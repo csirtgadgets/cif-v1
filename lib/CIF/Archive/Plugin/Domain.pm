@@ -5,7 +5,6 @@ use strict;
 use warnings;
 
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
-use Digest::SHA1 qw/sha1_hex/;
 
 use Try::Tiny;
 
@@ -30,49 +29,36 @@ sub insert {
         }
     }
     my $uuid = $data->{'uuid'};
-    my $confidence  = 50;
+         
+    my $addresses = $class->iodef_addresses($data->{'data'});
+    return unless(@$addresses);
+    
+    my $confidence = $class->iodef_confidence($data->{'data'});
+    $confidence = @{$confidence}[0]->get_content();
     
     my @ids;
-    my $addresses = $class->iodef_addresses($data->{'data'});
     foreach my $address (@$addresses){
         my $addr = lc($address->get_content());
+        next if($addr =~ /^(ftp|https?):\/\//);
         next unless($addr =~ /[a-z0-9.\-_]+\.[a-z]{2,6}$/);
         my @a1 = reverse(split(/\./,$addr));
         my @a2 = @a1;
         foreach (0 ... $#a1-1){
             my $a = join('.',reverse(@a2));
             pop(@a2);
-            $data->{'hash'} = sha1_hex($a);
+            my $hash = $class->SUPER::generate_sha1($a);
             my $id = $class->SUPER::insert({
                 uuid        => $data->{'uuid'},
                 guid        => $data->{'guid'},
-                hash        => $data->{'hash'},
+                hash        => $hash,
                 confidence  => $confidence,
             });
             push(@ids,$id);
-            $id = $class->insert_hash($data,$a);
+            $id = $class->insert_hash($data,$hash);
         }
     }
     $class->table($tbl);
     return(undef,@ids);
 }
-
-__PACKAGE__->set_sql('feed' => qq{
-    SELECT DISTINCT on (__TABLE__.uuid) __TABLE__.uuid, confidence, archive.data
-    FROM __TABLE__
-    LEFT JOIN archive ON __TABLE__.uuid = archive.uuid
-    WHERE
-        detecttime >= ?
-        AND __TABLE__.confidence >= ?
-        AND NOT EXISTS (
-            SELECT dw.address FROM domain_whitelist dw
-            WHERE
-                    dw.detecttime >= ?
-                    AND dw.confidence >= 25
-                    AND dw.hash = __TABLE__.hash
-        )
-    ORDER BY __TABLE__.uuid ASC, __TABLE__.id ASC
-    LIMIT ?
-});
 
 1;

@@ -18,7 +18,7 @@ our @ISA = qw(Exporter);
 # This allows declaration   use CIF::Utils ':all';
 # If you do not need this, moving things directly into @EXPORT or @EXPORT_OK
 # will save memory.
-our %EXPORT_TAGS = ( 'all' => [ qw(is_uuid generate_uuid_random generate_uuid_url generate_uuid_hash normalize_timestamp) ] );
+our %EXPORT_TAGS = ( 'all' => [ qw(is_uuid generate_uuid_random generate_uuid_url generate_uuid_hash normalize_timestamp generate_uuid_ns) ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw//;
 
@@ -74,7 +74,7 @@ sub generate_uuid_random {
     return($str);
 }
 
-sub generate_uuid_url {
+sub generate_uuid_ns {
     my $source = shift;
     my $uuid = OSSP::uuid->new();
     my $uuid_ns = OSSP::uuid->new();
@@ -83,6 +83,11 @@ sub generate_uuid_url {
     my $str = $uuid->export('str');
     undef $uuid;
     return($str);
+}
+
+# deprecate
+sub generate_uuid_url {
+    return generate_uuid_ns(shift);
 }
 
 =item normalize_timestamp($ts)

@@ -1,19 +1,20 @@
 package CIF::Archive;
 use base 'CIF::DBI';
 
+require 5.008;
+use strict;
+use warnings;
+
 # to make jeff teh happies!
 use Try::Tiny;
 
 use MIME::Base64;
 use OSSP::uuid;
 require Iodef::Pb;
-
-require 5.008;
-use strict;
-use warnings;
+require Compress::Snappy;
 
 use Module::Pluggable require => 1, except => qr/::Plugin::\S+::/;
-use CIF::Utils qw/generate_uuid_url generate_uuid_random is_uuid/;
+use CIF::Utils qw/generate_uuid_url generate_uuid_random is_uuid generate_uuid_ns/;
 
 __PACKAGE__->table('archive');
 __PACKAGE__->columns(Primary => 'id');
@@ -22,6 +23,9 @@ __PACKAGE__->columns(Essential => qw/id uuid guid data created/);
 __PACKAGE__->sequence('archive_id_seq');
 
 my @plugins = __PACKAGE__->plugins();
+
+our $root_uuid      = generate_uuid_ns('root');
+our $everyone_uuid  = generate_uuid_ns('everyone');
 
 sub insert {
     my $class = shift;
@@ -33,40 +37,45 @@ sub insert {
     $data->{'guid'}     = generate_uuid_url('root') unless($data->{'guid'});
     $data->{'created'}  = DateTime->from_epoch(epoch => time()) unless($data->{'created'});
     
+    my $err;
     try {
         $id = $class->SUPER::insert({
             uuid        => $data->{'uuid'},
             guid        => $data->{'guid'},
-            data        => encode_base64($data->{'data'}),
+            ## TODO -- move encode/compress to the client?
+            data        => encode_base64(Compress::Snappy::compress($data->{'data'}->encode())),
             created     => $data->{'created'},
         });
     }
     catch {
-        my $err = shift;
-        return($err,undef);
+        $err = shift;
+        warn $err;
     };
-    
-    $data->{'data'} = IODEFDocumentType->decode($data->{'data'});
+    return($err,undef) if($err);
     foreach my $p (@plugins){
         my ($pid,$err);
         try {
             ($err,$pid) = $p->insert($data);
         } catch {
             $err = shift;
-            return($err,undef);
         };
+        if($err){
+            warn $err;
+            $class->dbi_rollback() unless($class->db_Main->{'AutoCommit'});
+            return($err,undef);
+        }
     }
     return(undef,$data->{'uuid'});
 }
 
-sub query {
+sub search {
     my $class = shift;
     my $data = shift;
     
     # just in case someone gets stupid
-    $data->{'limit'}        = 1000 unless($data->{'limit'});
+    ## TODO -- move to config??
+    $data->{'limit'}        = 5000 unless($data->{'limit'});
     $data->{'confidence'}   = 0 unless(defined($data->{'confidence'}));
-    $data->{'decode'}       = 1 unless(defined($data->{'decode'}) && $data->{'decode'} == 0);
     $data->{'query'}        = lc($data->{'query'});
  
     my $ret;
@@ -74,15 +83,20 @@ sub query {
         # TODO -- finish
     } else {
         # log the query first
-        $class->log_query($data) unless($data->{'nolog'});
-        
+        unless($data->{'nolog'}){
+            my ($err,$ret) = $class->log_search($data);
+            return($err) if($err);
+        }
         foreach my $p (@plugins){
+            my $err;
             try {
                 $ret = $p->query($data);
             } catch {
-                my $err = shift;
-                return($err);
+                $err = shift;
+                warn $err if($::debug);
+                warn $err;
             };
+            return($err,undef) if($err);
             last if(defined($ret));
         }
     }
@@ -93,7 +107,7 @@ sub query {
         # protect against orphans
         next unless($_->{'data'});
         if($data->{'decode'}){
-            push(@rr,decode_base64($_->{'data'}));
+            push(@rr,Compress::Snappy::decompress(decode_base64($_->{'data'})));
         } else {
             push(@rr,$_->{'data'});
         }
@@ -101,20 +115,20 @@ sub query {
     return(undef,\@rr);
 }
 
-sub log_query {
+sub log_search {
     my $class = shift;
     my $data = shift;
     
-    my $q           = lc($data->{'query'});
-    my $source      = $data->{'source'}         || 'unknown';
-    my $confidence  = $data->{'confidence'}     || 50;
-    my $restriction = $data->{'restriction'}    || 'private';
-    my $guid        = $data->{'guid'}           || 'root';
+    my $q               = lc($data->{'query'});
+    my $source          = $data->{'source'}         || 'unknown';
+    my $confidence      = $data->{'confidence'}     || 50;
+    my $restriction     = $data->{'restriction'}    || 'private';
+    my $guid            = $data->{'guid'}           || $data->{'guid_default'} || $root_uuid;
     
     my $dt          = DateTime->from_epoch(epoch => time());
-        
-    $source = generate_uuid_url($source);
-    $guid   = generate_uuid_url($guid);
+    $dt = $dt->ymd().'T'.$dt->hms().'Z';
+    
+    $source = generate_uuid_ns($source);
     
     my $id;
     my $q_type = 'address';
@@ -128,44 +142,62 @@ sub log_query {
             last;
         }
     }
-    
+
     # thread friendly to load here
+    ## TODO this could go in the client...?
     require Iodef::Pb::Simple;
+    ## TODO -- have the client pass along a description
+    my $desc = 'search';
     my $doc = Iodef::Pb::Simple->new({
-        description => 'search '.$q,
+        description => $desc,
         assessment  => AssessmentType->new({
-            Impact  => ImpactType->new({
-                lang    => 'EN',
-                content => MLStringType->new({
-                    content => 'search '.$q,
+            Impact  => [
+                ImpactType->new({
                     lang    => 'EN',
+                    content => MLStringType->new({
+                        content => 'search',
+                        lang    => 'EN',
+                    }),
                 }),
+            ],
+            
+            ## TODO -- change this to low|med|high
+            Confidence  => ConfidenceType->new({
+                content => 50,
+                rating  => ConfidenceType::ConfidenceRating::Confidence_rating_numeric(),
             }),
         }),
         $q_type     => $q,
         confidence  => $confidence,
+        IncidentID          => IncidentIDType->new({
+            content => generate_uuid_random(),
+            name    => $source,
+        }),
+        detecttime  => $dt,
+        reporttime  => $dt,
+        restriction => $restriction,
+        guid        => $guid,
+        restriction => RestrictionType::restriction_type_private(),
     });
     
+    my $err;
     try {
-        $id = $class->SUPER::insert({
+        $id = $class->insert({
             uuid    => generate_uuid_random(),
             guid    => $guid,
-            data    => encode_base64($doc->encode()),
+            data    => $doc,
             created => $dt,
         });
     } catch {
-        my $err = shift;
+        $err = shift;
         $class->dbi_rollback() unless($class->db_Main->{'AutoCommit'});
-        return($err);
     };
-    
+    warn $err if($err);
+    return($err,undef) if($err);
     $class->dbi_commit() unless($class->db_Main->{'AutoCommit'});
     return(undef,$id);
 }
 
 sub prune {}
-
-
-
 
 1;

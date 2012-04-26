@@ -19,20 +19,43 @@ sub sub_table {
     my ($type,$subtype) = (lc($1),lc($2));
     return $type.'_'.$subtype;
 }
+
+sub generate_sha1 {
+    my $self    = shift;
+    my $thing   = shift || return;
+    
+    return $thing if(lc($thing) =~ /^[a-f0-9]{40}$/);
+    return sha1_hex($thing);
+}
     
 sub insert_hash {
     my $class = shift;
     my $data = shift;
-    my $thing = shift;
+    my $hash = shift;
+    
+    $hash = sha1_hex($hash) unless($hash =~ /^[a-f0-9]{40}$/);
     
     my $confidence = 50;
     my $id = CIF::Archive::Plugin::Hash->insert({
         uuid        => $data->{'uuid'},
         guid        => $data->{'guid'},
         confidence  => $confidence,
-        hash        => $data->{'hash'},
+        hash        => $hash,
     });
     return ($id);
+}
+
+sub iodef_descriptions {
+    my $class = shift;
+    my $iodef = shift;
+    
+    my @array;
+    foreach my $i (@{$iodef->get_Incident()}){
+        my $desc = $i->get_Description();
+        $desc = [$desc] unless(ref($desc) eq 'ARRAY');
+        push(@array,@$desc);
+    }
+    return(\@array);
 }
 
 sub iodef_assessments {
@@ -46,12 +69,25 @@ sub iodef_assessments {
     return(\@array);
 }
 
+sub iodef_confidence {
+    my $class = shift;
+    my $iodef = shift;
+    
+    my $ret = $class->iodef_assessments($iodef);
+    my @array;
+    foreach my $a (@$ret){
+        push(@array,$a->get_Confidence());
+    }
+    return(\@array);
+}
+
 sub iodef_impacts {
     my $class = shift;
     my $iodef = shift;
     
     my $assessments = $class->iodef_assessments($iodef);
     my @array;
+    
     foreach my $a (@$assessments){
         push(@array,@{$a->get_Impact()});
     }
@@ -67,12 +103,25 @@ sub iodef_impacts_first {
     return($impact);
 }
 
+sub iodef_additional_data {
+    my $class = shift;
+    my $iodef = shift;
+    
+    my @array;
+    foreach my $i (@{$iodef->get_Incident()}){
+        my @additional_data = (ref($i->get_AdditionalData()) eq 'ARRAY') ? @{$i->get_AdditionalData()} : $i->get_AdditionalData();
+        push(@array,@additional_data);
+    }
+    return(\@array);
+}
+
 sub iodef_event_additional_data {
     my $class = shift;
     my $iodef = shift;
     
     my @array;
     foreach my $i (@{$iodef->get_Incident()}){
+        next unless($i->get_EventData());
         foreach my $e (@{$i->get_EventData()}){
             my @additional_data = (ref($e->get_AdditionalData()) eq 'ARRAY') ? @{e->get_AdditionalData()} : $e->get_AdditionalData();
             push(@array,@additional_data);
@@ -87,6 +136,7 @@ sub iodef_addresses {
     
     my @array;
     foreach my $i (@{$iodef->get_Incident()}){
+        next unless($i->get_EventData());
         foreach my $e (@{$i->get_EventData()}){
             my @flows = (ref($e->get_Flow()) eq 'ARRAY') ? @{$e->get_Flow()} : $e->get_Flow();
             foreach my $f (@flows){
@@ -111,6 +161,7 @@ sub iodef_systems {
     
     my @array;
     foreach my $i (@{$iodef->get_Incident()}){
+        next unless($i->get_EventData());
         foreach my $e (@{$i->get_EventData()}){
             my @flows = (ref($e->get_Flow()) eq 'ARRAY') ? @{$e->get_Flow()} : $e->get_Flow();
             foreach my $f (@flows){
@@ -128,6 +179,7 @@ sub iodef_systems_additional_data {
     
     my @array;
     foreach my $i (@{$iodef->get_Incident()}){
+        next unless($i->get_EventData());
         foreach my $e (@{$i->get_EventData()}){
             my @flows = (ref($e->get_Flow()) eq 'ARRAY') ? @{$e->get_Flow()} : $e->get_Flow();
             foreach my $f (@flows){

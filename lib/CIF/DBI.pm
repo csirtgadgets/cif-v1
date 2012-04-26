@@ -4,8 +4,6 @@ use base 'Class::DBI';
 use strict;
 use warnings;
 
-__PACKAGE__->connection('DBI:Pg:database=cif;host=localhost','postgres','',{ AutoCommit => 1});
-
 # because UUID's are really primary keys too in our schema
 # this overrides some of the default functionality of Class::DBI and 'id'
 sub retrieve {

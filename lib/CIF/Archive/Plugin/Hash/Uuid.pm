@@ -18,7 +18,7 @@ sub query {
     my $data = shift;
     
     return unless($class->prepare($data->{'query'}));
-    return $class->search_query(
+    return $class->search_lookup(
         $data->{'query'},
         $data->{'confidence'},
         $data->{'limit'},
