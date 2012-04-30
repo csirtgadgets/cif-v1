@@ -2,8 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.64])
-AC_INIT(cif, m4_esyscmd_s([git describe --tags]), [ci-framework@googlegroups.com])
-AC_CONFIG_SRCDIR([lib/CIF.pm])
+AC_INIT(cif-perl, m4_esyscmd_s([git describe --tags]), [ci-framework@googlegroups.com])
 AM_INIT_AUTOMAKE
 
 # Checks for programs.
@@ -22,6 +21,12 @@ AC_CONFIG_FILES([
 
 
 # Checks for libraries.
+
+## Google Protocol Buffers
+PKG_CHECK_MODULES([protobuf],[protobuf >= 2.4.1])
+
+## uuid
+PKG_CHECK_MODULES([uuid],[uuid >= 2.17.0])
 
 # Checks for header files.
 

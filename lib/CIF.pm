@@ -4,8 +4,7 @@ use 5.008008;
 use strict;
 use warnings;
 
-our $VERSION = '0.99_01';
-$VERSION = eval $VERSION;
+our $VERSION = '0.99.01';
 
 use DateTime::Format::DateParse;
 use OSSP::uuid;

@@ -3,9 +3,8 @@ package CIF::Message;
 use strict;
 use warnings;
 
-## TODO -- use CIF.pm's version
-our $VERSION = '0.99_01';
-$VERSION = eval $VERSION;
+## TODO clean this up and .proto it
+our $VERSION = '0.99.01';
 
 use Google::ProtocolBuffers;
 

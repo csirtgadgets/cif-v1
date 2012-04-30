@@ -14,20 +14,17 @@ fixperms:
 	chown -R $(CIF_USER) $(prefix)
 	chgrp -R $(CIF_GROUP) $(prefix)
 
-dirs:
-	$(INSTALL) -m 0770 -d $(sysconfdir)
-
-install: dirs files-install fixperms
+install: files-install fixperms
 
 files-install: libs-install
 
 depends: fixdeps
 
 fixdeps:
-	$(PERL) ./sbin/test-dependencies --verbose --install
+	$(PERL) ./sbin/test-dependencies --verbose --install --prefix $(prefix)
 
 testdeps:
-	$(PERL) ./sbin/test-dependencies --verbose
+	$(PERL) ./sbin/test-dependencies --verbose --prefix $(prefix)
 
 libs-install: 
 	[ -d $(libdir) ] || $(INSTALL) -m 0755 -d $(libdir)
