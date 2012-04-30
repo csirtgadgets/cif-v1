@@ -29,15 +29,8 @@ sub insert {
         my $addr = lc($address->get_content());
         next unless($addr =~ /^(ftp|https?):\/\//);
         my $hash = $class->SUPER::generate_sha1($addr);
-        my $id = $class->SUPER::insert({
-            uuid        => $data->{'uuid'},
-            guid        => $data->{'guid'},
-            hash        => $hash,
-            confidence  => $confidence,
-            
-        });
+        my $id = $class->insert_hash($data,$hash);
         push(@ids,$id);
-        $id = $class->insert_hash($data,$hash);
     }
     return(undef,\@ids);
 }

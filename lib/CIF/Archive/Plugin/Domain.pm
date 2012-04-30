@@ -47,14 +47,8 @@ sub insert {
             my $a = join('.',reverse(@a2));
             pop(@a2);
             my $hash = $class->SUPER::generate_sha1($a);
-            my $id = $class->SUPER::insert({
-                uuid        => $data->{'uuid'},
-                guid        => $data->{'guid'},
-                hash        => $hash,
-                confidence  => $confidence,
-            });
+            my $id = $class->insert_hash($data,$hash);
             push(@ids,$id);
-            $id = $class->insert_hash($data,$hash);
         }
     }
     $class->table($tbl);

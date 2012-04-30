@@ -1,6 +1,9 @@
 package CIF::DBI;
 use base 'Class::DBI';
 
+our $VERSION = '0.99_01';
+$VERSION = eval $VERSION;
+
 use strict;
 use warnings;
 

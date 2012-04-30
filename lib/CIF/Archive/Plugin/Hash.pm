@@ -51,15 +51,15 @@ sub query {
     
     # work-around for cif-v1
     # till we can add this to the client
-    return if($data->{'query'} =~ /^$RE{'net'}{'IPv4'}/);
-    unless($data->{'query'}=~ /^([a-f0-9]{32}|[a-f0-9]{40})$/){
-         $data->{'query'} = sha1_hex($data->{'query'});
-    }
+    #return if($data->{'query'} =~ /^$RE{'net'}{'IPv4'}/);
+    #unless($data->{'query'}=~ /^([a-f0-9]{32}|[a-f0-9]{40})$/){
+    #     $data->{'query'} = sha1_hex($data->{'query'});
+    #}
     # end
     
     foreach (@plugins){
         my $r = $_->query($data);
-        return ($r) if($r->count());
+        return ($r) if($r && $r->count());
     }
     return;
 }

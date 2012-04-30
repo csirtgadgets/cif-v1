@@ -9,12 +9,11 @@ use warnings;
 use Try::Tiny;
 
 use MIME::Base64;
-use OSSP::uuid;
 require Iodef::Pb;
 require Compress::Snappy;
 
 use Module::Pluggable require => 1, except => qr/::Plugin::\S+::/;
-use CIF::Utils qw/generate_uuid_url generate_uuid_random is_uuid generate_uuid_ns/;
+use CIF qw/generate_uuid_url generate_uuid_random is_uuid generate_uuid_ns/;
 
 __PACKAGE__->table('archive');
 __PACKAGE__->columns(Primary => 'id');

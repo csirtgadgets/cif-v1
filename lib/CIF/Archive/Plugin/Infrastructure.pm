@@ -8,8 +8,6 @@ use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 use Regexp::Common qw/net/;
 use Regexp::Common::net::CIDR;
 
-use Try::Tiny;
-
 my @plugins = __PACKAGE__->plugins();
 
 __PACKAGE__->table('infrastructure');
@@ -30,6 +28,8 @@ sub insert {
     }
 
     my $uuid = $data->{'uuid'};
+    
+    ## TODO -- add these to Plugin
     my $portlist;
     my $protocol;
     my $confidence = $class->iodef_confidence($data->{'data'});
@@ -44,11 +44,11 @@ sub insert {
         # we have to check for both because of urls that look like:
         # 1.1.1.1/abc.html
         next unless($a->get_content() =~ /^$RE{'net'}{'IPv4'}$/ || $a->get_content() =~ /^$RE{'net'}{'CIDR'}{'IPv4'}$/);
-
+       
         my $id = $class->SUPER::insert({
-            uuid        => $data->{'uuid'},
-            guid        => $data->{'guid'},
-            address     => $a->get_content(),
+            guid    => $data->{'guid'},
+            uuid    => $data->{'uuid'},
+            address => $a->get_content(),
             confidence  => $confidence,
             portlist    => $portlist,
             protocol    => $protocol,
@@ -58,18 +58,20 @@ sub insert {
         ## TODO -- clean this up into a function, map with ipv6
         ## it'll evolve into pushing this search into the hash table
         ## the client will then do the final leg of the work (Net::Patricia, etc)
-        ## right now postgres can do it, but down the road hadoop might not
+        ## right now postgres can do it, but down the road big-data warehouses might not
         ## this way we can do faster hash lookups for non-advanced CIDR queries
-        my @array = split(/\./,$a->get_content());
-        my @array2 = (
-            $array[0].'.0.0.0/8',
-            $array[0].'.'.$array[1].'.0.0/16',
-            $array[0].'.'.$array[1].'.'.$array[2].'.0/24',
-            $a->get_content(),
-        );
-        foreach (@array2){
-            $id = $class->insert_hash($data,$_);
-        }
+        #my $id;
+        #my @array = split(/\./,$a->get_content());
+        #my @array2 = (
+        #    $array[0].'.0.0.0/8',
+        #    $array[0].'.'.$array[1].'.0.0/16',
+        #    $array[0].'.'.$array[1].'.'.$array[2].'.0/24',
+        #    $a->get_content(),
+        #);
+        #foreach (@array2){
+        #    $id = $class->insert_hash($data,$_);
+        #    push(@ids,$id);
+        #}
     }
     return(undef,@ids);
 }
