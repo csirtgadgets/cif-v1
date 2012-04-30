@@ -134,7 +134,6 @@ my %AVOID = (
 
 $deps{'CORE'} = [ text_to_hash( << '.') ];
 CIF 0.99
-CIF::DBI 0.99
 Try::Tiny 0.04
 Config::Simple 4.59
 Module::Pluggable 3.9
@@ -142,6 +141,10 @@ Class::Accessor 0.34
 Iodef::Pb 0.01
 Iodef::Pb::Simple 0.01
 Compress::Snappy 0.18
+DBI 1.37
+Class::DBI 3.0.17
+Class::Trigger 0.14
+DBD::Pg 1.43
 .
 
 if ($args{'download'}) {

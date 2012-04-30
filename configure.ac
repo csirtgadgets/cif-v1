@@ -28,12 +28,6 @@ AC_CONFIG_FILES([
 
 # Checks for library functions.
 
-AC_ARG_VAR([SNAPPY],[Compress::Snappy snappy_status])
-AC_PATH_PROG([SNAPPY],[snappy_status],[not found])
-if test "$SNAPPY" = 'not found'; then
-    AC_MSG_ERROR([cannot use $PACKAGE_NAME without Compress Snappy snappy_status])
-fi
-
 #dnl CIF_USER
 AC_ARG_WITH(user,
     AC_HELP_STRING([--with-user=USER],
