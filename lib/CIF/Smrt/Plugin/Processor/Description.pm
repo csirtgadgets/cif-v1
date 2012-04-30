@@ -1,15 +1,20 @@
 package CIF::Smrt::Plugin::Processor::Description;
 
+use strict;
+use warnings;
+
 sub process {
     my $class = shift;
+    my $rules = shift;
     my $rec = shift;
 
-    $rec->{'impact'} = lc($rec->{'impact'});
+    $rec->{'assessment'} = lc($rec->{'assessment'});
     unless($rec->{'description'}){
-        $rec->{'description'} = $rec->{'impact'};
+        $rec->{'description'} = 'unknown';
+    } else {
+        $rec->{'description'} = lc($rec->{'description'});
     }
-    $rec->{'description'} = lc($rec->{'description'});
-    return($rec);
+    return $rec;
 }
 
 1;

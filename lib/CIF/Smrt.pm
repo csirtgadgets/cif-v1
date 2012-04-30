@@ -1,42 +1,115 @@
 package CIF::Smrt;
-use base qw(Class::Accessor);
+use base 'Class::Accessor';
 
 use 5.008008;
 use strict;
 use warnings;
 use threads;
 
-our $VERSION = '0.00_01';
+our $VERSION = '0.99_01';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
-__PACKAGE__->follow_best_practice;
-
-use CIF::Utils ':all';
+use CIF qw/generate_uuid_url generate_uuid_random is_uuid/;
 use Regexp::Common qw/net URI/;
 use Regexp::Common::net::CIDR;
 use Encode qw/encode_utf8/;
 use Data::Dumper;
 use File::Type;
 use Module::Pluggable require => 1;
-use Digest::MD5 qw/md5_hex/;
 use Digest::SHA1 qw/sha1_hex/;
 use URI::Escape;
 use Try::Tiny;
+use Iodef::Pb::Simple;
+require CIF::Archive;
+use ZeroMQ qw(:all);
+
+__PACKAGE__->follow_best_practice;
+__PACKAGE__->mk_accessors(qw(config db_config threads entries defaults feed rules load_full goback));
 
 my @processors = __PACKAGE__->plugins;
 @processors = grep(/Processor/,@processors);
 
 sub new {
-    my ($class,%args) = (shift,@_);
+    my $class = shift;
+    my $args = shift;
+    
     my $self = {};
     bless($self,$class);
+    
+    $self->init($args);
 
-    return $self;
+    return (undef,$self);
 }
 
-sub get_feed { 
+sub init {
+    my $self = shift;
+    my $args = shift;
+    
+    $self->set_feed($args->{'feed'});
+    
+    $self->init_config($args);
+    $self->init_rules($args);
+    
+    $self->set_threads(     $args->{'threads'}      || $self->get_config->{'threads'}   || 1);
+    $self->set_goback(      $args->{'goback'}       || $self->get_config->{'goback'}    || 3);
+    $self->set_load_full(   $args->{'load_full'}    || $self->get_config->{'load_full'} || 0);
+    
+    
+    $self->set_goback(time() - ($self->get_goback() * 84600));
+    $self->set_goback(0) if($self->get_load_full());
+    
+    $self->init_db($args);
+}
+
+sub init_config {
+    my $self = shift;
+    my $args = shift;
+    
+    $args->{'config'} = Config::Simple->new($args->{'config'}) || return(undef,'missing config file');
+    $self->set_config($args->{'config'}->param(-block => 'cif_smrt'));
+        
+    $self->set_db_config($args->{'config'}->param(-block => 'db'));   
+}
+
+sub init_rules {
+    my $self = shift;
+    my $args = shift;
+    
+    $args->{'rules'} = Config::Simple->new($args->{'rules'}) || return(undef,'missing rules file');
+    
+    my $defaults    = $args->{'rules'}->param(-block => 'default');
+    my $rules       = $args->{'rules'}->param(-block => $self->get_feed());
+    
+    map { $defaults->{$_} = $rules->{$_} } keys (%$rules);
+    
+    unless(is_uuid($defaults->{'guid'})){
+        $defaults->{'guid'} = generate_uuid_url($defaults->{'guid'});
+    }
+    $self->set_rules($defaults);   
+}
+    
+
+sub init_db {
+    my $self = shift;
+    my $args = shift;
+    
+    my $config = $self->get_db_config();
+    
+    my $db          = $config->{'database'} || 'cif';
+    my $user        = $config->{'user'}     || 'postgres';
+    my $password    = $config->{'password'} || '';
+    my $host        = $config->{'host'}     || '127.0.0.1';
+    
+    my $dbi = 'DBI:Pg:database='.$db.';host='.$host;
+    
+    require CIF::DBI;
+    my $ret = CIF::DBI->connection($dbi,$user,$password,{ AutoCommit => 0});
+    return $ret;   
+}
+
+sub pull_feed { 
     my $f = shift;
-    my ($content,$err) = threads->create('_get_feed',$f)->join();
+    my ($content,$err) = threads->create('_pull_feed',$f)->join();
     return(undef,$err) if($err);
     return(undef,'no content') unless($content);
     # auto-decode the content if need be
@@ -52,7 +125,7 @@ sub get_feed {
 
 # we do this sep cause it's in a thread
 # this gets around memory leak issues and TLS threading issues with Crypt::SSLeay, etc
-sub _get_feed {
+sub _pull_feed {
     my $f = shift;
     return unless($f->{'feed'});
 
@@ -76,9 +149,10 @@ sub _get_feed {
 
 ## TODO -- turn this into plugins
 sub parse {
-    my $class = shift;
-    my $f = shift;
-    my ($content,$err) = get_feed($f);
+    my $self = shift;
+    my $f = $self->get_rules();
+    
+    my ($content,$err) = pull_feed($f);
     return($err,undef) if($err);
 
     my $return;
@@ -136,95 +210,70 @@ sub _decode {
     return $data;
 }
 
-sub insert {
-    my $config = shift;
-    my $recs = shift;
+sub process {
+    my $self = shift;
+    my $args = shift;
 
-    require Iodef::Pb::Simple;
-    require CIF::Archive;
-    CIF::DBI->connection('DBI:Pg:database=cif_test;host=localhost','postgres','',{ AutoCommit => 0});
-    foreach (@$recs){
-        foreach my $key (keys %$_){
-            next unless($_->{$key});
-            if($_->{$key} =~ /<(\S+)>/){
-                my $x = $_->{$1};
+    my $threads = $self->get_threads();
+    my $full    = 1;
+    
+    warn 'parsing...' if($::debug);
+    my $recs = $self->parse();
+    
+    warn 'mapping...' if($::debug);
+    foreach my $r (@$recs){
+        #delete($_->{'regex'}) if($_->{'regex'});
+        foreach my $key (keys %$r){
+            next unless($r->{$key});
+            if($r->{$key} =~ /<(\S+)>/){
+                my $x = $r->{$1};
                 if($x){
-                    $_->{$key} =~ s/<\S+>/$x/;
+                    $r->{$key} =~ s/<\S+>/$x/;
                 }
             }
         }
         foreach my $p (@processors){
-            $p->process($config,$_);
+            $r = $p->process($self->get_rules(),$r);
         }
-        my $iodef = Iodef::Pb::Simple->new($_);
-        my $id;
-        try {
-            $id = CIF::Archive->insert({
-                data    => $iodef->encode()
-            });
-            warn $id;
-        } catch {
-            my $err = shift;
-            warn $err;
-            return($err);
-        }
-    }
-
-    CIF::Archive->dbi_commit() unless(CIF::Archive->db_Main->{'AutoCommit'});
-    return(0);
-}
-
-sub process {
-    my $class = shift;
-    my %args = @_;
-
-    my $threads = $args{'threads'};
-    my $recs    = $args{'entries'};
-    my $full    = $args{'full_load'};
-    my $config  = $args{'config'};
-
-    # we do this so other scripts can hook into us
-    my $fctn = ($args{'function'}) ? $args{'function'} : 'CIF::Smrt::insert';
-
-    # do the sort before we split
-    $recs = _sort_detecttime($recs);
-    my $batches;
-    if($full){ 
-        $batches = split_batches($threads,$recs);
-    } else {
-        # sort by detecttime and only process the last 5 days of stuff
-        ## TODO -- make this configurable
-        my $goback = DateTime->from_epoch(epoch => (time() - (84600 * 5)));
-        $goback = $goback->ymd().'T'.$goback->hms().'Z';
-        my @rr;
-        foreach (@$recs){
-            last if(($_->{'detecttime'} cmp $goback) == -1);
-            push(@rr,$_);
-        }
-        # TODO -- round robin the split?
-        $batches = split_batches($threads,\@rr);
     }
     
-    ## CREATE THE IODEF analytics first...
-
-    if(scalar @{$batches} == 1){
-        insert($config,$recs);
-    } else {
-        foreach(@{$batches}){
-            my $t = threads->create($fctn,$config,$_);
-        }
-
-        while(threads->list()){
-            my @joinable = threads->list(threads::joinable);
-            unless($#joinable > -1){
-                sleep(1);
-                next();
-            }
-            foreach(@joinable){
-                $_->join();
-            }
+    warn 'sorting...' if($::debug);
+    $recs = [ sort { $b->{'dt'} <=> $a->{'dt'} } @$recs ];
+    
+    warn 'submitting...' if($::debug);
+    
+    my @array;
+    foreach (@$recs){
+        last if($_->{'dt'} < $self->get_goback());
+        $_->{'id'} = generate_uuid_random();
+        my $iodef = Iodef::Pb::Simple->new($_);
+        push(@array,{ uuid => $_->{'id'}, data => $iodef });
+    }
+    
+    ## TODO -- thread out analytics
+    
+    ## TODO -- re-write using the client in version 1.1
+    
+    # store
+    my $state = 0;
+    warn 'entries: '.($#array + 1) if($::debug);
+    for(my $i = 0; $i <= $#array; $i++){
+        my $id = CIF::Archive->insert({
+            guid    => $self->get_rules->{'guid'},
+            data    => $array[$i]->{'data'},
+            uuid    => $array[$i]->{'uuid'},
+        });
+        $state = 0;
+        warn $id if($::debug && $::debug > 1);
+        if($i % 1000 == 0){
+            warn 'commiting...' if($::debug);
+            CIF::Archive->dbi_commit();
+            $state = 1;
         }
     }
+    warn 'commiting last...' if($::debug);
+    CIF::Archive->dbi_commit() unless($state);
+    return(undef,1);
 }
 
 sub throttle {
@@ -241,58 +290,31 @@ sub throttle {
     return($cores * 1.5);
 }
 
-sub split_batches {
-    ## TODO -- think through this.
-    my $tc = shift;
-    my $recs = shift || return;
-    my @array = @$recs;
-
-    my @batches;
-    if($#array == 0){
-        push(@batches,$recs);
-        return(\@batches);
-    }
-
-    my $num_recs = $#array + 1;
-    my $batch = (($num_recs/$tc) == int($num_recs/$tc)) ? ($num_recs/$tc) : (int($num_recs/$tc) + 1);
-    for(my $x = 0; $x <= $#array; $x += $batch){
-        my $start = $x;
-        my $end = ($x+$batch);
-        $end = $#array if($end > $#array);
-        my @a = @array[$x ... $end];
-        push(@batches,\@a);
-        $x++;
-    }
-    return(\@batches);
-}
-
-sub _sort_detecttime {
-    my $recs = shift;
-
-    foreach (@{$recs}){
-        delete($_->{'regex'}) if($_->{'regex'});
-        my $dt = $_->{'detecttime'};
-        if($dt){
-            $dt = normalize_timestamp($dt);
-        }
-        unless($dt){
-            $dt = DateTime->from_epoch(epoch => time());
-            if(lc($_->{'detection'}) eq 'hourly'){
-                $dt = $dt->ymd().'T'.$dt->hour.':00:00Z';
-            } elsif(lc($_->{'detection'}) eq 'monthly') {
-                $dt = $dt->year().'-'.$dt->month().'-01T00:00:00Z';
-            } elsif(lc($_->{'detection'} ne 'now')){
-                $dt = $dt->ymd().'T00:00:00Z';
+sub normalize_timestamp {
+    my $dt = shift;
+    return $dt if($dt =~ /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
+    if($dt && ref($dt) ne 'DateTime'){
+        if($dt =~ /^\d+$/){
+            if($dt =~ /^\d{8}$/){
+                $dt.= 'T00:00:00Z';
+                $dt = eval { DateTime::Format::DateParse->parse_datetime($dt) };
+                unless($dt){
+                    $dt = DateTime->from_epoch(epoch => time());
+                }
             } else {
-                $dt = $dt->ymd().'T'.$dt->hms();
+                $dt = DateTime->from_epoch(epoch => $dt);
             }
+        } elsif($dt =~ /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(\S+)?$/) {
+            my ($year,$month,$day,$hour,$min,$sec,$tz) = ($1,$2,$3,$4,$5,$6,$7);
+            $dt = DateTime::Format::DateParse->parse_datetime($year.'-'.$month.'-'.$day.' '.$hour.':'.$min.':'.$sec,$tz);
+        } else {
+            $dt =~ s/_/ /g;
+            $dt = DateTime::Format::DateParse->parse_datetime($dt);
+            return undef unless($dt);
         }
-        $_->{'detecttime'} = $dt;
-        $_->{'description'} = '' unless($_->{'description'});
     }
-    ## TODO -- can we get around having to create a new array?
-    my @new = sort { $b->{'detecttime'} cmp $a->{'detecttime'} } @$recs;
-    return(\@new);
+    $dt = $dt->ymd().'T'.$dt->hms().'Z';
+    return $dt;
 }
 
 1;

@@ -1,13 +1,15 @@
 package CIF::Smrt::Plugin::Processor::Portlist;
 
 use strict;
+use warnings;
 
 sub process {
     my $class = shift;
+    my $rules = shift;
     my $rec = shift;
 
-    return unless($rec->{'portlist'});
-    return if($rec->{'portlist'} =~ /^\d+$/);
+    return $rec unless($rec->{'portlist'});
+    return $rec if($rec->{'portlist'} =~ /^\d+$/);
 
     for($rec->{'portlist'}){
         if(/_/){
@@ -16,7 +18,7 @@ sub process {
         }
     }
 
-    return($rec);
+    return $rec;
 }
 
 1;

@@ -1,35 +1,28 @@
 package CIF::Smrt::Plugin::Processor::Uri;
 
 use strict;
+use warnings;
 
-use Digest::SHA1 qw/sha1_hex/;
-use Digest::MD5 qw/md5_hex/;
-use Regexp::Common qw/URI/;
-use URI::Escape;
+use Regexp::Common qw/net/;
+use Regexp::Common::net::CIDR;
 
 sub process {
     my $class = shift;
+    my $rules = shift;
     my $rec = shift;
-
-    return $rec unless($rec->{'address'});
-    return $rec unless($rec->{'impact'});
-    return $rec unless($rec->{'impact'} =~ /url$/);
-
-    if($rec->{'address'} !~ /^(http|https|ftp):\/\//){
-        if($rec->{'address'} =~ /[\/]+/){
-            $rec->{'address'} = 'http://'.$rec->{'address'};
-        }
+    
+    my $address = $rec->{'address'};
+    
+    return $rec unless($address);
+    
+    # Regexp::Common qw/URI/ chokes on large urls
+    return $rec if($address =~ /^(ftp|https?):\/\//);
+    return $rec if($address =~ /^$RE{'net'}{'IPv4'}$/ || $address =~ /^$RE{'net'}{'CIDR'}{'IPv4'}$/);
+    return $rec unless($address =~ /^$RE{'net'}{'IPv4'}/);
+    if($rec->{'address'} =~ /[\/]+/){
+        $rec->{'address'} = 'http://'.$rec->{'address'};
     }
-
-    if($rec->{'address'} && $rec->{'address'} =~ /^$RE{'URI'}/){
-        # we do this here so ::Plugin::Hash will pick it up
-        $rec->{'address'} = uri_escape($rec->{'address'},'\x00-\x1f\x7f-\xff');
-        $rec->{'address'} = lc($rec->{'address'});
-        $rec->{'md5'} = md5_hex($rec->{'address'});
-        $rec->{'sha1'} = sha1_hex($rec->{'address'});
-    }
-
-    return($rec);
+    return $rec;
 }
 
 1;
