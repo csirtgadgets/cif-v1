@@ -40,29 +40,12 @@ sub insert {
         next unless($entry);
         next unless($entry->get_meaning() eq 'sha1');
         next unless($entry->get_content() =~ /^[a-f0-9]{40}$/);
-        my $id = $class->SUPER::insert({
-            uuid        => $data->{'uuid'},
-            guid        => $data->{'guid'},
-            hash        => $entry->get_content(),
-            confidence  => $confidence,
-        });
+        my $id = $class->insert_hash($data,$entry->get_content());
         push(@ids,$id);
-        $id = $class->insert_hash($data,$entry->get_content());
     }    
       
     $class->table($tbl);
     return(undef,\@ids);
 }
-
-__PACKAGE__->set_sql('feed' => qq{
-    SELECT DISTINCT on (__TABLE__.uuid) __TABLE__.uuid, confidence, archive.data
-    FROM __TABLE__
-    LEFT JOIN archive ON __TABLE__.uuid = archive.uuid
-    WHERE
-        detecttime >= ?
-        AND __TABLE__.confidence >= ?
-    ORDER BY __TABLE__.uuid ASC, __TABLE__.id ASC
-    LIMIT ?
-});
 
 1;

@@ -189,6 +189,7 @@ sub log_search {
         });
     } catch {
         $err = shift;
+        warn $err;
         $class->dbi_rollback() unless($class->db_Main->{'AutoCommit'});
     };
     warn $err if($err);
