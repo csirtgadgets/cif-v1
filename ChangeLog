@@ -1,4 +1,10 @@
-Revision history for cif-client-perl v1.
+Revision history for cif-dbi-perl v1.
 
 0.99.01 2012-04-27
     - initial release
+    - split cif-dbi out into it's own lib
+    - simplified the storage model
+    - added compression (google-compress-snappy)
+    - leveraging Iodef::Pb (google protocol buffers) instead of JSON for IODEF
+    - re-factored most of the "index tables" to be hash lookups (with the exception of ipv4/6 addrs)
+    - split out "WebAPI" into a generic router platform (cif-router-perl)
