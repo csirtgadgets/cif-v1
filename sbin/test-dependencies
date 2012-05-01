@@ -135,6 +135,7 @@ my %AVOID = (
 $deps{'CORE'} = [ text_to_hash( << '.') ];
 Google::ProtocolBuffers 0.08 
 DateTime::Format::DateParse 0.05
+OSSP::uuid 1.0501
 .
 
 if ($args{'download'}) {

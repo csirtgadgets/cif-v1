@@ -4,7 +4,8 @@ use strict;
 use warnings;
 
 ## TODO clean this up and .proto it
-our $VERSION = '0.99.01';
+our $VERSION = '0.99_01';
+$VERSION = eval $VERSION;
 
 use Google::ProtocolBuffers;
 
