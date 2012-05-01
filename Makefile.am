@@ -40,6 +40,12 @@ bin-install:
 	-( cd bin && find . -type f -print ) | while read file ; do \
         $(INSTALL) -m 0750 "bin/$$file" "$(bindir)/$$file" ; \
     done
+    
+initdb:
+	-( cd schemas/$(DB_TYPE) && find -type f -print | sort ) | while read file ; do \
+    $(PSQL) -U $(DB_DBA) -d $(DB_DATABASE) -h $(DB_HOST) -p $(DB_PORT) < "schemas/$(DB_TYPE)/$$file" ; \
+    done
+	@echo "Tables built"
 
 clean:
 	rm Makefile

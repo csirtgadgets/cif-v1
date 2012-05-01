@@ -8,7 +8,7 @@ use warnings;
 # fix lib paths, some may be relative
 BEGIN {
     require File::Spec;
-    my @libs = ("lib", "local/lib");
+    my @libs = ("lib", "local/lib", '/home/wes/projects/src/cif/v2/cif-perl/lib', '/home/wes/projects/src/cif/v2/cif-dbi-perl/lib');
     my $bin_path;
 
     for my $lib (@libs) {

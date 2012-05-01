@@ -29,6 +29,8 @@ sub handler {
     my $router = CIF::Router->new({
         config  => $req->dir_config->get('CIFRouterRESTConfig') || '/var/www/.cif' || '/home/cif/.cif',
     });
+    use Data::Dumper;
+    warn Dumper($router);
     my $reply = $router->process($buffer);
     
     $req->content_type('application/x-protobuf');

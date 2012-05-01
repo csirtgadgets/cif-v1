@@ -13,16 +13,17 @@ use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 use Config::Simple;
 
 require CIF::Archive;
+require CIF::Router::APIKey;
+require CIF::Router::APIKeyGroups;
 use CIF qw/is_uuid generate_uuid_url/;
 use CIF::Message;
-use CIF::Router::APIKey;
-use CIF::Router::APIKeyGroups;
+
 use Data::Dumper;
 
 my @drivers = __PACKAGE__->plugins();
 
 __PACKAGE__->follow_best_practice();
-__PACKAGE__->mk_accessors(qw(config db_config driver driver_config restriction_map group_map groups));
+__PACKAGE__->mk_accessors(qw(config db_config router_db_config driver driver_config restriction_map group_map groups));
 
 sub new {
     my $class = shift;
@@ -35,7 +36,10 @@ sub new {
     my $self = {};
     bless($self,$class);
     $self->set_config($args->{'config'}->param(-block => 'router'));
+    
     $self->set_db_config($args->{'config'}->param(-block => 'db'));
+    $self->set_router_db_config($args->{'config'}->param(-block => 'router_db'));
+    
     $self->set_restriction_map($args->{'config'}->param(-block => 'restriction_map'));
         
     my $ret = $self->init($args);
