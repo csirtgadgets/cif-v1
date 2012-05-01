@@ -1,4 +1,4 @@
-EXTRA_DIST = lib
+EXTRA_DIST = lib bin sbin
 
 ME=cif-router-perl
 BUILD=$(shell git describe --tags)
@@ -16,7 +16,7 @@ fixperms:
 
 install: files-install fixperms
 
-files-install: 
+files-install: libs-install bin-install
 
 depends: fixdeps
 
@@ -36,8 +36,8 @@ libs-install:
     done
     
 bin-install:    
-    [ -d $(bindir) ] || $(INSTALL) -m 0770 -d $(bindir)
-    -( cd bin && find . -type f -print ) | while read file ; do \
+	[ -d $(bindir) ] || $(INSTALL) -m 0770 -d $(bindir)
+	-( cd bin && find . -type f -print ) | while read file ; do \
         $(INSTALL) -m 0750 "bin/$$file" "$(bindir)/$$file" ; \
     done
 

@@ -4,6 +4,7 @@ use base 'Class::Accessor';
 use strict;
 use warnings;
 
+## TODO -- this should be set my CIF::Message
 our $VERSION = '0.99_01';
 $VERSION = eval $VERSION;
 

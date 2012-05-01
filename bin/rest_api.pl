@@ -3,16 +3,12 @@
 use strict;
 use warnings;
 
+# this just sets up the lib paths for apache
+
 # fix lib paths, some may be relative
 BEGIN {
     require File::Spec;
-    my @libs = ("lib", "local/lib",
-        "/home/wes/projects/src/cif/v2/cif-dbi-perl/lib",
-        "/home/wes/projects/src/cif/v2/iodef-pb-perl/lib",
-        "/home/wes/projects/src/cif/v2/cif-router-perl/lib",
-        "/home/wes/projects/src/cif/v2/iodef-pb-simple-perl/lib",
-        "/home/wes/projects/src/cif/v2/cif-perl/lib/",
-    );
+    my @libs = ("lib", "local/lib");
     my $bin_path;
 
     for my $lib (@libs) {
