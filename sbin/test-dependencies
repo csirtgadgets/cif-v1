@@ -156,8 +156,8 @@ Digest::SHA 2.10
 File::Spec 0.8
 URI::Escape 1.56
 Encode 2.23
-Iodef::Pb::Simple 0.01
-ZeroMQ 2.1.11
+Iodef::Pb::Simple 0.00
+ZeroMQ 0.21
 .
 
 if ($args{'download'}) {

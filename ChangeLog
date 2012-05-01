@@ -1,4 +1,5 @@
-Revision history for cif-client-perl v1.
+Revision history for cif-smrt-perl v1.
 
 0.99.01 2012-04-27
     - initial release
+    - re-factored old "cif_feedparser", CIF::FeedParser to CIF::Smrt

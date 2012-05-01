@@ -14,7 +14,7 @@ fixperms:
 	chown -R $(CIF_USER) $(prefix)
 	chgrp -R $(CIF_GROUP) $(prefix)
 
-install: files-install fixperms etc-link
+install: files-install etc-install fixperms etc-link
 
 files-install: libs-install bin-install
 
@@ -27,15 +27,15 @@ testdeps:
 	$(PERL) ./sbin/test-dependencies --verbose --prefix $(prefix)
 
 etc-link:
-    [ -d /etc/cif ] || ln -sf $(prefix)/etc /etc/cif
+	[ -d /etc/cif ] || ln -sf $(prefix)/etc /etc/cif
     
 etc-install:
-    [ -d $(sysconfdir) ] || $(INSTALL) -m 0755 -d $(sysconfdir)
-    -( cd lib && find . -type d -print ) | while read dir ; do \
-    $(INSTALL) -m 0755 -d "$(sysconfdir)/$$dir" ; \
+	[ -d $(sysconfdir) ] || $(INSTALL) -m 0755 -d $(sysconfdir)
+	-( cd etc && find . -type d -print ) | while read dir ; do \
+    $(INSTALL) -m 0750 -d "$(sysconfdir)/$$dir" ; \
     done
-    -( cd lib && find . -type f -print ) | while read file ; do \
-    $(INSTALL) -m 0644 "lib/$$file" "$(sysconfdir)/$$file" ; \
+	-( cd etc && find . -type f -print ) | while read file ; do \
+    $(INSTALL) -m 0640 "etc/$$file" "$(sysconfdir)/$$file" ; \
     done
     
 libs-install:

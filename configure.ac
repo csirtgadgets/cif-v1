@@ -12,6 +12,18 @@ if test "$PERL" = 'not found'; then
     AC_MSG_ERROR([cannot use $PACKAGE_NAME without perl])
 fi
 
+AC_ARG_VAR([PSQL],[Postgres psql command])
+AC_PATH_PROG([PSQL],[psql],[not found])
+if test "$PSQL" = 'not found'; then
+    AC_MSG_ERROR([cannot use $PACKAGE_NAME without postgres psql])
+fi
+
+AC_ARG_VAR([PGDUMP],[Postgres pg_dump command])
+AC_PATH_PROG([PGDUMP],[pg_dump],[not found])
+if test "$PGDUMP" = 'not found'; then
+    AC_MSG_ERROR([cannot use $PACKAGE_NAME without postgres pg_dump])
+fi
+
 dnl Defaults paths for installation
 AC_PREFIX_DEFAULT([/opt/cif])
 
