@@ -16,7 +16,7 @@ fixperms:
 
 install: files-install fixperms
 
-files-install: libs-install
+files-install: libs-install bin-install
 
 depends: fixdeps
 
