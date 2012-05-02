@@ -13,8 +13,8 @@ use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 use Config::Simple;
 
 require CIF::Archive;
-require CIF::Router::APIKey;
-require CIF::Router::APIKeyGroups;
+require CIF::APIKey;
+require CIF::APIKeyGroups;
 use CIF qw/is_uuid generate_uuid_url/;
 use CIF::Message;
 
@@ -131,7 +131,7 @@ sub authorized_read {
     # test1
     return('invaild apikey',0) unless(is_uuid($key));
 
-    my $rec = CIF::Router::APIKey->retrieve(uuid => $key);
+    my $rec = CIF::APIKey->retrieve(uuid => $key);
     return('invaild apikey',0) unless($rec);
     return('apikey revokved',0) if($rec->revoked()); # revoked keys
 
@@ -169,7 +169,7 @@ sub authorized_write {
     my $key = shift;
     
     $key = lc($key);
-    my $rec = CIF::Router::APIKey->retrieve(uuid => $key);
+    my $rec = CIF::APIKey->retrieve(uuid => $key);
     return(0) unless($rec && $rec->write());
     return(1);
 }
