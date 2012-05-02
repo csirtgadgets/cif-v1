@@ -21,7 +21,7 @@ use URI::Escape;
 use Try::Tiny;
 use Iodef::Pb::Simple;
 require CIF::Archive;
-use ZeroMQ qw(:all);
+#use ZeroMQ qw(:all);
 
 __PACKAGE__->follow_best_practice;
 __PACKAGE__->mk_accessors(qw(config db_config threads entries defaults feed rules load_full goback));
