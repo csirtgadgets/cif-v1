@@ -45,7 +45,7 @@ sub new {
     my $ret = $self->init($args);
     die $ret unless($ret);
      
-    my $driver = $args->{'driver'};
+    my $driver = $args->{'driver'} || 'REST';
     
     if($args->{'config'}->param(-block => 'router_'.lc($driver))){
         $self->set_driver_config($args->{'config'}->param(-block => 'router_'.lc($driver)));
@@ -147,7 +147,7 @@ sub authorized_read {
     
     ## TODO -- datatype access control?
     
-    my @groups = @{$self->get_group_map()};
+    my @groups = ($self->get_group_map()) ? @{$self->get_group_map()} : undef;
    
     my @array;
     foreach my $g (@groups){
