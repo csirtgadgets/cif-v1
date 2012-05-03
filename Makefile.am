@@ -1,4 +1,4 @@
-EXTRA_DIST = lib
+EXTRA_DIST = lib sbin
 
 ME=cif-perl
 BUILD=$(shell git describe --tags)

@@ -22,8 +22,9 @@ AC_CONFIG_FILES([
 
 # Checks for libraries.
 
+# not needed yet
 ## Google Protocol Buffers
-PKG_CHECK_MODULES([protobuf],[protobuf >= 2.4.1])
+#PKG_CHECK_MODULES([protobuf],[protobuf >= 2.4.1])
 
 ## uuid
 PKG_CHECK_MODULES([uuid],[uuid >= 2.17.0])
