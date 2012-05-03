@@ -38,7 +38,7 @@ getopts('afdt:T:C:c:p:c:hL',\%opts);
 my $period      = $opts{'p'} || 'daily';
 my $throttle    = $opts{'T'} || 'medium';
 my $threads     = $opts{'t'};
-my $cron_tool   = $opts{'C'} || 'bin/cif_smrt.pl';
+my $cron_tool   = $opts{'C'} || 'bin/cif_smrt';
 my $first_run   = $opts{'f'};
 my $debug       = $opts{'d'};
 my $mutex       = $opts{'L'} || '/tmp/cif_crontool.lock.'.$period;
