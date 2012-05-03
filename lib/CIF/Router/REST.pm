@@ -26,11 +26,14 @@ sub handler {
     $req->read($buffer,$req->headers_in->{'content-length'});
     
     require CIF::Router;
-    my $router = CIF::Router->new({
-        config  => $req->dir_config->get('CIFRouterRESTConfig') || '/var/www/.cif' || '/home/cif/.cif',
+    my ($err,$router) = CIF::Router->new({
+        config  => $req->dir_config->get('CIFRouterRESTConfig') || '/home/cif/.cif',
     });
-    use Data::Dumper;
-    warn Dumper($router);
+    if($err){
+        ## TODO -- set debugging variable
+        warn $err;
+        return Apache2::Const::SERVER_ERROR();
+    }
     my $reply = $router->process($buffer);
     
     $req->content_type('application/x-protobuf');

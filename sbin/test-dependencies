@@ -139,7 +139,7 @@ Try::Tiny 0.04
 Config::Simple 4.59
 Module::Pluggable 3.9
 Class::Accessor 0.34
-Apache2::RequestRec 2.0.5
+Apache2::RequestRec 2.0.4
 .
 
 if ($args{'download'}) {

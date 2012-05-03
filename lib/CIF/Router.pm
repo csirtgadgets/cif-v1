@@ -64,7 +64,7 @@ sub new {
         };
         $self->set_driver($driver);
     }
-    return($self);
+    return(undef,$self);
 }
 
 sub init {
@@ -268,6 +268,8 @@ sub process {
             }
         }
     }
+    
+    ## TODO -- return err messages
     return $reply;
 }
 
