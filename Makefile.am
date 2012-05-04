@@ -14,7 +14,7 @@ fixperms:
 	chown -R $(CIF_USER) $(prefix)
 	chgrp -R $(CIF_GROUP) $(prefix)
 
-install: files-install etc-install fixperms etc-link
+install: files-install etc-install local-whitelist fixperms etc-link
 
 files-install: libs-install bin-install
 
@@ -25,6 +25,10 @@ fixdeps:
 
 testdeps:
 	$(PERL) ./sbin/test-dependencies --verbose --prefix $(prefix)
+	
+local-whitelist:
+	[ -e $(prefix)/etc/whitelist_domains ] || touch "$(prefix)/etc/whitelist_domains"
+	[ -e $(prefix)/etc/whitelist_infrastructure ] || touch "$(prefix)/etc/whitelist_infrastructure"
 
 etc-link:
 	[ -d /etc/cif ] || ln -sf $(prefix)/etc /etc/cif
