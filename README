@@ -1,0 +1,26 @@
+Welcome
+-------
+
+This is the core message protocol for cif.
+
+Building and installation
+-------------------------
+
+See the INSTALL file included with the distribution.
+
+
+Resources
+---------
+
+Website: collectiveintel.net
+Git repository: github.com/collectiveintel/cif-protocol
+
+
+COPYRIGHT AND LICENCE
+---------------------
+Copyright (C) 2012 Wes Young (claimid.com/wesyoung)
+Copyright (C) 2012 REN-ISAC and The Trustees of Indiana University (ren-isac.net)
+
+Free use of this software is granted under the terms of the GNU Lesser General
+Public License (LGPL). For details see the files `COPYING` included with the
+distribution.
