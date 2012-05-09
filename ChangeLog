@@ -1,0 +1,5 @@
+Revision history for cif-perl v1.
+
+0.99.01 2012-04-27
+    - initial release
+    - contains old CIF::Utils functions (generate_uuid, etc)
