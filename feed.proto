@@ -1,5 +1,4 @@
 // TODO -- version, namespace, etc
-package cif.feed;
 message FeedType {
     // pulled from RFC 5070 -- IODEF
     enum RestrictionType {
