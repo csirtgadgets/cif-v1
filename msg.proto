@@ -24,10 +24,10 @@ message MessageType {
     message SubmissionType {
         optional string apikey      = 1;
         optional string guid        = 2;
-        repeated byptes data        = 3;
+        repeated bytes data        = 3;
     }
     message ReplyType {
-        repeated FeedType feed = 1; 
+        repeated bytes data = 1; 
     }    
     required float version      = 1;
     required MsgType type       = 2;
