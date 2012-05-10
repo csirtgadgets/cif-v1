@@ -22,7 +22,8 @@ message FeedType {
     // TODO: evolve this to Assessment Class
     optional int32 confidence               = 3;
     
-    // TODO: MLStringType
+    // TODO: MLStringType? or even Assessment?
+    // combine with confidence class
     required string description             = 4;
     required string ReportTime              = 5;
     optional RestrictionType restriction    = 6;

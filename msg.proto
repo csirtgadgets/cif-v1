@@ -26,13 +26,10 @@ message MessageType {
         optional string guid        = 2;
         repeated bytes data        = 3;
     }
-    message ReplyType {
-        repeated bytes data = 1; 
-    }    
     // TODO: this is a string for now
     // git describe will give off string references
     // based on the tags, may not be optimal
-    required string version      = 1;
+    required string version     = 1;
     required MsgType type       = 2;
     optional StatusType status  = 3;
     repeated bytes data         = 4 [packed=true];
