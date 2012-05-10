@@ -12,7 +12,10 @@ message FeedType {
         required string value = 2;
     }
 
-    required float version                  = 1;
+    // TODO: this is a string for now
+    // git describe will give off string references
+    // based on the tags, may not be optimal
+    required string version                  = 1;
     // guid should evolve to the ContactType from IODEF
     optional string guid                    = 2;
     
