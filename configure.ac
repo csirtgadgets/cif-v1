@@ -6,10 +6,16 @@ AC_INIT(cif-protocol, m4_esyscmd_s([git describe --tags]), [ci-framework@googleg
 AM_INIT_AUTOMAKE
 
 # Checks for programs.
-AC_ARG_VAR([PERL],[Perl interpreter command])
-AC_PATH_PROG([PERL], [perl], [not found])
-if test "$PERL" = 'not found'; then
-    AC_MSG_ERROR([cannot use $PACKAGE_NAME without perl])
+AC_ARG_WITH([perl], [AS_HELP_STRING([--with-perl],
+    [build perl bindings [default=no]])],
+    [with_perl=$withval],[with_perl=yes])
+
+if test "x$with_perl" != "xno"; then
+    AC_ARG_VAR([PERL],[Perl interpreter command])
+    AC_PATH_PROG([PERL], [perl], [not found])
+    if test "$PERL" = 'not found'; then
+        AC_MSG_ERROR([cannot use $PACKAGE_NAME without perl])
+    fi
 fi
 
 AC_CONFIG_FILES([
@@ -19,8 +25,6 @@ AC_CONFIG_FILES([
 
 # Checks for libraries.
 
-# not needed yet
-## Google Protocol Buffers
 PKG_CHECK_MODULES([protobuf],[protobuf >= 2.4.1])
 
 # Checks for header files.
