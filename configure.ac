@@ -18,6 +18,23 @@ if test "x$with_perl" != "xno"; then
     fi
 fi
 
+AC_ARG_WITH([python], [AS_HELP_STRING([--with-python],
+    [build python bindings [default=no]])],
+    [with_python=$withval],[with_python=yes])
+
+if test "x$with_python" != "xno"; then
+    AC_ARG_VAR([PYTHON],[Python interpreter command])
+    AC_PATH_PROG([PYTHON], [python], [not found])
+    if test "$PYTHON" = 'not found'; then
+        AC_MSG_ERROR([cannot use $PACKAGE_NAME without python])
+    fi
+fi
+
+AC_PATH_PROG([PROTOC], [protoc], [not found])
+    if test "$PROTOC" = 'not found'; then
+        AC_MSG_ERROR([cannot use $PACKAGE_NAME without protoc])
+    fi
+
 AC_CONFIG_FILES([
                  Makefile
 ])

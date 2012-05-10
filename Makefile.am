@@ -3,32 +3,47 @@ EXTRA_DIST = lib sbin
 ME=cif-protocol
 BUILD=$(shell git describe --tags)
 SNAPSHOT=$(ME)-$(BUILD)
+PROTOFILES=src/msg.proto src/feed.proto
+THRIFTFILES=src/msg.thrift src/feed.thrift
 
 all: default
 
 default:
 	@echo "Please read the README before beginning your installation."
 
-install: files-install
+install:
+	@echo "Please read the README before beginning your installation."
 
-files-install: libs-install
+perl: pbperl 
+pbperl:
+	$(PERL) sbin/generate_perl_bindings.pl
+	-( cd perl/ && $(PERL) Makefile.PL && make test)
 
-libs-install: 
-	[ -d $(libdir) ] || $(INSTALL) -m 0755 -d $(libdir)
-	-( cd lib && find . -type d -print ) | while read dir ; do \
-    $(INSTALL) -m 0755 -d "$(libdir)/$$dir" ; \
-    done
-	-( cd lib && find . -type f -print ) | while read file ; do \
-    $(INSTALL) -m 0644 "lib/$$file" "$(libdir)/$$file" ; \
-    done
+cpp: protobuf_cpp
+pbcpp:
+	[ -d pb-cpp ] || mkdir pb-cpp
+	$(PROTOC) --cpp_out=pb-cpp $(PROTOFILES)
+
+python: pbpython
+pbpython:
+	[ -d pb-python ] || mkdir pb-python
+	$(PROTOC) --python_out=pb-python $(PROTOFILES) 
+
+tpython:
+	@echo "not implemented yet..."
+
+tcpp:
+	@echo "not implemented yet..."
+
+tperl:
+	@echo "not implemented yet..."
 
 clean:
 	rm Makefile
 	rm config.log
 	rm config.status
 
-realclean:
-	clean
+realclean: clean
 	rm Makefile.in
 	rm configure
 	rm aclocal.m4

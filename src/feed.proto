@@ -1,4 +1,6 @@
 // TODO -- version, namespace, etc
+package CIF.msg;
+
 message FeedType {
     // pulled from RFC 5070 -- IODEF
     enum RestrictionType {
@@ -29,5 +31,6 @@ message FeedType {
     optional RestrictionType restriction    = 6;
     repeated MapType restriction_map        = 7;
     repeated MapType group_map              = 8;
-    repeated bytes data                     = 9 [packed=true];
+    // TODO: research packed = true
+    repeated bytes data                     = 9;
 }
