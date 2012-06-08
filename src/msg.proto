@@ -1,8 +1,6 @@
 // TODO -- version, namespace, etc
 // VERSION string should be set by make script (git describe or so)
 
-package CIF.msg;
-
 message MessageType {
     enum StatusType {
         SUCCESS         = 1;
@@ -14,14 +12,18 @@ message MessageType {
         SUBMISSION  = 2;
         REPLY       = 3;
     }
+    message QueryStruct {
+        required string query   = 1;
+        optional bool nolog     = 2;
+    }
     message QueryType {
         optional string apikey      = 1;
         optional string guid        = 2;
         optional int32 limit        = 3;
         optional int32 confidence   = 4;
-        optional bool nolog         = 5;
-        required string query       = 6;
-        optional string description = 7;
+        repeated QueryStruct query  = 5;
+        optional string description = 6;
+        required bool feed          = 7 [ default = false ];
     }
     message SubmissionType {
         optional string apikey      = 1;

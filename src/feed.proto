@@ -1,5 +1,4 @@
 // TODO -- version, namespace, etc
-package CIF.msg;
 
 message FeedType {
     // pulled from RFC 5070 -- IODEF
