@@ -1,4 +1,4 @@
-package CIF::FeedParser::Plugin::Decode::Gtar;
+package CIF::Smrt::Plugin::Decode::Gtar;
 
 use Compress::Zlib;
 use Archive::Tar;

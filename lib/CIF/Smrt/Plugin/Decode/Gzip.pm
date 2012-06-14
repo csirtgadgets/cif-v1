@@ -1,4 +1,4 @@
-package CIF::FeedParser::Plugin::Decode::Gzip;
+package CIF::Smrt::Plugin::Decode::Gzip;
 
 use Compress::Zlib;
 
