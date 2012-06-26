@@ -12,6 +12,8 @@ __PACKAGE__->columns(Primary => 'id');
 __PACKAGE__->columns(Essential => qw/id uuid guid hash confidence detecttime created/);
 __PACKAGE__->sequence('email_id_seq');
 
+my @plugins = __PACKAGE__->plugins();
+
 
 sub is_email {
     my $e = shift;
@@ -25,21 +27,46 @@ sub insert {
     my $class = shift;
     my $data = shift;
     
+    return unless(ref($data->{'data'}) eq 'IODEFDocumentType');
+       
     my @ids;
     my $addresses = $class->iodef_addresses($data->{'data'});
     return unless(@$addresses);
+    
+    my $tbl = $class->table();
+    foreach(@plugins){
+        if($_->prepare($data)){
+            $class->table($_->table());
+        }
+    }
+    my $confidence = $class->iodef_confidence($data->{'data'});
+    $confidence = @{$confidence}[0]->get_content();
+    
     foreach my $address (@$addresses){
         my $addr = lc($address->get_content());
         next unless(is_email($addr));
-        my $id = $class->SUPER::insert({
-            uuid        => $data->{'uuid'},
-            guid        => $data->{'guid'},
-            confidence  => $data->{'confidence'},
-            hash        => sha1_hex($addr),
-        });
-        push(@ids,$id);
-        $id = $class->insert_hash($data,$addr);
+        my $hash = $class->SUPER::generate_sha1($addr);
+        if($class->test_feed($data)){
+            $class->SUPER::insert({
+                guid        => $data->{'guid'},
+                uuid        => $data->{'uuid'},
+                hash        => $hash,
+                confidence  => $confidence,
+            });
+        }
+        $addr =~ /\@([a-z0-9.-]+\.[a-z0-9.-]{2,5}$)/;
+        $addr = $1;
+        my @a1 = reverse(split(/\./,$addr));
+        my @a2 = @a1;
+        foreach (0 ... $#a1-1){
+            my $a = join('.',reverse(@a2));
+            pop(@a2);
+            my $hash = $class->SUPER::generate_sha1($a);
+            my $id = $class->insert_hash($data,$hash);
+            push(@ids,$id);
+        }
     }
+    $class->table($tbl);
     return(undef,\@ids);
         
 }

@@ -1,10 +1,10 @@
-package CIF::Archive::Plugin::Hash::Sha1;
-use base 'CIF::Archive::Plugin::Hash';
+package CIF::Archive::Plugin::Malware::Sha1;
+use base 'CIF::Archive::Plugin::Malware';
 
 use strict;
 use warnings;
 
-__PACKAGE__->table('hash_sha1');
+__PACKAGE__->table('malware_sha1');
 
 sub prepare {
     my $class = shift;

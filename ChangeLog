@@ -1,5 +1,9 @@
 Revision history for cif-dbi-perl v1.
 
+0.99.02 2012-06-26
+    - misc bugfixes
+    - split out feed support to handle new hashing data-model
+
 0.99.01 2012-04-27
     - initial release
     - split cif-dbi out into it's own lib

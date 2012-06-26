@@ -27,6 +27,19 @@ sub generate_sha1 {
     return $thing if(lc($thing) =~ /^[a-f0-9]{40}$/);
     return sha1_hex($thing);
 }
+
+sub test_feed {
+    my $class = shift;
+    my $data = shift;
+    my $feeds = $data->{'feeds'};
+    
+    return unless($feeds);
+    $feeds = [$feeds] unless(ref($feeds) eq 'ARRAY');
+    return unless(@$feeds);
+    foreach my $f (@$feeds){
+        return 1 if(lc($class) =~ /$f$/);
+    }
+}
     
 sub insert_hash {
     my $class = shift;
@@ -35,11 +48,10 @@ sub insert_hash {
     
     $hash = sha1_hex($hash) unless($hash =~ /^[a-f0-9]{40}$/);
     
-    my $confidence = 50;
     my $id = CIF::Archive::Plugin::Hash->insert({
         uuid        => $data->{'uuid'},
         guid        => $data->{'guid'},
-        confidence  => $confidence,
+        confidence  => $data->{'confidence'},
         hash        => $hash,
     });
     return ($id);
@@ -61,6 +73,8 @@ sub iodef_descriptions {
 sub iodef_assessments {
     my $class = shift;
     my $iodef = shift;
+    
+    return [] unless(ref($iodef) eq 'IODEFDocumentType');
 
     my @array;
     foreach my $i (@{$iodef->get_Incident()}){
@@ -107,6 +121,8 @@ sub iodef_additional_data {
     my $class = shift;
     my $iodef = shift;
     
+    return [] unless(ref($iodef) eq 'IODEFDocumentType');
+    
     my @array;
     foreach my $i (@{$iodef->get_Incident()}){
         my @additional_data = (ref($i->get_AdditionalData()) eq 'ARRAY') ? @{$i->get_AdditionalData()} : $i->get_AdditionalData();
@@ -134,6 +150,8 @@ sub iodef_addresses {
     my $class = shift;
     my $iodef = shift;
     
+    return [] unless(ref($iodef) eq 'IODEFDocumentType');
+    
     my @array;
     foreach my $i (@{$iodef->get_Incident()}){
         next unless($i->get_EventData());
@@ -147,6 +165,31 @@ sub iodef_addresses {
                         my $addresses = $n->get_Address();
                         $addresses = [$addresses] if(ref($addresses) eq 'AddressType');
                         push(@array,@$addresses);
+                    }
+                }
+            }
+        }
+    }
+    return(\@array);
+}
+
+sub iodef_services {
+    my $class = shift;
+    my $iodef = shift;
+    
+    my @array;
+    foreach my $i (@{$iodef->get_Incident()}){
+        next unless($i->get_EventData());
+        foreach my $e (@{$i->get_EventData()}){
+            my @flows = (ref($e->get_Flow()) eq 'ARRAY') ? @{$e->get_Flow()} : $e->get_Flow();
+            foreach my $f (@flows){
+                my @systems = (ref($f->get_System()) eq 'ARRAY') ? @{$f->get_System()} : $f->get_System();
+                foreach my $s (@systems){
+                    my $services = $s->get_Service();
+                    $services = [$services] unless(ref($services) eq 'ARRAY');
+                    foreach my $svc (@$services){
+                        $svc = [$svc] unless(ref($svc) eq 'ARRAY');
+                        push(@array,@$svc);
                     }
                 }
             }

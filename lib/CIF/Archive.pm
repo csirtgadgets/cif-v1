@@ -30,12 +30,15 @@ sub insert {
     my $class = shift;
     my $data = shift;
     
+    ## TODO -- adapt this to take in array references
+    ## $data = [$data] unless(ref($data) eq 'ARRAY');
+
     my $id;
     
-    $data->{'uuid'}     = generate_uuid_random() unless($data->{'uuid'});
-    $data->{'guid'}     = generate_uuid_url('root') unless($data->{'guid'});
-    $data->{'created'}  = DateTime->from_epoch(epoch => time()) unless($data->{'created'});
-    
+    $data->{'uuid'}     = generate_uuid_random()                    unless($data->{'uuid'});
+    $data->{'guid'}     = generate_uuid_ns('root')                  unless($data->{'guid'});
+    $data->{'created'}  = DateTime->from_epoch(epoch => time())     unless($data->{'created'});
+        
     my $err;
     try {
         $id = $class->SUPER::insert({
@@ -70,7 +73,7 @@ sub insert {
 sub search {
     my $class = shift;
     my $data = shift;
-    
+      
     # just in case someone gets stupid
     ## TODO -- move to config??
     $data->{'limit'}        = 5000 unless($data->{'limit'});
@@ -99,6 +102,7 @@ sub search {
             last if(defined($ret));
         }
     }
+
     return(undef,undef) unless($ret);
     my @recs = (ref($ret) ne 'CIF::Archive') ? reverse($ret->slice(0,$ret->count())) : @$ret;
     my @rr;
@@ -123,6 +127,7 @@ sub log_search {
     my $confidence      = $data->{'confidence'}     || 50;
     my $restriction     = $data->{'restriction'}    || 'private';
     my $guid            = $data->{'guid'}           || $data->{'guid_default'} || $root_uuid;
+    my $desc            = $data->{'description'}    || 'search';
     
     my $dt          = DateTime->from_epoch(epoch => time());
     $dt = $dt->ymd().'T'.$dt->hms().'Z';
@@ -131,22 +136,14 @@ sub log_search {
     
     my $id;
     my $q_type = 'address';
-    for($q){
-        if(/^[a-f0-9]{32}$/){
-            $q_type = 'md5';
-            last;
-        }
-        if(/^[a-f0-9]{40}$/){
-            $q_type = 'sha1';
-            last;
-        }
-    }
-
+    
+    ## TODO: clean this up
+    $q_type = 'hash' if($q =~ /^([a-f0-9]{40}|[a-f0-9]{32})$/);
+   
     # thread friendly to load here
     ## TODO this could go in the client...?
     require Iodef::Pb::Simple;
     ## TODO -- have the client pass along a description
-    my $desc = 'search';
     my $doc = Iodef::Pb::Simple->new({
         description => $desc,
         assessment  => AssessmentType->new({
@@ -162,12 +159,11 @@ sub log_search {
             
             ## TODO -- change this to low|med|high
             Confidence  => ConfidenceType->new({
-                content => 50,
+                content => $confidence,
                 rating  => ConfidenceType::ConfidenceRating::Confidence_rating_numeric(),
             }),
         }),
         $q_type     => $q,
-        confidence  => $confidence,
         IncidentID          => IncidentIDType->new({
             content => generate_uuid_random(),
             name    => $source,

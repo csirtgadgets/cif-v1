@@ -1,10 +1,10 @@
-package CIF::Archive::Plugin::Hash::Md5;
-use base 'CIF::Archive::Plugin::Hash';
+package CIF::Archive::Plugin::Malware::Md5;
+use base 'CIF::Archive::Plugin::Malware';
 
 use strict;
 use warnings;
 
-__PACKAGE__->table('hash_md5');
+__PACKAGE__->table('malware_md5');
 
 sub prepare {
     my $class = shift;
