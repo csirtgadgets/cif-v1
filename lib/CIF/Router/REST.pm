@@ -13,6 +13,16 @@ use Apache2::RequestIO ();
 use Apache2::RequestUtil ();
 use Apache2::Const qw(:common :http);
 
+## NOTE: we do it this way cause mod_perl calls us by name
+## not CIF::Router
+## required by ::Router
+sub new {
+    my $class = shift;
+    my $self = {};
+    bless($self,$class);
+    return($self);
+}
+
 sub handler {
     my $req = shift;
     
