@@ -1,5 +1,8 @@
 Revision history for cif-router-perl v1.
 
+0.99.02 2012-06-24
+    - bugfixes, some re-factoring
+
 0.99.01 2012-04-27
     - initial release
     - re-factored old CIF::WebAPI out to the CIF::Router::REST driver
