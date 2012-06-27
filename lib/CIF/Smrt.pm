@@ -24,7 +24,7 @@ require CIF::Archive;
 #use ZeroMQ qw(:all);
 
 __PACKAGE__->follow_best_practice;
-__PACKAGE__->mk_accessors(qw(config db_config threads entries defaults feed rules load_full goback));
+__PACKAGE__->mk_accessors(qw(config db_config feeds_config feeds threads entries defaults feed rules load_full goback));
 
 my @processors = __PACKAGE__->plugins;
 @processors = grep(/Processor/,@processors);
@@ -59,6 +59,7 @@ sub init {
     $self->set_goback(0) if($self->get_load_full());
     
     $self->init_db($args);
+    $self->init_feeds($args);
 }
 
 sub init_config {
@@ -68,7 +69,8 @@ sub init_config {
     $args->{'config'} = Config::Simple->new($args->{'config'}) || return(undef,'missing config file');
     $self->set_config($args->{'config'}->param(-block => 'cif_smrt'));
         
-    $self->set_db_config($args->{'config'}->param(-block => 'db'));   
+    $self->set_db_config($args->{'config'}->param(-block => 'db'));
+    $self->set_feeds_config($args->{'config'}->param(-block => 'cif_feeds'));
 }
 
 sub init_rules {
@@ -76,7 +78,6 @@ sub init_rules {
     my $args = shift;
     
     $args->{'rules'} = Config::Simple->new($args->{'rules'}) || return(undef,'missing rules file');
-    
     my $defaults    = $args->{'rules'}->param(-block => 'default');
     my $rules       = $args->{'rules'}->param(-block => $self->get_feed());
     
@@ -85,9 +86,15 @@ sub init_rules {
     unless(is_uuid($defaults->{'guid'})){
         $defaults->{'guid'} = generate_uuid_url($defaults->{'guid'});
     }
-    $self->set_rules($defaults);   
+    $self->set_rules($defaults);
 }
+
+sub init_feeds {
+    my $self = shift;
     
+    my $feeds = $self->get_feeds_config->{'enabled'} || return;
+    $self->set_feeds($feeds);
+}
 
 sub init_db {
     my $self = shift;
@@ -249,7 +256,7 @@ sub process {
         my $iodef = Iodef::Pb::Simple->new($_);
         push(@array,{ uuid => $_->{'id'}, data => $iodef });
     }
-    
+   
     ## TODO -- thread out analytics
     
     ## TODO -- re-write using the client in version 1.1
@@ -262,6 +269,7 @@ sub process {
             guid    => $self->get_rules->{'guid'},
             data    => $array[$i]->{'data'},
             uuid    => $array[$i]->{'uuid'},
+            feeds   => $self->get_feeds(),
         });
         $state = 0;
         warn $id if($::debug && $::debug > 1);

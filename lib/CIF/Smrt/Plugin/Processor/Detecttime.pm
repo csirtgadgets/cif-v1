@@ -18,7 +18,7 @@ sub process {
     if(lc($rec->{'detection'}) eq 'hourly'){
         $dt = $dt->ymd().'T'.$dt->hour.':00:00Z';
     } elsif(lc($rec->{'detection'}) eq 'daily') {
-        
+        $dt = $dt->ymd().'T00:00:00Z';
     } elsif(lc($rec->{'detection'}) eq 'monthly') {
         $dt = $dt->year().'-'.$dt->month().'-01T00:00:00Z';
     } elsif(lc($rec->{'detection'} ne 'now')){
