@@ -23,7 +23,7 @@ message MessageType {
         optional int32 confidence   = 4;
         repeated QueryStruct query  = 5;
         optional string description = 6;
-        required bool feed          = 7 [ default = false ];
+        optional bool feed          = 7 [ default = false ];
     }
     message SubmissionType {
         optional string apikey      = 1;
