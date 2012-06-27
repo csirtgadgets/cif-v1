@@ -17,7 +17,6 @@ install:
 perl: pbperl 
 pbperl:
 	$(PERL) sbin/generate_perl_bindings.pl
-	-( cd perl/ && $(PERL) Makefile.PL && make test)
 
 cpp: protobuf_cpp
 pbcpp:
