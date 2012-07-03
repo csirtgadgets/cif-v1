@@ -55,7 +55,7 @@ sub insert {
         next unless($entry->get_meaning() eq 'hash');
         next unless($entry->get_content() =~ /^[a-f0-9]{40}$/);
         if($class->test_feed($data)){
-            warn $class->SUPER::insert({
+            $class->SUPER::insert({
                 guid        => $data->{'guid'},
                 uuid        => $data->{'uuid'},
                 hash        => $entry->get_content(),

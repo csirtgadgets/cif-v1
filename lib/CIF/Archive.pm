@@ -17,7 +17,7 @@ use CIF qw/generate_uuid_url generate_uuid_random is_uuid generate_uuid_ns/;
 
 __PACKAGE__->table('archive');
 __PACKAGE__->columns(Primary => 'id');
-__PACKAGE__->columns(All => qw/id uuid guid data created/);
+__PACKAGE__->columns(All => qw/id uuid guid data reporttime created/);
 __PACKAGE__->columns(Essential => qw/id uuid guid data created/);
 __PACKAGE__->sequence('archive_id_seq');
 
@@ -182,6 +182,7 @@ sub log_search {
             guid    => $guid,
             data    => $doc,
             created => $dt,
+            feeds   => $data->{'feeds'},
         });
     } catch {
         $err = shift;

@@ -6,6 +6,7 @@ CREATE TABLE archive (
     uuid uuid NOT NULL,
     guid uuid,
     format text,
+    reporttime timestamp with time zone DEFAULT NOW(),
     created timestamp with time zone DEFAULT NOW(),
     data text not null
 );

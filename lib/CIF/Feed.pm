@@ -192,6 +192,17 @@ sub process {
     return(undef,\@ids);
 }
 
+sub vaccum {
+    my $self = shift;
+    my $args = shift;
+    
+    my $ts = $args->{'timestamp'};
+    foreach my $p (@plugins){
+        $p->vaccum($ts);
+           
+    }
+}
+
 sub purge_feeds {
     my $self = shift;
     my $args = shift;

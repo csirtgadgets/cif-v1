@@ -7,6 +7,36 @@ $VERSION = eval $VERSION;
 use strict;
 use warnings;
 
+sub new {
+    my $class = shift;
+    my $args = shift;
+    
+    my $self = {};
+    bless($self,$class);
+    
+    $self->init_db($args);
+
+    return (undef,$self);
+}
+
+sub init_db {
+    my $self = shift;
+    my $args = shift;
+    
+    my $config = Config::Simple->new($args->{'config'}) || return(undef,'missing config file');
+    $config = $config->param(-block => 'db');
+    
+    my $db          = $config->{'database'} || 'cif';
+    my $user        = $config->{'user'}     || 'postgres';
+    my $password    = $config->{'password'} || '';
+    my $host        = $config->{'host'}     || '127.0.0.1';
+    
+    my $dbi = 'DBI:Pg:database='.$db.';host='.$host;
+
+    my $ret = $self->connection($dbi,$user,$password,{ AutoCommit => 0});
+    return $self if($ret);
+}
+
 # because UUID's are really primary keys too in our schema
 # this overrides some of the default functionality of Class::DBI and 'id'
 sub retrieve {
@@ -20,6 +50,20 @@ sub retrieve {
     return($recs[0]);
 }
 
+sub vaccum {
+    my $class = shift;
+    my $args = shift;
+    
+    my $ts = $args->{'timestamp'};
+    
+    my ($ret,$err);
+    
+    ## TODO -- try catch?
+    $ret = $class->sql_vaccum->execute($ts);
+    $class->dbi_commit() unless($class->db_Main->{'AutoCommit'});
+    return (undef,$ret);
+}
+
 __PACKAGE__->set_sql('retrieve_uuid' => qq{
     SELECT id,uuid
     FROM __TABLE__
@@ -28,9 +72,9 @@ __PACKAGE__->set_sql('retrieve_uuid' => qq{
     LIMIT 1
 });
 
-__PACKAGE__->set_sql('prune' => qq{
+__PACKAGE__->set_sql('vaccum' => qq{
     DELETE FROM __TABLE__
-    WHERE created <= ?;
+    WHERE reporttime <= ?;
 });
 
 

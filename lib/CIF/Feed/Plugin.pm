@@ -5,6 +5,8 @@ use base 'Class::Accessor';
 use warnings;
 use strict;
 
+use Try::Tiny;
+
 use CIF::Msg;
 use CIF::Msg::Feed;
 
