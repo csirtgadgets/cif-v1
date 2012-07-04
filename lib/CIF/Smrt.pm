@@ -6,10 +6,10 @@ use strict;
 use warnings;
 use threads;
 
-our $VERSION = '0.99_01';
+our $VERSION = '0.99_02';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
-use CIF qw/generate_uuid_url generate_uuid_random is_uuid/;
+
 use Regexp::Common qw/net URI/;
 use Regexp::Common::net::CIDR;
 use Encode qw/encode_utf8/;
@@ -20,11 +20,12 @@ use Digest::SHA1 qw/sha1_hex/;
 use URI::Escape;
 use Try::Tiny;
 use Iodef::Pb::Simple;
-require CIF::Archive;
-#use ZeroMQ qw(:all);
+
+use CIF qw/generate_uuid_url generate_uuid_random is_uuid/;
+require CIF::Client;
 
 __PACKAGE__->follow_best_practice;
-__PACKAGE__->mk_accessors(qw(config db_config feeds_config feeds threads entries defaults feed rules load_full goback));
+__PACKAGE__->mk_accessors(qw(config db_config feeds_config feeds threads entries defaults feed rules load_full goback client));
 
 my @processors = __PACKAGE__->plugins;
 @processors = grep(/Processor/,@processors);
@@ -36,6 +37,12 @@ sub new {
     my $self = {};
     bless($self,$class);
     
+    my ($err,$ret) = CIF::Client->new({
+        config  => $args->{'config'}
+    });
+    return $err if($err);
+    $self->set_client($ret);
+  
     $self->init($args);
 
     return (undef,$self);
@@ -44,7 +51,7 @@ sub new {
 sub init {
     my $self = shift;
     my $args = shift;
-    
+       
     $self->set_feed($args->{'feed'});
     
     $self->init_config($args);
@@ -254,34 +261,25 @@ sub process {
         last if($_->{'dt'} < $self->get_goback());
         $_->{'id'} = generate_uuid_random();
         my $iodef = Iodef::Pb::Simple->new($_);
-        push(@array,{ uuid => $_->{'id'}, data => $iodef });
+        push(@array,$iodef->encode());
     }
    
     ## TODO -- thread out analytics
     
     ## TODO -- re-write using the client in version 1.1
     
-    # store
-    my $state = 0;
-    warn 'entries: '.($#array + 1) if($::debug);
-    for(my $i = 0; $i <= $#array; $i++){
-        my $id = CIF::Archive->insert({
-            guid    => $self->get_rules->{'guid'},
-            data    => $array[$i]->{'data'},
-            uuid    => $array[$i]->{'uuid'},
-            feeds   => $self->get_feeds(),
-        });
-        $state = 0;
-        warn $id if($::debug && $::debug > 1);
-        if($i % 1000 == 0){
-            warn 'commiting...' if($::debug);
-            CIF::Archive->dbi_commit();
-            $state = 1;
-        }
-    }
-    warn 'commiting last...' if($::debug);
-    CIF::Archive->dbi_commit() unless($state);
-    return(undef,1);
+    ## TODO -- mod this out, % 1000 or so
+    my $ret = $self->get_client->new_submission({
+        #apikey  => $self->get_client->get_apikey(),
+        guid    => $self->get_rules->{'guid'},
+        data    => \@array
+    });
+ 
+    my $err;
+    ($err,$ret) = $self->get_client->submit($ret);
+    return $err if($err);
+    
+    return(undef,$ret);
 }
 
 sub throttle {
