@@ -1,4 +1,4 @@
-package CIF::Smrt::Plugin::Processor::Detecttime;
+package CIF::Smrt::Plugin::Preprocessor::Detecttime;
 
 sub process {
     my $class   = shift;

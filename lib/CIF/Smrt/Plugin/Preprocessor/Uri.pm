@@ -1,4 +1,4 @@
-package CIF::Smrt::Plugin::Processor::Uri;
+package CIF::Smrt::Plugin::Preprocessor::Uri;
 
 use strict;
 use warnings;

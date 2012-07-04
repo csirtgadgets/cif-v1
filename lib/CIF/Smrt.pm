@@ -27,8 +27,11 @@ require CIF::Client;
 __PACKAGE__->follow_best_practice;
 __PACKAGE__->mk_accessors(qw(config db_config feeds_config feeds threads entries defaults feed rules load_full goback client));
 
-my @processors = __PACKAGE__->plugins;
-@processors = grep(/Processor/,@processors);
+my @preprocessors = __PACKAGE__->plugins();
+@preprocessors = grep(/Preprocessor/,@preprocessors);
+
+my @postprocessors = __PACKAGE__->plugins();
+@postprocessors = grep(/Postprocessor/,@postprocessors);
 
 sub new {
     my $class = shift;
@@ -234,6 +237,8 @@ sub process {
     warn 'parsing...' if($::debug);
     my $recs = $self->parse();
     
+    return unless($#{$recs} > -1);
+    
     warn 'mapping...' if($::debug);
     foreach my $r (@$recs){
         #delete($_->{'regex'}) if($_->{'regex'});
@@ -246,7 +251,7 @@ sub process {
                 }
             }
         }
-        foreach my $p (@processors){
+        foreach my $p (@preprocessors){
             $r = $p->process($self->get_rules(),$r);
         }
     }
@@ -265,21 +270,23 @@ sub process {
     }
    
     ## TODO -- thread out analytics
-    
-    ## TODO -- re-write using the client in version 1.1
-    
+  
     ## TODO -- mod this out, % 1000 or so
-    my $ret = $self->get_client->new_submission({
-        #apikey  => $self->get_client->get_apikey(),
-        guid    => $self->get_rules->{'guid'},
-        data    => \@array
-    });
- 
-    my $err;
-    ($err,$ret) = $self->get_client->submit($ret);
-    return $err if($err);
+    my ($ret,$err) = $self->send(\@array) if($#array > -1);
     
     return(undef,$ret);
+}
+
+sub send {
+    my $self = shift;
+    my $array = shift;
+    
+    my $ret = $self->get_client->new_submission({
+        guid    => $self->get_rules->{'guid'},
+        data    => $array
+    });
+ 
+    return $self->get_client->submit($ret);
 }
 
 sub throttle {

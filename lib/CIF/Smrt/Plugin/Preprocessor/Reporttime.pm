@@ -1,4 +1,4 @@
-package CIF::Smrt::Plugin::Processor::Reporttime;
+package CIF::Smrt::Plugin::Preprocessor::Reporttime;
 
 sub process {
     my $class   = shift;

@@ -1,4 +1,4 @@
-package CIF::Smrt::Plugin::Processor::Email;
+package CIF::Smrt::Plugin::Preprocessor::Email;
 
 use strict;
 use warnings;
