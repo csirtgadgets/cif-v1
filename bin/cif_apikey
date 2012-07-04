@@ -27,6 +27,8 @@ BEGIN {
 
 }
 
+use lib '../cif-perl/lib';
+
 use Getopt::Std;
 use CIF qw/generate_uuid_ns is_uuid/;
 use CIF::DBI;

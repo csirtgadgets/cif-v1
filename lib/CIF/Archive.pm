@@ -45,7 +45,8 @@ sub insert {
             uuid        => $data->{'uuid'},
             guid        => $data->{'guid'},
             ## TODO -- move encode/compress to the client?
-            data        => encode_base64(Compress::Snappy::compress($data->{'data'}->encode())),
+            #data        => encode_base64(Compress::Snappy::compress($data->{'data'}->encode())),
+            data        => $data->{'data'},
             created     => $data->{'created'},
         });
     }
@@ -54,6 +55,13 @@ sub insert {
         warn $err;
     };
     return($err,undef) if($err);
+    
+    ## TODO -- this is all gonna happen as an indexing correlation at some point
+    ## router shouldn't be doing this.
+    
+    $data->{'data'} = Compress::Snappy::decompress(decode_base64($data->{'data'}));
+    $data->{'data'} = IODEFDocumentType->decode($data->{'data'});
+    
     foreach my $p (@plugins){
         my ($pid,$err);
         try {
