@@ -31,119 +31,102 @@ use lib '../cif-perl/lib';
 
 use Getopt::Std;
 use CIF qw/generate_uuid_ns is_uuid/;
-use CIF::DBI;
-use CIF::APIKey;
+use CIF::Profile;
 use Text::Table;
 use Config::Simple;
+use DateTime::Format::DateParse;
 use Data::Dumper;
 
 my %opts;
-getopt('G:g:e:k:u:c:', \%opts);
+getopt('E:G:g:e:k:u:c:', \%opts);
 die(usage()) if($opts{'h'});
 
 my $user            = $opts{'u'};
 my $access          = $opts{'e'};
 my $groups          = $opts{'g'};
-my $default_guid    = $opts{'G'};
+my $default_group   = $opts{'G'};
 my $desc            = $opts{'D'};
+my $key             = $opts{'k'};
+my $write           = $opts{'w'};
+my $revoke          = $opts{'r'};
+my $delete          = $opts{'d'};
+my $add             = $opts{'a'};
+my $parentid        = $opts{'p'};
+my $expires         = $opts{'E'};
 my $config          = $opts{'c'} || $ENV{'HOME'}.'/.cif';
 
-$config = Config::Simple->new($config) || die('missing config file: '.$config);
-$config = $config->param(-block => 'db') || die("missing 'router_db' section of config file...");
-
-if($default_guid){
-    $default_guid = generate_uuid_ns($default_guid) unless(is_uuid($default_guid));
-}
-
 if($user){
-    die(usage()) unless($opts{'k'} || $opts{'l'} || $opts{'g'} || $opts{'d'});
+    die(usage()) unless($key || $opts{'l'} || $opts{'a'} || $opts{'d'});
 }
 
 sub usage {
     return <<EOF;
 Usage: perl $0 -u joe\@example.com
-    -h  --help:     this meessage
-    -e  --enable:   enable access to specific section (infrastructure,domains,malware,etc... default: all)
-    -r  --revoke:   revoke a key
-    -w  --write:    enable write access
-    -a  --add:      add key
-    -d  --delete:   delete key
-    -k  --key:      apikey
-    -l  --list:     list users
-    -g  --groups:   add user to list of groups (eg: everyone,group1,group2)
-    -G  --default group: set the default group
-    -D  --desc:     give the key an optional description
+
+Basic:
+    -h  --help:             this meessage
+
+    -a  --add:              add key
+    -d  --delete:           delete key
+    -k  --key:              apikey
+    -l  --list:             list users
+    
+Advanced:
+    -e  --enable:           enable access to specific section (infrastructure,domains,malware,etc... default: all)
+    -r  --revoke:           revoke a key
+    -w  --write:            enable write access
+    -E  --expires:          set an expiration date
+    -g  --groups:           add user to list of groups (eg: everyone,group1,group2)
+    -G  --default group:    set the default group (defaults to: everyone)
+    -D  --desc:             give the key an optional description
 
 Examples:
     \$> perl $0 -u joe\@example.com
-    \$> perl $0 -u joe\@example.com -a everyone,group2
+    \$> perl $0 -u joe\@example.com -a everyone,group2 -G everyone
     \$> perl $0 -d -k 96818121-f1b6-482e-8851-8fb49cb2f6c0
-    \$> perl $0 -u joe\@example.com -e infrastructure -a
+    \$> perl $0 -u joe\@example.com -e infrastructure -a -a everyone -G everyone
     \$> perl $0 -k 96818121-f1b6-482e-8851-8fb49cb2f6c0 -w
     \$> perl $0 -k 96818121-f1b6-482e-8851-8fb49cb2f6c0 -r
+    \$> perl $0 -u joe\@example.com -E 2020-12-30T23:59:59Z
     \$> perl $0 -l
 EOF
 }
 
-## TODO -- clean this up
-## turn into cif profiles
-my $db          = $config->{'database'} || 'cif';
-my $db_user     = $config->{'user'}     || 'postgres';
-my $db_password = $config->{'password'} || '';
-my $db_host     = $config->{'host'}     || '127.0.0.1';
-    
-my $dbi = 'DBI:Pg:database='.$db.';host='.$db_host;
-    
-require CIF::DBI;
-my $ret = CIF::DBI->connection($dbi,$db_user,$db_password,{ AutoCommit => 1});
+if($expires){
+    $expires = DateTime::Format::DateParse->parse_datetime($expires);
+    die 'invalid `expires` timestamp'."\n\n".usage() unless($expires);
+}
 
-if(exists($opts{'a'})){
+my $profile = CIF::Profile->new({
+    config  => $config,
+});
+
+if($add){
     die(usage()) unless($user);
-    my $id = CIF::APIKey->genkey(
-        uuid_alias      => $user,
+    my $id = $profile->user_add({
+        userid          => $user,
         description     => $desc,
         access          => $access,
-        write           => $opts{'w'},
-        revoked         => $opts{'r'},
-        parentid        => $opts{'p'},
+        write           => $write,
+        revoked         => $revoke,
+        parentid        => $parentid,
         groups          => $groups,
-        default_guid    => $default_guid,
-    );
-} elsif($opts{'r'} || $opts{'w'}) {
-    die(usage()) unless($opts{'k'});
-    my @r = CIF::APIKey->search(uuid => $opts{'k'});
-    if($#r > -1){
-        foreach (@r){
-            if($opts{'r'}){
-                my $val = 0;
-                $val = 1 unless($_->revoked());
-                $_->revoked($val);
-            }
-            if($opts{'w'}){
-                my $val = 0;
-                $val = 1 unless($_->write());
-                $_->write($val);
-            }
-            $_->update();
-        }
-    }
+        default_group   => $default_group,
+        expires         => $expires,
+    });
 } elsif($opts{'g'}){
-    if($opts{'k'}){
+    if($key){
         if($opts{'d'}){
-            my $k = CIF::APIKey->retrieve(uuid => $opts{'k'});
-            my $g = generate_uuid_ns($opts{'g'});
-            foreach ($k->groups()){
-                if($g eq $_->guid()){
-                    $_->delete();
-                }
-            }
+            $profile->group_remove({
+                key     => $key,
+                group   => $opts{'g'},
+            });
         } else {
-            my @r = CIF::APIKey->search(uuid => $opts{'k'});
-            if($#r > -1){
-                foreach (@r){
-                    $_->add_groups($opts{'G'},$opts{'g'});
-                }
-            }
+            $profile->group_add({
+                key             => $key,
+                group           => $opts{'g'},
+                group_default   => $opts{'G'},
+            });
         }
     } else {
         my @g = split(/,/,$opts{'g'});
@@ -155,61 +138,62 @@ if(exists($opts{'a'})){
         exit(0);
     }
 } elsif($opts{'G'}){
-    die(usage()) unless($opts{'k'});
-    my $key = CIF::APIKey->retrieve(uuid => $opts{'k'});
-    foreach ($key->groups()){
-        next unless($_->default_guid());
-        $_->default_guid(undef);
-        $_->update();
-    }
-    foreach ($key->groups()){
-        next unless($_->guid eq $default_guid);
-        $_->default_guid('true');
-        $_->update();
-    }
-
-
+    die(usage()) unless($key);
+    $profile->group_set_default({
+        key     => $key,
+        group   => $opts{'G'},
+    });
 }
 
-if(exists($opts{'d'}) && !$opts{'g'}){
-    die(usage()) unless($opts{'k'} || $user);
-    my @recs;
-    if($opts{'k'}){
-        @recs = CIF::APIKey->search(uuid => $opts{'k'});
-    } else {
-        @recs = CIF::APIKey->search(uuid_alias => $user);
-    }
-    foreach (@recs){
-        print 'deleting: '.$_->uuid()."\n";
-        $_->delete();
-
-    }
+if($expires){
+    die(usage()) unless($key);
+    my $r = $profile->key_set_expires({
+        key     => $key,
+        expires => $expires,
+    });
 }
-my @recs;
-if(!$user && $opts{'k'}){
-    my @r = CIF::APIKey->search(uuid => $opts{'k'});
-    unless(@r){
+
+if($write) {
+    die(usage()) unless($key);
+    my $r = $profile->key_toggle_write({
+        write   => $write,
+        key     => $key,
+    });
+} 
+
+if($revoke){
+    die(usage()) unless($key);
+    my $r = $profile->key_toggle_revoke({
+        revoke  => $revoke,
+        key     => $key,
+    });
+}
+
+if(exists($opts{'d'})){
+    die(usage()) unless($key || $user);
+    my $obj = $key || $user;
+    print 'removing: '.$obj."\n";
+    $profile->remove($obj);
+}
+
+if(!$user && $key){
+    $user = $profile->user_from_key($key);
+    unless($user){
         print 'no keys found'."\n";
         exit(0);
     }
-    $user = $r[0]->uuid_alias();
 }
-if($user){
-    @recs = CIF::APIKey->search(uuid_alias => $user, { order_by => 'created DESC' });
-} else {
-    @recs = CIF::APIKey->retrieve_all();
-}
+my @recs = $profile->user_list({ user => $user });
 if($#recs > -1){
-    my $t = Text::Table->new('userid','key','description','guid','default_guid','access','write','revoked','created');
+    my $t = Text::Table->new('userid','key','description','guid','default_guid','access','write','revoked','expires','created');
     foreach (@recs){
-        my $groups = $_->mygroups();
-        my @groups = split(/,/,$groups);
-        foreach my $g (@groups){
-            my $isDefaultGuid = ($g eq $_->default_guid()) ? 'true' : '';
-            $t->load([$_->uuid_alias(),$_->uuid(),$_->description(),$g,$isDefaultGuid,$_->access(),$_->write(),$_->revoked(),$_->created()]);
+        my $groups = $profile->groups($_->uuid());
+        foreach my $g (@$groups){
+            my $isDefaultGuid = ($g eq $profile->group_default($_->uuid())) ? 'true' : '';
+            $t->load([$_->uuid_alias(),$_->uuid(),$_->description(),$g,$isDefaultGuid,$_->access(),$_->write(),$_->revoked(),$_->expires(),$_->created()]);
         }
     }
     print $t;
 } else {
-    die('you have no api keys');
+    die($user.' has no api keys...');
 }

@@ -11,6 +11,7 @@ CREATE TABLE apikeys (
     access varchar(100) default 'all',
     write bool default null,
     created timestamp with time zone DEFAULT NOW(),
+    expires timestamp with time zone,
     UNIQUE(uuid)
 );
 

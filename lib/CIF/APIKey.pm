@@ -3,7 +3,7 @@ use base 'CIF::DBI';
 
 __PACKAGE__->table('apikeys');
 __PACKAGE__->columns(Primary => 'uuid');
-__PACKAGE__->columns(All => qw/uuid uuid_alias description parentid revoked write access created/);
+__PACKAGE__->columns(All => qw/uuid uuid_alias description parentid revoked write access expires created/);
 __PACKAGE__->sequence('apikeys_id_seq');
 __PACKAGE__->has_many(groups  => 'CIF::APIKeyGroups');
 
@@ -20,26 +20,6 @@ sub retrieve {
     my @recs = $class->search(uuid => $keys{'uuid'});
     return unless(@recs);
     return($recs[0]);
-}
-
-sub genkey {
-    my ($self,%args) = @_;
-    my $uuid = generate_uuid_random();
-
-    my $r = CIF::APIKey->insert({
-        uuid        => $uuid,
-        uuid_alias  => $args{'uuid_alias'},
-        description => $args{'description'},
-        access      => $args{'access'} || 'all',
-        parentid    => $args{'parentid'},
-        write       => $args{'write'},
-        revoked     => $args{'revoked'},
-    });
-    if($args{'groups'}){
-        $r->add_groups($args{'default_guid'},$args{'groups'});
-    }
-    CIF::APIKey->dbi_commit() unless(CIF::APIKey->db_Main->{'AutoCommit'});
-    return($r);
 }
 
 sub add_groups {
@@ -75,6 +55,10 @@ sub default_guid {
 }
 
 sub inGroup {
+    return in_group(\@_);
+}
+
+sub in_group {
     my $self = shift;
     my $grp = shift;
     return unless($grp);
@@ -89,6 +73,10 @@ sub inGroup {
 }
 
 sub mygroups {
+    return groups(\@_);
+}
+
+sub my_groups {
     my $self = shift;
     
     my @groups = $self->groups();
@@ -99,6 +87,18 @@ sub mygroups {
     }
     $g =~ s/,$//;
     return $g;
+}
+
+## TODO -- move this to PROFILE
+sub expired {
+    my $self = shift;
+    my $args = shift;
+
+    return 0 unless($self->expires());
+    
+    my $time = DateTime::Format::DateParse->parse_datetime($self->expires());
+    return 1 if(time() > $time);
+    return 0;
 }
 
 1;
