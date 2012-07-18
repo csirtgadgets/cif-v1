@@ -3,6 +3,8 @@ Revision history for cif-dbi-perl v1.
 0.99.03 2012-07-XX
     - added cif_archive_vaccum script
     - cleaned up feed table vaccum
+    - added CIF::Profile to wrap apikeys
+    - added key expiration to profiles
 
 0.99.02 2012-06-26
     - misc bugfixes
