@@ -5,7 +5,7 @@ use 5.008008;
 use strict;
 use warnings;
 
-our $VERSION = '0.00_01';
+our $VERSION = '0.00_02';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
 1;
