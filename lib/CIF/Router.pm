@@ -146,6 +146,7 @@ sub authorized_read {
     my $rec = CIF::APIKey->retrieve(uuid => $key);
     return('invaild apikey',0) unless($rec);
     return('apikey revokved',0) if($rec->revoked()); # revoked keys
+    return('key expired',0) if($rec->expired());
 
     my $ret;
     my $args;
@@ -209,13 +210,14 @@ sub process {
             $reply = $self->process_query($msg);
             last;
         }
-        if($_ == MessageType::MsgType::Type::SUBMISSION()){
+        if($_ == MessageType::MsgType::SUBMISSION()){
             $reply = $self->process_submission($msg);
             last;
         }
     }
     
     ## TODO -- return err messages
+    #warn Dumper($reply);
     return $reply->encode();
 }
 
@@ -265,6 +267,7 @@ sub process_query {
                 nolog           => $q->get_nolog(),
                 source          => $m->get_apikey(),
                 description     => $m->get_description(),
+                feeds           => $self->get_feeds(),
             });
             next unless($s);
             push(@res,@$s);
@@ -305,81 +308,61 @@ sub process_query {
 sub process_submission {
     my $self = shift;
     my $msg = shift;
-    
+
     warn 'type: submission...';
+    
     my ($err, $ret) = $self->authorized_write($msg->get_apikey());
-    my $reply;
-    unless($ret){
-        $reply = MessageType->new({
-            version => $CIF::Msg::VERSION,
-            type    => MessageType::MsgType::REPLY(),
-            status  => MessageType::StatusType::UNAUTHORIZED(),
-            data    => $err,
-        })->encode();
-        last;
-    }
-    my $array = $msg->get_data();
-    my $guid = $msg->get_guid() || $ret->{'default_guid'};
-    require CIF::Archive;
-    ## TODO -- copy foreach loop from SMRT; commit every X objects
-    foreach (@$array){
-        my ($err,$r) = CIF::Archive->insert({
-            data    => $_,
-            guid    => $guid,
-        });
-        if($r){
-            CIF::Archive->dbi_commit();
-            warn 'insert successful: '.$r;
-            $reply = $r;
-        } else {
-            CIF::Archive->dbi_rollback();
-            warn 'insert unsuccessful...';
+    my $reply = MessageType->new({
+        version => $CIF::Msg::VERSION,
+        type    => MessageType::MsgType::REPLY(),
+        status  => MessageType::StatusType::UNAUTHORIZED(),
+        data    => $err,
+    })->encode();
+    return $reply unless($ret || 1);
+    
+    my $state = 0;
+    $ret = undef;
+    foreach (@{$msg->get_data()}){
+        my $m = MessageType::SubmissionType->decode($_);
+     
+        my $array = $m->get_data();
+        my $guid = $m->get_guid() || $ret->{'default_guid'};
+        ## TODO -- copy foreach loop from SMRT; commit every X objects
+        
+        warn 'entries: '.($#{$array} + 1);
+        for(my $i = 0; $i <= $#{$array}; $i++){
+            next unless(@{$array}[$i]);
+            $state = 0;
+            my ($err,$id) = CIF::Archive->insert({
+                data    => @{$array}[$i],
+                guid    => $guid,
+                feeds   => $self->get_feeds(),
+            });
+            if($err){
+                $ret = 'submission failed: '.$err;
+                $state = 1;
+                last;
+            }
+            push(@$ret,$id);
+            ## TODO -- make the 1000 a variable
+            if($i % 1000 == 0){
+                CIF::Archive->dbi_commit();
+                warn 'committing...';
+                $state = 1;
+            }           
         }
     }
-    ## TODO: create SUCESS REPLY
-    return $reply;   
-}
-
-sub search {
-    my $self = shift;
-    my $args = shift;
-    
-    require CIF::Archive;
-    my ($err,$ret) = CIF::Archive->search($args);
-    
-    return($err,$ret);
-}
-
-sub feed {
-    my $self = shift;
-    my $ret;
-    
-    my $dt = DateTime->from_epoch(epoch => time());
-    $dt = $dt->ymd().'T'.$dt->hms().'Z';
-    
-    my $q = 'test';
-    my $feed = Feed->new({
-        entry       => $ret,
-        restriction => RestrictionType::restriction_type_default(),
-        description => 'search '.$q,
-        updated     => $dt,
-        group_map   => GroupMapType->new({
-            [
-                group   => MapType->new({
-                    key => '1234',
-                    value   => 'example.com',
-                }),
-                group   => MapType->new({
-                    key => '1234',
-                    value   => 'example2.com',
-                }),
-            ],
-        }),
-            
-        ## TODO -- restriction / group mappings
+    unless($state){
+        warn 'final commit...';
+        CIF::Archive->dbi_commit();
+    }
+    warn 'done...';
+    return MessageType->new({
+        version => $CIF::Msg::VERSION,
+        type    => MessageType::MsgType::REPLY(),
+        status  => MessageType::StatusType::SUCCESS(),
+        data    => $ret,
     });
-    
-    $feed = $feed->encode();
 }
 
 sub send {}

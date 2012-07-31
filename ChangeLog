@@ -1,5 +1,10 @@
 Revision history for cif-router-perl v1.
 
+0.99.03 2012-07031
+    - bugfixes
+    - added submission interface
+    - added key expiration check
+
 0.99.02 2012-06-24
     - bugfixes, some re-factoring
 
