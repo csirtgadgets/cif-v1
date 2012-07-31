@@ -17,7 +17,7 @@ use CIF qw/generate_uuid_url generate_uuid_random is_uuid generate_uuid_ns/;
 
 __PACKAGE__->table('archive');
 __PACKAGE__->columns(Primary => 'id');
-__PACKAGE__->columns(All => qw/id uuid guid data reporttime created/);
+__PACKAGE__->columns(All => qw/id uuid guid data format reporttime created/);
 __PACKAGE__->columns(Essential => qw/id uuid guid data created/);
 __PACKAGE__->sequence('archive_id_seq');
 
@@ -29,7 +29,7 @@ our $everyone_uuid  = generate_uuid_ns('everyone');
 sub insert {
     my $class = shift;
     my $data = shift;
-    
+        
     ## TODO -- adapt this to take in array references
     ## $data = [$data] unless(ref($data) eq 'ARRAY');
 
@@ -44,6 +44,7 @@ sub insert {
         $id = $class->SUPER::insert({
             uuid        => $data->{'uuid'},
             guid        => $data->{'guid'},
+            format      => $data->{'format'},
             ## TODO -- move encode/compress to the client?
             #data        => encode_base64(Compress::Snappy::compress($data->{'data'}->encode())),
             data        => $data->{'data'},
@@ -60,7 +61,12 @@ sub insert {
     ## router shouldn't be doing this.
     
     $data->{'data'} = Compress::Snappy::decompress(decode_base64($data->{'data'}));
-    $data->{'data'} = IODEFDocumentType->decode($data->{'data'});
+    
+    if($data->{'format'} && $data->{'format'} eq 'feed'){
+        $data->{'data'} = FeedType->decode($data->{'data'});
+    } else {
+        $data->{'data'} = IODEFDocumentType->decode($data->{'data'});
+    }
     
     foreach my $p (@plugins){
         my ($pid,$err);
@@ -69,7 +75,9 @@ sub insert {
         } catch {
             $err = shift;
         };
+        
         if($err){
+            warn 'fail...';
             warn $err;
             $class->dbi_rollback() unless($class->db_Main->{'AutoCommit'});
             return($err,undef);

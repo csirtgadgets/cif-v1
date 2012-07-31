@@ -44,10 +44,8 @@ sub generate_feeds {
             restriction_map => $args->{'restriction_map'},
         };
         my $f = $class->SUPER::generate_feeds($feed_args);
-        if(keys %$f){
-            $f = $class->SUPER::encode_feed({ recs => $f, %$feed_args });
-            push(@feeds,$f) if($f);
-        }
+        $f = $class->SUPER::encode_feed({ recs => $f, %$feed_args });
+        push(@feeds,$f);
     }
     $class->table($tbl);
     return(\@feeds);

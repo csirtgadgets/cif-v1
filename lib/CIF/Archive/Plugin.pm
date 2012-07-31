@@ -151,7 +151,7 @@ sub iodef_addresses {
     my $iodef = shift;
     
     return [] unless(ref($iodef) eq 'IODEFDocumentType');
-    
+        
     my @array;
     foreach my $i (@{$iodef->get_Incident()}){
         next unless($i->get_EventData());

@@ -47,9 +47,10 @@ sub generate_feeds {
         my $f = $class->SUPER::generate_feeds($feed_args);
         if(keys %$f){
             $f = $class->test_whitelist({ recs => $f });
-            $f = $class->SUPER::encode_feed({ recs => $f, %$feed_args });
-            push(@feeds,$f) if($f);
+           
         }
+        $f = $class->SUPER::encode_feed({ recs => $f, %$feed_args });
+        push(@feeds,$f);
     }
     $class->table($tbl);
     return(\@feeds);

@@ -13,6 +13,8 @@ use CIF::APIKey;
 use Module::Pluggable require => 1, except => qr/CIF::Feed::Plugin::\S+::/;
 use Data::Dumper;
 use Digest::SHA1 qw(sha1_hex);
+use MIME::Base64;
+require Compress::Snappy;
 
 __PACKAGE__->follow_best_practice;
 __PACKAGE__->mk_accessors(qw(config db_config feeds confidence roles limit limit_days start_time report_time group_map restriction_map));
@@ -27,6 +29,13 @@ sub new {
     bless($self,$class);
     
     $self->init($args);
+    
+    my $enabled = $args->{'specific_feeds'} || $self->get_config->{'enabled'};
+    return ('no feeds specified') unless($enabled);
+    
+    my @array = (ref($enabled) eq 'ARRAY') ? @$enabled : split(/,/,$enabled);
+    
+    $self->set_feeds(\@array);
 
     return (undef,$self);
 }
@@ -37,6 +46,8 @@ sub init {
     
     $self->init_config( $args);   
     $self->init_db(     $args);
+    
+    
     
     my $report_time = $args->{'report_time'} || time();
     
@@ -82,12 +93,7 @@ sub init_config {
         $self->set_roles($roles);
     }
     
-    my $enabled = $args->{'specific_feeds'} || $self->get_config->{'enabled'};
-    return ('no feeds specified') unless($enabled);
     
-    my @array = (ref($enabled) eq 'ARRAY') ? @$enabled : split(/,/,$enabled);
-    
-    $self->set_feeds(\@array);
     
     my $confidence = $args->{'confidence'} || $self->get_config->{'confidence'} || '95,85';
     my @array2 = (ref($confidence) eq 'ARRAY') ? @$confidence : split(/,/,$confidence);
@@ -158,8 +164,11 @@ sub process {
   
     my @ids;
     foreach my $confidence (@{$self->get_confidence()}){
+        warn 'confidence: '.$confidence;
         foreach my $role (@{$self->get_roles()}){
+            warn 'role: '.$role;
             my $p = 'CIF::Feed::Plugin::'.ucfirst($feed);
+            warn 'generating feed...';
             my $ret = $p->generate_feeds({
                 confidence      => $confidence,
                 guid            => generate_uuid_ns($role),
@@ -169,13 +178,13 @@ sub process {
                 group_map       => $self->get_group_map(),
                 restriction_map => $self->get_restriction_map(),
             });
-            next unless(@$ret);
-                       
+
             foreach my $f (@$ret){
                 my ($err,$id) = CIF::Archive->insert({
-                    data    => $f,
+                    data    => encode_base64(Compress::Snappy::compress($f->encode())),
                     guid    => $f->get_guid(),
                     created => $f->get_ReportTime(),
+                    format  => 'feed',
                 });
                 if($err){
                     warn $err;
@@ -185,7 +194,7 @@ sub process {
                 push(@ids,$id);
                 warn 'id: '.$id.' confidence: '.$confidence.' desc: '.$f->get_description().' role: '.$role if($::debug);
             }
-            
+            warn 'committing...';
             CIF::Archive->dbi_commit() unless(CIF::Archive->db_Main->{'AutoCommit'});
         }
     }
@@ -195,10 +204,9 @@ sub process {
 sub vaccum {
     my $self = shift;
     my $args = shift;
-    
-    my $ts = $args->{'timestamp'};
+
     foreach my $p (@plugins){
-        $p->vaccum($ts);
+        $p->vaccum($args);
            
     }
 }

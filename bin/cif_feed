@@ -132,19 +132,24 @@ my ($err,$obj) = CIF::Feed->new({
     limit_days      => $limit_days,
     specific_feeds  => $specific_feed,
     roles           => $roles,
-    report_time      => time(),
+    report_time     => time(),
 });
 
 die($err."\n\n") if($err);
 
 foreach my $feed (@{$obj->get_feeds()}){
     _profile($feed);
+    warn 'processing: '.$feed if($debug);
     my ($err2,$ret) = $obj->process($feed);
 }
 
 my $timestamp = DateTime->from_epoch(epoch => (time() - ((1 + $limit_days) * 84600)));
 $timestamp = $timestamp->ymd().'T00:00:00Z';
+
+warn 'purging...' if($debug);
 $ret = $obj->purge_feeds({ timestamp => $timestamp });
+
+warn 'vaccuming: '.$timestamp if($debug);
 $ret = $obj->vaccum({ timestamp => $timestamp });
 
 die $err if($err);

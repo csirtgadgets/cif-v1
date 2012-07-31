@@ -39,6 +39,7 @@ sub insert {
     foreach my $address (@$addresses){
         my $addr = lc($address->get_content());
         next unless($addr =~ /^(ftp|https?):\/\//);
+        ## TODO -- pull this out of the IODEF ?
         my $hash = $class->SUPER::generate_sha1($addr);
         if($class->test_feed($data)){
             $class->SUPER::insert({

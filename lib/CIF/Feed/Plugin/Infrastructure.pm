@@ -62,10 +62,14 @@ sub generate_feeds {
         };
         my $f = $class->SUPER::generate_feeds($feed_args);
         if(keys %$f){
-            $f = $class->test_whitelist({ recs => $f, %$feed_args });
-            $f = $class->SUPER::encode_feed({ recs => $f, %$feed_args });
-            push(@feeds,$f) if($f);
+            $f = $class->test_whitelist({ recs => $f, %$feed_args }); 
         }
+        # we create a feed no matter what
+        # because of the way guid's work, it's better to do it this way
+        # it's better to get nothing based on your key's 'default guid' rather than
+        # a feed from another guid you weren't expecting...
+        $f = $class->SUPER::encode_feed({ recs => $f, %$feed_args });
+        push(@feeds,$f);
     }
     $class->table($tbl);
     return(\@feeds);
