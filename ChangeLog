@@ -1,5 +1,12 @@
 Revision history for cif-smrt-perl v1.
 
+0.99.02 2012-07-31
+    - zmq support
+    - improved thread support
+    - reduced memory overhead (memleaks)
+    - removed direct dbi integration, now via cif-client and cif-router for submissions
+    - merged cif_analytics in as 'postprocessors' plugin
+
 0.99.01 2012-04-27
     - initial release
     - re-factored old "cif_feedparser", CIF::FeedParser to CIF::Smrt

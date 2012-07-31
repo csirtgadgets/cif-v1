@@ -10,6 +10,17 @@ sub parse {
     
     my @lines = split(/\n/,$content);
     my @array;
+    
+    if(my $l = $f->{'feed_limit'}){
+        my ($start,$end);
+        if(ref($l) eq 'ARRAY'){
+            ($start,$end) = @{$l};
+        } else {
+            ($start,$end) = (0,$l-1);
+        }
+        @lines = @lines[$start..$end];
+    }
+    
     my $csv = Text::CSV->new({binary => 1});
     my @cols = split(',',$f->{'values'});
     foreach(@lines){

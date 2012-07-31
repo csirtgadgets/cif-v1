@@ -1,23 +1,31 @@
 package CIF::Smrt::Plugin::Pull::Http;
 
-require LWP::Simple;
-require LWP::UserAgent;
+use strict;
+use warnings;
 
-our $VERSION = '0.01';
+# used for LWP user-agent version
+our $VERSION = '1.0';
 
-## TODO -- remove LWP::Simple
 sub pull {
     my $class = shift;
     my $f = shift;
     return unless($f->{'feed'} =~ /^http/);
     return if($f->{'cif'});
+    
 
     my $timeout = $f->{'timeout'} || 10;
 
+    require LWP::UserAgent;
+    my $ua = LWP::UserAgent->new(agent => 'CIF/'.$VERSION);
+    $ua->timeout($timeout);
+    
+    # work-around for what appears to be a threading / race condition
+    # in Crypt-SSLeay
+    $ua->max_redirect(0) if($f->{'feed'} =~ /^https/);
+
     my $content;
     if($f->{'feed_user'}){
-       my $ua = LWP::UserAgent->new();
-       $ua->timeout($timeout);
+       
        my $req = HTTP::Request->new(GET => $f->{'feed'});
        $req->authorization_basic($f->{'feed_user'},$f->{'feed_password'});
        my $ress = $ua->request($req);
@@ -27,7 +35,7 @@ sub pull {
        }
        $content = $ress->decoded_content();
     } else {
-        my $ua = LWP::UserAgent->new(agent => 'CIF/'.$VERSION);
+        
         if(defined($f->{'verify_tls'}) && $f->{'verify_tls'} == 0){
             $ua->ssl_opts(verify_hostname => 0);
         }
@@ -45,9 +53,9 @@ sub pull {
             if($r->is_success()){
                 $content = $r->decoded_content();
             } else {
-                #$content = LWP::Simple::get($f->{'feed'});
-                print 'failed to get feed: '.$f->{'feed'}."\n".$r->status_line();
+                print 'failed to get feed: '.$f->{'feed'}."\n".$r->status_line()."\n";
             }
+            $ua = undef;
         }
     }
     return($content);

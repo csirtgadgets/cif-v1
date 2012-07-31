@@ -11,6 +11,7 @@ sub parse {
     my @lines = split(/\n/,$content);
     my @cols = split(',',$f->{'values'});
     my @array;
+    
     if(my $l = $f->{'feed_limit'}){
         my ($start,$end);
         if(ref($l) eq 'ARRAY'){
@@ -20,6 +21,7 @@ sub parse {
         }
         @lines = @lines[$start..$end];
     }
+
     foreach(@lines){
         next if(/^(#|$|<)/);
         my @m = split($split,$_);

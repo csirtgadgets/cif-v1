@@ -34,7 +34,7 @@ use Data::Dumper;
 use MIME::Lite;
 
 my %opts;
-getopts('afdt:T:C:c:p:c:hL',\%opts);
+getopts('afdt:T:C:c:p:c:hLS:P',\%opts);
 my $period      = $opts{'p'} || 'daily';
 my $throttle    = $opts{'T'} || 'medium';
 my $threads     = $opts{'t'};
@@ -42,6 +42,8 @@ my $cron_tool   = $opts{'C'} || 'bin/cif_smrt';
 my $first_run   = $opts{'f'};
 my $debug       = $opts{'d'};
 my $mutex       = $opts{'L'} || '/tmp/cif_crontool.lock.'.$period;
+my $start_at    = $opts{'S'};
+my $postprocess = $opts{'P'};
 
 $SIG{__DIE__} = 'cleanup';
 $SIG{'INT'} = 'cleanup';
@@ -111,9 +113,9 @@ Usage: $0 -p hourly
     -d  --debug:    debug
     -L  --lock:     path for the mutex to go (default: $mutex);
     -T  --throttle: throttle (how man threads to use, default: $throttle)
-                    low:    threads = 1/2 number of cores
-                    medium: threads = number of cores
-                    high:   threads = 2x number of cores
+                    low:    threads = number of cores
+                    medium: threads = number of cores * 2
+                    high:   threads = number of cores * 4
 
 Examples:
     $0 -T high -f -d
@@ -144,6 +146,8 @@ foreach(@crons){
         $cmd .= ' -T '.$throttle;
     }
     $cmd .= ' -F' if($first_run);
+    $cmd .= ' -P' if($postprocess);
+    
     warn $cmd if($debug);
     my $ret = system($cmd);
     warn $ret if($debug);
