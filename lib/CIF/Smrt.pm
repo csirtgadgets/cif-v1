@@ -25,7 +25,6 @@ use Module::Pluggable require => 1;
 use Digest::SHA1 qw/sha1_hex/;
 use URI::Escape;
 use Try::Tiny;
-#use Iodef::Pb::Simple;
 
 use Time::HiRes qw/nanosleep/;
 use ZeroMQ qw/:all/;
