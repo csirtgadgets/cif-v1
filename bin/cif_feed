@@ -37,6 +37,7 @@ use DateTime;
 use Config::Simple;
 use Data::Dumper;
 use CIF::Feed;
+use CIF qw/debug/;
 
 my %opts;
 getopts('dC:S:R:c:D:l:h',\%opts);
@@ -88,19 +89,6 @@ $SIG{__DIE__} = 'cleanup';
 
 my $start = time();
 
-## TODO: move these to libcif
-sub _debug {
-    return unless($debug);
-    my $msg = shift;
-    my ($pkg,$f,$line) = caller();
-    warn "[DEBUG] $line: $msg";
-}
-
-sub _profile {
-    my ($msg) = @_;
-    _debug('('.(time() - $start).') '.$msg);
-}
-
 sub cleanup {
     my $msg = shift;
     if($msg){   
@@ -138,23 +126,22 @@ my ($err,$obj) = CIF::Feed->new({
 die($err."\n\n") if($err);
 
 foreach my $feed (@{$obj->get_feeds()}){
-    _profile($feed);
-    warn 'processing: '.$feed if($debug);
+    debug('processing: '.$feed);
     my ($err2,$ret) = $obj->process($feed);
 }
 
 my $timestamp = DateTime->from_epoch(epoch => (time() - ((1 + $limit_days) * 84600)));
 $timestamp = $timestamp->ymd().'T00:00:00Z';
 
-warn 'purging...' if($debug);
+debug('purging...');
 $ret = $obj->purge_feeds({ timestamp => $timestamp });
 
-warn 'vaccuming: '.$timestamp if($debug);
+debug('vaccuming: '.$timestamp);
 $ret = $obj->vaccum({ timestamp => $timestamp });
 
 die $err if($err);
 
-warn 'done...';
+debug('done...');
 
 remove_lock();
 exit(0);

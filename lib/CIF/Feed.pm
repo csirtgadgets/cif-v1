@@ -8,7 +8,7 @@ use warnings;
 our $VERSION = '0.99_01';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
-use CIF qw/generate_uuid_ns generate_uuid_random is_uuid/;
+use CIF qw/generate_uuid_ns generate_uuid_random is_uuid debug/;
 use CIF::APIKey;
 use Module::Pluggable require => 1, except => qr/CIF::Feed::Plugin::\S+::/;
 use Data::Dumper;
@@ -164,11 +164,10 @@ sub process {
   
     my @ids;
     foreach my $confidence (@{$self->get_confidence()}){
-        warn 'confidence: '.$confidence;
         foreach my $role (@{$self->get_roles()}){
-            warn 'role: '.$role;
             my $p = 'CIF::Feed::Plugin::'.ucfirst($feed);
-            warn 'generating feed...';
+            #warn 'generating '.$confidence.'% '.$role.' '.$feed.' feed' if($::debug);
+            debug('generating '.$confidence.'% '.$role.' '.$feed.' feed','INFO');
             my $ret = $p->generate_feeds({
                 confidence      => $confidence,
                 guid            => generate_uuid_ns($role),
