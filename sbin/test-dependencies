@@ -133,7 +133,7 @@ my %AVOID = (
 );
 
 $deps{'CORE'} = [ text_to_hash( << '.') ];
-CIF::Msg 0.00_01
+CIF::Msg 0.00_02
 CIF::DBI 0.99
 Try::Tiny 0.04
 Config::Simple 4.59
