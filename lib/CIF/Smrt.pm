@@ -95,6 +95,8 @@ sub init {
     $self->set_goback(time() - ($self->get_goback() * 84600));
     $self->set_goback(0) if($self->get_load_full());
     
+    
+    ## TODO -- this isnt' being passed to the plugins, the config is
     $self->set_name(        $args->{'name'}     || $self->get_config->{'name'}      || 'localhost');
     $self->set_instance(    $args->{'instance'} || $self->get_config->{'instance'}  || 'localhost');
     
