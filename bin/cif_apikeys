@@ -195,5 +195,8 @@ if($#recs > -1){
     }
     print $t;
 } else {
-    die($user.' has no api keys...');
+    if($user){
+        print $user." has ";
+    }
+    print 'no api keys...'."\n";
 }
