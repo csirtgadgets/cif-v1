@@ -77,7 +77,7 @@ Usage: perl $0 -c $rules_dir/misc.cfg -f malwaredomainlist -T low
 
 Examples:
     \$ $0 -c $rules_dir/spyeyetracker.cfg -f binaries -T medium -F
-    \$ cif_feed_parser -c $rules_dir/misc.cfg -f malwaredomainlist -T high -F -d
+    \$ $0 -c $rules_dir/misc.cfg -f malwaredomainlist -T high -F -d
 EOF
 }
 
