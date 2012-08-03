@@ -18,7 +18,7 @@ sub pull {
         }
         @lines = @lines[$start..$end];
     }
-    my $content = join('',<F>);
+    my $content = join('',@lines);
     return(undef,$content);
 }
 
