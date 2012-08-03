@@ -16,6 +16,9 @@ use constant RETURN_CONNECTION  => 'ipc://return';
 use constant SENDER_CONNECTION  => 'ipc://sender';
 use constant CTRL_CONNECTION    => 'ipc://ctrl';
 
+# for figuring out throttle
+use constant DEFAULT_THROTTLE_FACTOR => 4;
+
 use Regexp::Common qw/net URI/;
 use Regexp::Common::net::CIDR;
 use Encode qw/encode_utf8/;
@@ -565,14 +568,14 @@ sub throttle {
 
     require Linux::Cpuinfo;
     my $cpu = Linux::Cpuinfo->new();
-    return(1) unless($cpu);
-    my $cores = $cpu->num_cpus();
-    return(1) unless($cores && $cores =~ /^\d$/);
-    return(1) if($cores eq 1);
+    return(DEFAULT_THROTTLE_FACTOR()) unless($cpu);
     
-    return($cores * 4)  if($throttle eq 'high');
-    return($cores * 2)  if($throttle eq 'medium');
-    return($cores);
+    my $cores = $cpu->num_cpus();
+    return(DEFAULT_THROTTLE_FACTOR()) unless($cores && $cores =~ /^\d$/);
+    return(DEFAULT_THROTTLE_FACTOR()) if($cores eq 1);
+    
+    return($cores * (DEFAULT_THROTTLE_FACTOR() * 2))  if($throttle eq 'high');
+    return($cores * DEFAULT_THROTTLE_FACTOR())  if($throttle eq 'medium');
 }
 
 sub normalize_timestamp {
