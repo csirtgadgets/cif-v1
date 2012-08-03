@@ -56,7 +56,6 @@ sub process {
                                     name        => $smrt->get_name(),
                                     restriction => $restriction,
                                 });
-                                warn ::Dumper($id);
                                 my $new = Iodef::Pb::Simple->new({
                                     address         => $rr->{'nsdname'},
                                     IncidentID      => $id,
