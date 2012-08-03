@@ -1,5 +1,8 @@
 Revision history for cif-smrt-perl v1.
 
+0.99.03 2012-08
+    - misc bugfixes
+
 0.99.02 2012-07-31
     - zmq support
     - improved thread support

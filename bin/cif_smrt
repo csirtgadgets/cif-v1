@@ -90,7 +90,7 @@ my ($err,$ret) = CIF::Smrt->new({
     postprocess     => $postprocess,
 });
 
-die($err."\n\n".usage()) if($err);
+die(usage()."\n\n".$err) if($err);
 
 ($err,$ret) = $ret->process();
 

@@ -68,14 +68,18 @@ sub new {
 sub init {
     my $self = shift;
     my $args = shift;
-       
-    $self->set_feed($args->{'feed'});
     
     my ($err,$ret) = $self->init_config($args);
     return($err) if($err);
-    
+      
     ($err,$ret) = $self->init_rules($args);
     return($err) if($err);
+    
+    die ::Dumper($self);
+    
+    
+    
+    
     
     $self->set_threads(         $args->{'threads'}          || $self->get_config->{'threads'}           || 1);
     $self->set_goback(          $args->{'goback'}           || $self->get_config->{'goback'}            || 3);
@@ -127,6 +131,16 @@ sub init_rules {
     my $args = shift;
     
     $args->{'rules'} = Config::Simple->new($args->{'rules'}) || return(undef,'missing rules file');
+    
+    unless($args->{'feed'}){
+        my @sections = keys %{$args->{'rules'}->{'_DATA'}};
+        @sections = map { $_ = $_ if($_ !~ /^default/) } @sections;
+        my $string = "missing feed, please set (-f) one of the following for this config:\n\n";
+        $string .= join("\n",@sections);
+        return($string);
+    }
+
+    $self->set_feed($args->{'feed'});
     my $defaults    = $args->{'rules'}->param(-block => 'default');
     my $rules       = $args->{'rules'}->param(-block => $self->get_feed());
     
