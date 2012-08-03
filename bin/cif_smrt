@@ -76,8 +76,8 @@ Usage: perl $0 -c $rules_dir/misc.cfg -f malwaredomainlist -T low
                     high:   threads = number of cores * 2
 
 Examples:
-    \$ $0 -c $rules_dir/spyeyetracker.cfg -f binaries -T medium -F
-    \$ $0 -c $rules_dir/misc.cfg -f malwaredomainlist -T high -F -d
+    \$ $0 -c $rules_dir/spyeyetracker.cfg -f binaries -T medium
+    \$ $0 -c $rules_dir/malwaredomains.cfg -f domains -T high -d
 EOF
 }
 

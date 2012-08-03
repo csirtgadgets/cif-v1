@@ -427,7 +427,7 @@ sub worker_routine {
                 foreach my $p (@postprocessors){
                     my $err;
                     try {
-                        $p->process($self->get_config(),$iodef);
+                        $p->process($self,$iodef);
                     } catch {
                         $err = shift;
                     };

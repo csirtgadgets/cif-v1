@@ -8,7 +8,7 @@ use CIF qw/generate_uuid_random/;
 
 sub process {
     my $class   = shift;
-    my $config  = shift;
+    my $smrt    = shift;
     my $data    = shift;
   
     return;    
@@ -33,8 +33,8 @@ sub process {
             
             my $new_id = IncidentIDType->new({
                 content     => generate_uuid_random(),
-                instance    => $config->{'instance'},
-                name        => $config->{'name'},
+                instance    => $smrt->get_instance(),
+                name        => $smrt->get_name(),
                 restriction => $restriction,
             });
             my $new = Iodef::Pb::Simple->new({

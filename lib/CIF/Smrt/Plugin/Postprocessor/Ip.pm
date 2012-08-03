@@ -12,14 +12,14 @@ my @plugins = __PACKAGE__->plugins();
 
 sub process {
     my $class   = shift;
-    my $config  = shift;
+    my $smrt    = shift;
     my $data    = shift;
 
     my $addresses = iodef_addresses($data);
     return unless($#{$addresses} > -1);
 
     foreach (@plugins){
-        $_->process($config,$data);
+        $_->process($smrt,$data);
     }
 }
 

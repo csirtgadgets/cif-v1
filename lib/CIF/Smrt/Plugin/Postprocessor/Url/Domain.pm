@@ -14,7 +14,7 @@ my @postprocessors = CIF::Smrt->plugins();
 
 sub process {
     my $class   = shift;
-    my $config  = shift;
+    my $smrt    = shift;
     my $data    = shift;
     
     my @new_incidents;
@@ -55,8 +55,8 @@ sub process {
                             $port = 80 unless($port && ($port ne ''));
                             my $id = IncidentIDType->new({
                                 content     => generate_uuid_random(),
-                                instance    => $config->{'instance'},
-                                name        => $config->{'name'},
+                                instance    => $smrt->get_instance(),
+                                name        => $smrt->get_name(),
                                 restriction => $restriction,
                             });
                             my $new = Iodef::Pb::Simple->new({

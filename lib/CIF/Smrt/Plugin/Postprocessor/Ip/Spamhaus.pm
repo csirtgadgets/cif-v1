@@ -11,7 +11,7 @@ use Iodef::Pb qw(/iodef_impacts_first/);
 
 sub process {
     my $class   = shift;
-    my $config  = shift;
+    my $smrt    = shift;
     my $data    = shift;
     
     my @new_ids;
@@ -46,8 +46,8 @@ sub process {
                             foreach my $rr (@$ret){
                                 my $new_id = IncidentIDType->new({
                                     content     => generate_uuid_random(),
-                                    instance    => $config->{'instance'},
-                                    name        => $config->{'name'},
+                                    instance    => $smrt->get_instance(),
+                                    name        => $smrt->get_name(),
                                     restriction => $restriction,
                                 });
                                 my $asn = $class->resolve_bgp($addr);

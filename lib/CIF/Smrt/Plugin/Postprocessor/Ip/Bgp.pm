@@ -8,7 +8,7 @@ use Iodef::Pb qw/iodef_systems/;
 
 sub process {
     my $self        = shift;
-    my $config      = shift;
+    my $smrt        = shift;
     my $data        = shift;
     
     my $systems = iodef_systems($data);
