@@ -60,7 +60,8 @@ sub cleanup {
 }
 
 my @files;
-my $feedsdir = './etc';
+## TODO make this a var
+my $feedsdir = '/opt/cif/etc';
 unless($opts{'c'}){
     opendir(F,$feedsdir) || die($!);
     @files = sort { $a cmp $b } grep(/.cfg$/,readdir(F));
