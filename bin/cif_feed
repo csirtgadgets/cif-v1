@@ -49,7 +49,8 @@ my $roles            = $opts{'R'} || 'everyone';
 my $confidence      = $opts{'c'};
 my $limit_days      = $opts{'D'} || 7;
 my $limit           = $opts{'l'} || 50000;
-my $mutex           = $opts{'L'} || '/tmp/cif_feeds.lock';
+my $mutex           = $opts{'L'} || '/tmp/cif_feed.lock';
+my $restriction     = $opts{'r'} || 'private';
 
 ## TODO: pull this from the config
 my @feeds = ('infrastructure','domain','malware','email');
@@ -77,9 +78,9 @@ Advanced Usage:
 
 Examples:
 
-    cif_feeds -c 65
-    cif_feeds -d -S [infrastructure|domain|email|malware|url]
-    cif_feeds -c 40 -S domain
+    cif_feed -c 65
+    cif_feed -d -S [infrastructure|domain|email|malware|url]
+    cif_feed -c 40 -S domain
 
 EOF
 }

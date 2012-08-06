@@ -5,9 +5,6 @@ use 5.008008;
 use strict;
 use warnings;
 
-our $VERSION = '0.99_01';
-$VERSION = eval $VERSION;  # see L<perlmodstyle>
-
 use CIF qw/generate_uuid_ns generate_uuid_random is_uuid debug/;
 use CIF::APIKey;
 use Module::Pluggable require => 1, except => qr/CIF::Feed::Plugin::\S+::/;
@@ -17,7 +14,12 @@ use MIME::Base64;
 require Compress::Snappy;
 
 __PACKAGE__->follow_best_practice;
-__PACKAGE__->mk_accessors(qw(config db_config feeds confidence roles limit limit_days start_time report_time group_map restriction_map));
+__PACKAGE__->mk_accessors(qw(
+    config db_config feeds confidence 
+    roles limit limit_days start_time 
+    report_time group_map restriction_map
+    restriction
+));
 
 my @plugins = __PACKAGE__->plugins();
 
@@ -47,8 +49,6 @@ sub init {
     $self->init_config( $args);   
     $self->init_db(     $args);
     
-    
-    
     my $report_time = $args->{'report_time'} || time();
     
     if($report_time =~ /^\d+$/){
@@ -59,6 +59,8 @@ sub init {
     
     my $start_time = DateTime->from_epoch(epoch => time - ($self->get_limit_days() * 84600));
     $self->set_start_time($start_time->ymd().'T'.$start_time->hms().'Z');
+    
+    $self->set_restriction(normalize_restriction($args->{'restriction'} || $self->get_config->{'restriction'} || 'private'));
 }
 
 sub init_config {
@@ -67,7 +69,7 @@ sub init_config {
     
     $args->{'config'} = Config::Simple->new($args->{'config'}) || return(undef,'missing config file');
     
-    $self->set_config(          $args->{'config'}->param(-block => 'cif_feeds'));
+    $self->set_config(          $args->{'config'}->param(-block => 'cif_feed'));
     $self->set_db_config(       $args->{'config'}->param(-block => 'db'));
     $self->set_restriction_map( $args->{'config'}->param(-block => 'restriction_map')); 
     $self->set_group_map(       $args->{'config'}->param(-block => 'groups'));
@@ -176,6 +178,7 @@ sub process {
                 report_time     => $self->get_report_time(),
                 group_map       => $self->get_group_map(),
                 restriction_map => $self->get_restriction_map(),
+                restriction     => $self->get_restriction(),
             });
 
             foreach my $f (@$ret){
@@ -208,6 +211,32 @@ sub vaccum {
         $p->vaccum($args);
            
     }
+}
+
+sub normalize_restriction {
+    my $restriction     = shift;
+    
+    return unless($restriction);
+    return $restriction if($restriction =~ /^[1-4]$/);
+    for(lc($restriction)){
+        if(/^private$/){
+            $restriction = RestrictionType::restriction_type_private(),
+            last;
+        }
+        if(/^public$/){
+            $restriction = RestrictionType::restriction_type_public(),
+            last;
+        }
+        if(/^need-to-know$/){
+            $restriction = RestrictionType::restriction_type_need_to_know(),
+            last;
+        }
+        if(/^default$/){
+            $restriction = RestrictionType::restriction_type_default(),
+            last;
+        }   
+    }
+    return $restriction;
 }
 
 sub purge_feeds {
