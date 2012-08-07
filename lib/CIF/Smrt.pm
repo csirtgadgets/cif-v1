@@ -28,6 +28,7 @@ use Module::Pluggable require => 1;
 use Digest::SHA1 qw/sha1_hex/;
 use URI::Escape;
 use Try::Tiny;
+use CIF qw/debug/;
 
 use Time::HiRes qw/nanosleep/;
 use ZeroMQ qw/:all/;
@@ -77,12 +78,6 @@ sub init {
       
     ($err,$ret) = $self->init_rules($args);
     return($err) if($err);
-    
-    die ::Dumper($self);
-    
-    
-    
-    
     
     $self->set_threads(         $args->{'threads'}          || $self->get_config->{'threads'}           || 1);
     $self->set_goback(          $args->{'goback'}           || $self->get_config->{'goback'}            || 3);
@@ -426,18 +421,23 @@ sub worker_routine {
     my $done = 0;
     my $recs = 0;
     while(!$done){
-        warn 'worker['.threads->tid().'] polling...' if($::debug > 1);
+        warn 'worker['.threads->tid().'] polling...' if($::debug > 2);
         $poller->poll();
-        warn 'worker['.threads->tid().'] checking event...' if($::debug > 1);
+        warn 'worker['.threads->tid().'] checking event...' if($::debug > 2);
         if($poller->has_event('worker')){
-            warn 'worker['.threads->tid().'] receiving event...' if($::debug > 2);
+            warn 'worker['.threads->tid().'] receiving event...' if($::debug > 3);
             my $msg = $receiver->recv_as('json');
-            warn 'worker['.threads->tid().'] processing message...' if($::debug > 2);
+            warn 'worker['.threads->tid().'] processing message...' if($::debug > 3);
             
-            warn 'worker['.threads->tid().'] generating uuid...' if($::debug > 2);
+            warn 'worker['.threads->tid().'] generating uuid...' if($::debug > 3);
             $msg->{'id'} = generate_uuid_random();
+            
+            if($::debug > 1){
+                my $thing = $msg->{'address'} || $msg->{'malware_md5'} || $msg->{'malware_sha1'};
+                debug('uuid: '.$msg->{'id'}.' - '.$msg->{'detecttime'}.' - '.$thing.' - '.$msg->{'assessment'}.' - '.$msg->{'description'});
+            }
     
-            warn 'worker['.threads->tid().'] generating iodef...' if($::debug > 2);
+            warn 'worker['.threads->tid().'] generating iodef...' if($::debug > 3);
             my $iodef = Iodef::Pb::Simple->new($msg);
             
             if($self->get_postprocess()){
@@ -451,21 +451,21 @@ sub worker_routine {
                     warn $err if($err);
                 };
             }
-            warn 'worker['.threads->tid().'] sending message...' if($::debug > 2);
+            warn 'worker['.threads->tid().'] sending message...' if($::debug > 3);
             $sender->send($iodef->encode());
-            warn 'worker['.threads->tid().'] message sent...' if($::debug > 2);
+            warn 'worker['.threads->tid().'] message sent...' if($::debug > 3);
         }
-        warn 'worker['.threads->tid().'] checking control...' if($::debug > 1);
+        warn 'worker['.threads->tid().'] checking control...' if($::debug > 2);
         if($poller->has_event('ctrl')){
             warn 'worker['.threads->tid().'] recieved KILL';
             my $x = $ctrl->recv();
             $done = 1;
         }
-        warn 'worker['.threads->tid().'] tick...' if($::debug > 2);
+        warn 'worker['.threads->tid().'] tick...' if($::debug > 3);
         nanosleep NSECS_PER_MSEC;
-        warn 'worker['.threads->tid().'] tick done...' if($::debug > 2);
+        warn 'worker['.threads->tid().'] tick done...' if($::debug > 3);
     }
-    warn 'worker['.threads->tid().'] done...' if($::debug > 1);
+    warn 'worker['.threads->tid().'] done...' if($::debug > 2);
     $sender->close();
     $ctrl->close();
     $receiver->close();
