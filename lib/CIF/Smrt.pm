@@ -198,18 +198,19 @@ sub init_db {
 
 sub pull_feed { 
     my $f = shift;
-    my ($content,$err) = threads->create('_pull_feed',$f)->join();
-    return(undef,$err) if($err);
-    return(undef,'no content') unless($content);
+    my $ret = threads->create('_pull_feed',$f)->join();
+    return(undef,'') unless($ret);
+    return($ret) if($ret =~ /^ERROR: /);
+    
     # auto-decode the content if need be
-    $content = _decode($content,$f);
+    $ret = _decode($ret,$f);
 
     # encode to utf8
-    $content = encode_utf8($content);
+    $ret = encode_utf8($ret);
     # remove any CR's
-    $content =~ s/\r//g;
+    $ret =~ s/\r//g;
     delete($f->{'feed'});
-    return($content);
+    return(undef,$ret);
 }
 
 # we do this sep cause it's in a thread
@@ -228,11 +229,11 @@ sub _pull_feed {
     my @pulls = __PACKAGE__->plugins();
     @pulls = grep(/::Pull::/,@pulls);
     foreach(@pulls){
-        if(my $content = $_->pull($f)){
-            return(undef,$content);
-        }
+        my ($err,$ret) = $_->pull($f);
+        return('ERROR: '.$err) if($err);
+        return($ret) if($ret);
     }
-    return('could not pull feed',undef);
+    return('ERROR: could not pull feed');
 }
 
 
@@ -241,9 +242,10 @@ sub parse {
     my $self = shift;
     my $f = $self->get_rules();
     
-    my ($content,$err) = pull_feed($f);
-    return($err,undef) if($err);
+    my ($err,$content) = pull_feed($f);
 
+    return($err) if($err);
+    
     my $return;
     # see if we designate a delimiter
     if(my $d = $f->{'delimiter'}){
@@ -303,7 +305,8 @@ sub preprocess_routine {
     my $self = shift;
     
     warn 'parsing...' if($::debug);
-    my $recs = $self->parse();
+    my ($err,$recs) = $self->parse();
+    return($err) if($err);
     
     return unless($#{$recs} > -1);
     
@@ -311,7 +314,6 @@ sub preprocess_routine {
         warn 'sorting '.($#{$recs}+1).' recs...' if($::debug);
         $recs = _sort_detecttime($recs);
     }
-    
     ## TODO -- move this to the threads?
     ## test with alienvault scan's feed
     warn 'mapping...' if($::debug);
@@ -336,7 +338,8 @@ sub preprocess_routine {
         push(@array,$r);
     }
     warn 'done mapping...' if($::debug);
-    return(\@array);
+
+    return(undef,\@array);
 }
 
 sub process {
@@ -369,7 +372,12 @@ sub process {
     warn 'done...' if($::debug);
     
     warn 'running preprocessor routine...' if($::debug);
-    my $array = threads->create('preprocess_routine',$self)->join();
+    ## TODO -- figure out if this really needs to be threaded out or not
+    # there are implications with how we return errors
+    #my ($err,$array) = threads->create('preprocess_routine',$self)->join();
+    my ($err,$array) = $self->preprocess_routine();
+    return($err) if($err);
+
     return (undef,'no records') unless($#{$array} > -1);
     
     my $total_recs = ($#{$array});

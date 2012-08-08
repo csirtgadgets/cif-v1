@@ -30,8 +30,7 @@ sub pull {
        $req->authorization_basic($f->{'feed_user'},$f->{'feed_password'});
        my $ress = $ua->request($req);
        unless($ress->is_success()){
-            print('request failed: '.$ress->status_line()."\n");
-            return;
+            return('request failed: '.$ress->status_line());
        }
        $content = $ress->decoded_content();
     } else {
@@ -47,18 +46,18 @@ sub pull {
             open(F,$file) || die($!.': '.$file);
             $content = join('',<F>);
             close(F);
-            return('no content',undef) unless($content && $content ne '');
+            return('no content') unless($content && $content ne '');
         } else {
             $r = $ua->get($f->{'feed'});
             if($r->is_success()){
                 $content = $r->decoded_content();
             } else {
-                print 'failed to get feed: '.$f->{'feed'}."\n".$r->status_line()."\n";
+                return('failed to get feed: '.$f->{'feed'}."\n".$r->status_line());
             }
             $ua = undef;
         }
     }
-    return($content);
+    return(undef,$content);
 }
 
 1;

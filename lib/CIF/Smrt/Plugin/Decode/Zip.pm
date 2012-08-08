@@ -15,7 +15,6 @@ sub decode {
     if($f->{'zip_filename'}){
         $file = $f->{'zip_filename'};
     } else {
-        die $f->{'feed'};
         $f->{'feed'} =~ m/\/([a-zA-Z0-9_]+).zip$/;
         $file = $1;
     }

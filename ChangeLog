@@ -4,6 +4,7 @@ Revision history for cif-smrt-perl v1.
     - misc bugfixes
     - changed the default throttle factor to 4 (default is 4 threads per cpu core)
     - enabled specific-class postprocessor enabling (eg: -p fqdn,ip)
+    - better error message handling between threads
 
 0.99.02 2012-07-31
     - zmq support
