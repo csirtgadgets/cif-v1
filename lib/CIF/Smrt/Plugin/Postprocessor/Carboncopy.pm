@@ -10,26 +10,19 @@ sub process {
     my $class   = shift;
     my $smrt    = shift;
     my $data    = shift;
-  
-    return;    
+   
     my @new_ids;
     foreach my $i (@{$data->get_Incident()}){
-        next unless($i->get_purpose && $i->get_purpose == IncidentType::IncidentPurpose::Incident_purpose_mitigation());
+        #next unless($i->get_purpose && $i->get_purpose == IncidentType::IncidentPurpose::Incident_purpose_mitigation());
         next unless($i->get_Contact());
         my $restriction = $i->get_restriction();
         my @contacts = (ref($i->get_Contact()) eq 'ARRAY') ? @{$i->get_Contact()} : $i->get_Contact();
-        if(my $ad = $i->get_AdditionalData()){
-            foreach my $d (@{$ad}){
-                next unless($d->get_meaning() eq 'cc_restriction');
-                $restriction = $d->get_content();
-                if($restriction =~ /^(private|public|default|need-to-know)$/){
-                    $restriction = eval "RestrictionType::restriction_type_$restriction()";
-                }
-            }
-        }
-        my $altids = $i->get_AlternativeID();
+        my $altids;
+        # we assume the first contact is the point of origin, although i dunno that we need it?
+        # long as we have the AltID?
         foreach my $c (1 ... $#contacts){
             next unless($contacts[$c]->get_role() == ContactType::ContactRole::Contact_role_cc());
+            my $restriction = $contacts[$c]->get_restriction();
             
             my $new_id = IncidentIDType->new({
                 content     => generate_uuid_random(),
