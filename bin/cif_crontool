@@ -34,7 +34,7 @@ use Data::Dumper;
 use MIME::Lite;
 
 my %opts;
-getopts('afdt:T:C:c:p:c:hLS:P',\%opts);
+getopts('afdt:T:C:c:p:c:hLS:PF:',\%opts);
 my $period      = $opts{'p'} || 'daily';
 my $throttle    = $opts{'T'} || 'medium';
 my $threads     = $opts{'t'};
@@ -44,6 +44,7 @@ my $debug       = $opts{'d'};
 my $mutex       = $opts{'L'} || '/tmp/cif_crontool.lock.'.$period;
 my $start_at    = $opts{'S'};
 my $postprocess = $opts{'P'};
+my $dir         = $opts{'F'} || '/opt/cif';
 
 $SIG{__DIE__} = 'cleanup';
 $SIG{'INT'} = 'cleanup';
@@ -61,9 +62,11 @@ sub cleanup {
 
 my @files;
 ## TODO make this a var
-my $feedsdir = '/opt/cif/etc';
+my $feedsdir = $dir.'/etc';
 unless($opts{'c'}){
-    opendir(F,$feedsdir) || die($!);
+    # TODO -- this is a confusing error, it means you installed cif to a non-std location and aren't using the -F option
+    # we're getting rid of cif_crontool in the future, so this is the shim for now.
+    opendir(F,$feedsdir) || die('the directory: '.$feedsdir.' doesn\'t exist..'."\n".$!);
     @files = sort { $a cmp $b } grep(/.cfg$/,readdir(F));
     close(F);
 } else {
@@ -115,8 +118,10 @@ Usage: $0 -p hourly
     -L  --lock:     path for the mutex to go (default: $mutex);
     -T  --throttle: throttle (how man threads to use, default: $throttle)
                     low:    threads = number of cores
-                    medium: threads = number of cores * 2
-                    high:   threads = number of cores * 4
+                    medium: threads = number of cores * 4
+                    high:   threads = number of cores * 8
+    -F  --FeedDir:  what directory $0 should look at for feed configs (eg: /opt/cif/)
+                    if you've installed to a non-standard directory
 
 Examples:
     $0 -T high -f -d
