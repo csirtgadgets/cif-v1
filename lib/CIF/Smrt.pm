@@ -37,7 +37,6 @@ use ZeroMQ qw/:all/;
 # threading collisions resulting in a seg fault.
 # the higher the thread count, the higher this number needs to be
 use constant NSECS_PER_MSEC     => 1_000_000;
-use constant NSECS_PER_MSEC_NOP => 2_000_000;
 
 use CIF qw/generate_uuid_url generate_uuid_random is_uuid/;
 require CIF::Client;
@@ -85,8 +84,7 @@ sub init {
     $self->set_wait_for_server( $args->{'wait_for_server'}  || $self->get_config->{'wait_for_server'}   || 0);
     $self->set_batch_control(   $args->{'batch_control'}    || $self->get_config->{'batch_control'}     || 5000); # arbitrary
     
-    ## TODO -- enable postprocessors individually
-    $self->set_postprocess(     $args->{'postprocess'}      || $self->get_config->{'postprocess'}       || 0);
+    $self->init_postprocessors($args);
     
     if($self->get_postprocess()){
         warn 'postprocessing enabled...' if($::debug);
@@ -106,6 +104,26 @@ sub init {
     $self->init_feeds($args);
     return($err,$ret) if($err);
     return(undef,1);
+}
+
+sub init_postprocessors {
+    my $self = shift;
+    my $args = shift;
+    
+    my $things = $args->{'postprocess'} || $self->get_config->{'postprocess'};
+    return unless($things);
+    
+    if($things eq '1'){
+        $self->set_postprocess(\@postprocessors);
+    } else {
+        my $enabled;
+        foreach (@$things){
+            foreach my $p (@postprocessors){
+                push(@$enabled,$p) if(lc($p) =~ /::$_$/);
+            }
+        }
+        $self->set_postprocess($enabled);
+    }
 }
 
 sub init_config {
@@ -441,7 +459,7 @@ sub worker_routine {
             my $iodef = Iodef::Pb::Simple->new($msg);
             
             if($self->get_postprocess()){
-                foreach my $p (@postprocessors){
+                foreach my $p (@{$self->get_postprocess}){
                     my $err;
                     try {
                         $p->process($self,$iodef);

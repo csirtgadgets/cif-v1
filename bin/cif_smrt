@@ -59,6 +59,12 @@ if(!$threads){
     $threads = CIF::Smrt::throttle($throttle);
 }
 
+if($postprocess && $postprocess ne '1'){
+    my @stuff = split(/,/,$postprocess);
+    $postprocess = \@stuff;
+    
+}
+
 die usage() if($opts{'h'} || !$rules);
 
 sub usage {
