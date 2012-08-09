@@ -1,5 +1,6 @@
 SET default_tablespace = 'archive';
 DROP TABLE IF EXISTS apikeys_groups;
+DROP TABLE IF EXISTS apikeys_restrictions;
 DROP TABLE IF EXISTS apikeys;
 CREATE TABLE apikeys (
     id BIGSERIAL PRIMARY KEY NOT NULL,
@@ -8,7 +9,7 @@ CREATE TABLE apikeys (
     description text,
     parentid uuid null,
     revoked bool default null,
-    access varchar(100) default 'all',
+    restricted_access bool default 0,
     write bool default null,
     created timestamp with time zone DEFAULT NOW(),
     expires timestamp with time zone,
@@ -22,4 +23,12 @@ CREATE TABLE apikeys_groups (
     default_guid bool,
     created timestamp with time zone default now(),
     unique(uuid,guid)
+);
+
+CREATE TABLE apikeys_restrictions (
+    id BIGSERIAL PRIMARY KEY NOT NULL,
+    uuid uuid references apikeys(uuid) on delete cascade not null,
+    access varchar(40) not null,
+    created timestamp with time zone DEFAULT NOW(),
+    UNIQUE(uuid,access)
 );

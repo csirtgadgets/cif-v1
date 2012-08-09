@@ -38,7 +38,7 @@ use DateTime::Format::DateParse;
 use Data::Dumper;
 
 my %opts;
-getopt('E:G:g:e:k:u:c:', \%opts);
+getopt('E:G:g:k:u:c:R:', \%opts);
 die(usage()) if($opts{'h'});
 
 my $user            = $opts{'u'};
@@ -54,6 +54,7 @@ my $add             = $opts{'a'};
 my $parentid        = $opts{'p'};
 my $expires         = $opts{'E'};
 my $config          = $opts{'c'} || $ENV{'HOME'}.'/.cif';
+my $restricted      = $opts{'R'};
 
 if($user){
     die(usage()) unless($key || $opts{'l'} || $opts{'a'} || $opts{'d'});
@@ -104,15 +105,16 @@ my $profile = CIF::Profile->new({
 if($add){
     die(usage()) unless($user);
     my $id = $profile->user_add({
-        userid          => $user,
-        description     => $desc,
-        access          => $access,
-        write           => $write,
-        revoked         => $revoke,
-        parentid        => $parentid,
-        groups          => $groups,
-        default_group   => $default_group,
-        expires         => $expires,
+        userid              => $user,
+        description         => $desc,
+        access              => $access,
+        write               => $write,
+        revoked             => $revoke,
+        parentid            => $parentid,
+        groups              => $groups,
+        default_group       => $default_group,
+        expires             => $expires,
+        restricted_access   => $restricted,
     });
 } elsif($opts{'g'}){
     if($key){
@@ -185,12 +187,12 @@ if(!$user && $key){
 }
 my @recs = $profile->user_list({ user => $user });
 if($#recs > -1){
-    my $t = Text::Table->new('userid','key','description','guid','default_guid','access','write','revoked','expires','created');
+    my $t = Text::Table->new('userid','key','description','guid','default_guid','restricted access','write','revoked','expires','created');
     foreach (@recs){
         my $groups = $profile->groups($_->uuid());
         foreach my $g (@$groups){
             my $isDefaultGuid = ($g eq $profile->group_default($_->uuid())) ? 'true' : '';
-            $t->load([$_->uuid_alias(),$_->uuid(),$_->description(),$g,$isDefaultGuid,$_->access(),$_->write(),$_->revoked(),$_->expires(),$_->created()]);
+            $t->load([$_->uuid_alias(),$_->uuid(),$_->description(),$g,$isDefaultGuid,$_->restricted_access(),$_->write(),$_->revoked(),$_->expires(),$_->created()]);
         }
     }
     print $t;

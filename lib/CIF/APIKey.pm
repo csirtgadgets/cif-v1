@@ -3,7 +3,7 @@ use base 'CIF::DBI';
 
 __PACKAGE__->table('apikeys');
 __PACKAGE__->columns(Primary => 'uuid');
-__PACKAGE__->columns(All => qw/uuid uuid_alias description parentid revoked write access expires created/);
+__PACKAGE__->columns(All => qw/uuid uuid_alias description parentid revoked write restricted_access expires created/);
 __PACKAGE__->sequence('apikeys_id_seq');
 __PACKAGE__->has_many(groups  => 'CIF::APIKeyGroups');
 

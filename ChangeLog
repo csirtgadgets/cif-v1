@@ -3,6 +3,7 @@ Revision history for cif-dbi-perl v1.
 0.99.04 2012-08-XX
     - renamed cif_feeds to cif_feed in various places
     - added url_whitelisting (whooops...)
+    - added apikeys_restriction access control (eg: domain/malware, infrastructure/suspicious, etc...)
 
 0.99.03 2012-07-31
     - added cif_archive_vaccum script
