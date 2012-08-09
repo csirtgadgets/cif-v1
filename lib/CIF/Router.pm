@@ -15,6 +15,7 @@ use Config::Simple;
 require CIF::Archive;
 require CIF::APIKey;
 require CIF::APIKeyGroups;
+require CIF::APIKeyRestrictions;
 use CIF qw/is_uuid generate_uuid_url/;
 use CIF::Msg;
 use CIF::Msg::Feed;
@@ -177,6 +178,24 @@ sub authorized_read {
     return(undef,$ret); # all good
 }
 
+## TODO -- this is probably backwards..
+sub authorized_read_query {
+    my $self = shift;
+    my $args = shift;
+    
+    my @recs = CIF::APIKeyRestrictions->search(uuid => $args->{'apikey'});
+    # if there are no restrictions, return 1
+    return 1 unless($#recs > -1);
+    foreach (@recs){
+        warn $_->access();
+        # if we've given explicit access to that query (eg: domain/malware, domain/botnet, etc...)
+        # return 1
+        return 1 if($_->access() eq $args->{'query'});
+    }
+    # fail closed
+    return;
+}
+
 sub authorized_write {
     my $self = shift;
     my $key = shift;
@@ -257,7 +276,18 @@ sub process_query {
         }
         $authorized = 1;
         my @res;
-        foreach my $q (@{$m->get_query()}){   
+        foreach my $q (@{$m->get_query()}){
+            ## TODO -- there has got to be a better way to do this...
+            unless($self->authorized_read_query({ apikey => $m->get_apikey(), query => $q->get_query})){
+                return (
+                    MessageType->new({
+                        version => $CIF::Msg::VERSION,
+                        type    => MessageType::MsgType::REPLY(),
+                        status  => MessageType::StatusType::UNAUTHORIZED(),
+                        data    => 'no access to that type of query',
+                    })
+                );
+            }
             my $s = CIF::Archive->search({
                 query           => $q->get_query(),
                 limit           => $m->get_limit(),
