@@ -25,3 +25,6 @@ ALTER TABLE url_suspicious ADD PRIMARY KEY (id);
 
 CREATE TABLE url_spam () INHERITS (url);
 ALTER TABLE url_spam ADD PRIMARY KEY (id);
+
+CREATE TABLE url_whitelist () INHERITS (url);
+ALTER TABLE url_whitelist ADD PRIMARY KEY (id);

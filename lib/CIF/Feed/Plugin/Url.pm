@@ -12,7 +12,7 @@ __PACKAGE__->sequence('url_id_seq');
 
 ## TODO: database config?
 my @plugins = __PACKAGE__->plugins();
-push(@plugins, ('suspicious','botnet','malware','phishing','spam'));
+push(@plugins, ('suspicious','botnet','malware','phishing','spam','whitelist'));
 
 sub generate_feeds {
     my $class   = shift;
@@ -38,10 +38,12 @@ sub generate_feeds {
                 $args->{'start_time'},
                 $args->{'confidence'},
                 #$args->{'apikey'},
+                $args->{'start_time'},
                 $args->{'limit'},
             ],
             group_map       => $args->{'group_map'},
             restriction_map => $args->{'restriction_map'},
+            restriction     => $args->{'restriction'},
         };
         my $f = $class->SUPER::generate_feeds($feed_args);
         $f = $class->SUPER::encode_feed({ recs => $f, %$feed_args });
@@ -60,6 +62,13 @@ __PACKAGE__->set_sql('feed' => qq{
         detecttime >= ?
         AND t.confidence >= ?
         -- AND apikeys_groups.uuid = ?
+        AND NOT EXISTS (
+            SELECT uw.hash FROM url_whitelist uw
+            WHERE
+                uw.detecttime >= ?
+                AND uw.confidence > 25
+                AND uw.hash = t.hash
+        )
     ORDER BY t.hash ASC, t.id DESC
     LIMIT ?
 });
