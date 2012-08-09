@@ -29,11 +29,12 @@ sub generate_feeds {
         vars    => [
             $args->{'start_time'},
             $args->{'confidence'},
-            #$args->{'apikey'},
+            $args->{'guid'},
             $args->{'limit'},
         ],
         group_map       => $args->{'group_map'},
         restriction_map => $args->{'restriction_map'},
+        restriction     => $args->{'restriction'},
     };
     my $f = $class->SUPER::generate_feeds($feed_args);
     $f = $class->SUPER::encode_feed({ recs => $f, %$feed_args });
@@ -50,7 +51,7 @@ __PACKAGE__->set_sql('feed' => qq{
     WHERE 
         detecttime >= ?
         AND t.confidence >= ?
-        -- AND apikeys_groups.uuid = ?
+        AND t.guid = ?
     ORDER BY t.hash, t.id ASC, confidence DESC
     LIMIT ?
 });

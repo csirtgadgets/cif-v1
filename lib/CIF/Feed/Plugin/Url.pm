@@ -37,7 +37,7 @@ sub generate_feeds {
             vars    => [
                 $args->{'start_time'},
                 $args->{'confidence'},
-                #$args->{'apikey'},
+                $args->{'guid'},
                 $args->{'start_time'},
                 $args->{'limit'},
             ],
@@ -61,7 +61,7 @@ __PACKAGE__->set_sql('feed' => qq{
     WHERE
         detecttime >= ?
         AND t.confidence >= ?
-        -- AND apikeys_groups.uuid = ?
+        AND t.guid = ?
         AND NOT EXISTS (
             SELECT uw.hash FROM url_whitelist uw
             WHERE

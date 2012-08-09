@@ -53,12 +53,13 @@ sub generate_feeds {
             vars    => [
                 $args->{'start_time'},
                 $args->{'confidence'},
-                #$args->{'apikey'},
+                $args->{'guid'},
                 $args->{'start_time'},
                 $args->{'limit'},
             ],
             group_map       => $args->{'group_map'},
             restriction_map => $args->{'restriction_map'},
+            restriction     => $args->{'restriction'},
         };
         my $f = $class->SUPER::generate_feeds($feed_args);
         if(keys %$f){
@@ -104,8 +105,6 @@ sub test_whitelist {
     return($recs) if(keys %$recs);    
 }
 
-## TODO: this still relies on the INET data type
-## remove that dep
 __PACKAGE__->set_sql('feed' => qq{
     SELECT DISTINCT ON (address,protocol,portlist) t.address, t.id, archive.data
     FROM __TABLE__ t
@@ -114,8 +113,7 @@ __PACKAGE__->set_sql('feed' => qq{
     WHERE 
         detecttime >= ?
         AND t.confidence >= ?
-        -- TODO: fix
-        -- AND apikeys_groups.uuid = ?
+        AND t.guid = ?
         AND NOT EXISTS (
             SELECT iw.address FROM infrastructure_whitelist iw 
             WHERE 

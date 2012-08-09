@@ -19,7 +19,7 @@ sub generate_feeds {
     my $args    = shift;
     
     my $tbl = $class->table();
-    
+  
     my @feeds;
     foreach my $p (@plugins){
         my $t = $p;
@@ -37,17 +37,17 @@ sub generate_feeds {
             vars    => [
                 $args->{'start_time'},
                 $args->{'confidence'},
-                #$args->{'apikey'},
+                $args->{'guid'},
                 $args->{'start_time'},
                 $args->{'limit'},
             ],
             group_map       => $args->{'group_map'},
             restriction_map => $args->{'restriction_map'},
+            restriction     => $args->{'restriction'},
         };
         my $f = $class->SUPER::generate_feeds($feed_args);
         if(keys %$f){
-            $f = $class->test_whitelist({ recs => $f });
-           
+            $f = $class->test_whitelist({ recs => $f });  
         }
         $f = $class->SUPER::encode_feed({ recs => $f, %$feed_args });
         push(@feeds,$f);
@@ -70,7 +70,7 @@ sub test_whitelist {
         $hash{$recs->{$_}->{'address'}} = $recs->{$_};
     }
     my @whitelist = $class->search_feed_whitelist(
-        $args->{'detecttime'},
+        $args->{'start_time'},
         25000,
     );
     
@@ -100,7 +100,7 @@ __PACKAGE__->set_sql('feed' => qq{
     WHERE 
         detecttime >= ?
         AND t.confidence >= ?
-        -- AND apikeys_groups.uuid = ?
+        AND t.guid = ?
         AND NOT EXISTS (
             SELECT dw.address FROM domain_whitelist dw
             WHERE

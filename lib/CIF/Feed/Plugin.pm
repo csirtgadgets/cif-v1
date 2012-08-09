@@ -6,9 +6,9 @@ use warnings;
 use strict;
 
 use Try::Tiny;
-
 use CIF::Msg;
 use CIF::Msg::Feed;
+use CIF qw/generate_uuid_random/;
 
 __PACKAGE__->columns(All => qw/id uuid/);
 __PACKAGE__->columns(Primary => 'id');
@@ -38,7 +38,9 @@ sub encode_feed {
   
     my $recs = $args->{'recs'};
     $recs = [ map { $recs->{$_}->{'data'} } keys (%$recs) ];
-           
+    
+    delete($args->{'recs'});
+        
     my $feed = FeedType->new({
         description     => $args->{'description'},
         ReportTime      => $args->{'report_time'},
@@ -48,8 +50,9 @@ sub encode_feed {
         guid            => $args->{'guid'},
         group_map       => $args->{'group_map'},
         restriction_map => $args->{'restriction_map'},
+        uuid            => generate_uuid_random(),
+        restriction     => $args->{'restriction'},
     });
-    
     return $feed;
 }
 

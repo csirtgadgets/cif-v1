@@ -6,7 +6,9 @@ use warnings;
 
 use CIF::APIKey;
 use CIF::APIKeyGroups;
+use CIF::APIKeyRestrictions;
 use CIF qw/is_uuid generate_uuid_random generate_uuid_ns/;
+use Digest::SHA1 qw/sha1_hex/;
 
 __PACKAGE__->follow_best_practice();
 __PACKAGE__->mk_accessors(qw(config db_config));
@@ -67,14 +69,14 @@ sub key_add {
     my $uuid = generate_uuid_random();
 
     my $r = CIF::APIKey->insert({
-        uuid        => $uuid,
-        uuid_alias  => $args->{'uuid_alias'} || $args->{'userid'},
-        description => $args->{'description'},
-        access      => $args->{'access'},
-        parentid    => $args->{'parentid'},
-        write       => $args->{'write'},
-        revoked     => $args->{'revoked'},
-        expires     => $args->{'expires'},
+        uuid                => $uuid,
+        uuid_alias          => $args->{'uuid_alias'} || $args->{'userid'},
+        description         => $args->{'description'},
+        restricted_access   => $args->{'restricted_access'},
+        parentid            => $args->{'parentid'},
+        write               => $args->{'write'},
+        revoked             => $args->{'revoked'},
+        expires             => $args->{'expires'},
     });
     
     CIF::APIKey->dbi_commit() unless(CIF::APIKey->db_Main->{'AutoCommit'});
@@ -132,20 +134,52 @@ sub user_add {
     
     my $group           = $args->{'group'}          || 'everyone';
     my $default_group   = $args->{'default_group'}  || 'everyone';
+    my $isRestricted    = ($args->{'restricted_access'}) ? 1 : 0;
         
     my $r = $self->key_add({
-        uuid_alias      => $args->{'uuid_alias'}    || $args->{'userid'},
-        description     => $args->{'description'},
-        access          => $args->{'access'}        || 'all',
-        write           => $args->{'write'},
-        parentid        => $args->{'parentid'},
-        expires         => $args->{'expires'},
+        uuid_alias          => $args->{'uuid_alias'}    || $args->{'userid'},
+        description         => $args->{'description'},
+        write               => $args->{'write'},
+        parentid            => $args->{'parentid'},
+        expires             => $args->{'expires'},
+        restricted_access   => $isRestricted,
     });
     $self->group_add({
         key     => $r->uuid(),
         group   => $group,
         default => $default_group,
     });
+    $self->restriction_add({
+        restriction => $args->{'restricted_access'},
+        key         => $r->uuid(),
+    }) if($isRestricted);
+}
+
+sub restriction_add {
+    my $self = shift;
+    my $args = shift;
+    
+    my $restriction = (ref($args->{'restriction'}) eq 'ARRAY') ? $args->{'restriction'} : [ split(/,/,$args->{'restriction'}) ];
+    
+    my @ids;
+    foreach (@$restriction){
+        my @bits = split(/\//);
+        my $feed = join(' ',reverse(@bits)).' feed';
+        $feed = sha1_hex($feed) unless(/^[a-z0-9]{40}$/);
+        my $id = CIF::APIKeyRestrictions->insert({
+            uuid    => $args->{'key'},
+            access  => $feed,
+        });
+        push(@ids,$id);
+    }
+    return(\@ids);
+}
+
+sub restriction_list {
+    my $self = shift;
+    my $args = shift;
+    
+    return CIF::APIKey::Restriction->search(uuid => $args->{'uuid'});
 }
 
 sub user_list {

@@ -168,8 +168,7 @@ sub process {
     foreach my $confidence (@{$self->get_confidence()}){
         foreach my $role (@{$self->get_roles()}){
             my $p = 'CIF::Feed::Plugin::'.ucfirst($feed);
-            #warn 'generating '.$confidence.'% '.$role.' '.$feed.' feed' if($::debug);
-            debug('generating '.$confidence.'% '.$role.' '.$feed.' feed','INFO');
+            debug('generating '.$confidence.'% '.$role.' '.$feed.' feed') if($::debug);
             my $ret = $p->generate_feeds({
                 confidence      => $confidence,
                 guid            => generate_uuid_ns($role),
