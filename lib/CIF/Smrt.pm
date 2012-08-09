@@ -243,45 +243,49 @@ sub parse {
     my $f = $self->get_rules();
     
     my ($err,$content) = pull_feed($f);
-
     return($err) if($err);
     
     my $return;
-    # see if we designate a delimiter
-    if(my $d = $f->{'delimiter'}){
-        require CIF::Smrt::ParseDelim;
-        $return = CIF::Smrt::ParseDelim::parse($f,$content,$d);
-    } else {
-        # try to auto-detect the file
-        if($content =~ /<\?xml version=/){
-            if($content =~ /<rss version=/){
-                require CIF::Smrt::ParseRss;
-                $return = CIF::Smrt::ParseRss::parse($f,$content);
-            } else {
-                require CIF::Smrt::ParseXml;
-                $return = CIF::Smrt::ParseXml::parse($f,$content);
-            }
-        } elsif($content =~ /^\[?{/){
-            # possible json content or CIF
-            if($content =~ /^{"status"\:/){
-                require CIF::Smrt::ParseCIF;
-                $return = CIF::Smrt::ParseCIF::parse($f,$content);
-            } elsif($content =~ /urn:ietf:params:xmls:schema:iodef-1.0/) {
-                require CIF::Smrt::ParseJsonIodef;
-                $return = CIF::Smrt::ParseJsonIodef::parse($f,$content);
-            } else {
-                require CIF::Smrt::ParseJson;
-                $return = CIF::Smrt::ParseJson::parse($f,$content);
-            }
-        ## TODO -- fix this; double check it
-        } elsif($content =~ /^#?\s?"\S+","\S+"/ && !$f->{'regex'}){
-            require CIF::Smrt::ParseCsv;
-            $return = CIF::Smrt::ParseCsv::parse($f,$content);
+    try {
+        # see if we designate a delimiter
+        if(my $d = $f->{'delimiter'}){
+            require CIF::Smrt::ParseDelim;
+            $return = CIF::Smrt::ParseDelim::parse($f,$content,$d);
         } else {
-            require CIF::Smrt::ParseTxt;
-            $return = CIF::Smrt::ParseTxt::parse($f,$content);
+            # try to auto-detect the file
+            if($content =~ /<\?xml version=/){
+                if($content =~ /<rss version=/ && !$f->{'nodes'}){
+                    require CIF::Smrt::ParseRss;
+                    $return = CIF::Smrt::ParseRss::parse($f,$content);
+                } else {
+                    require CIF::Smrt::ParseXml;
+                    $return = CIF::Smrt::ParseXml::parse($f,$content);
+                }
+            } elsif($content =~ /^\[?{/){
+                # possible json content or CIF
+                if($content =~ /^{"status"\:/){
+                    require CIF::Smrt::ParseCIF;
+                    $return = CIF::Smrt::ParseCIF::parse($f,$content);
+                } elsif($content =~ /urn:ietf:params:xmls:schema:iodef-1.0/) {
+                    require CIF::Smrt::ParseJsonIodef;
+                    $return = CIF::Smrt::ParseJsonIodef::parse($f,$content);
+                } else {
+                    require CIF::Smrt::ParseJson;
+                    $return = CIF::Smrt::ParseJson::parse($f,$content);
+                }
+            ## TODO -- fix this; double check it
+            } elsif($content =~ /^#?\s?"\S+","\S+"/ && !$f->{'regex'}){
+                require CIF::Smrt::ParseCsv;
+                $return = CIF::Smrt::ParseCsv::parse($f,$content);
+            } else {
+                require CIF::Smrt::ParseTxt;
+                $return = CIF::Smrt::ParseTxt::parse($f,$content);
+            }
         }
-    }
+    } catch {
+        $err = shift;
+    };
+    return($err) if($err);
     return(undef,$return);
 }
 

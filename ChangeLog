@@ -6,6 +6,7 @@ Revision history for cif-smrt-perl v1.
     - enabled specific-class postprocessor enabling (eg: -p fqdn,ip)
     - better error message handling between threads
     - cleaned up carbon copy postprocessor
+    - adding try {} catches to parsers, to fail more gracefully
 
 0.99.02 2012-07-31
     - zmq support
