@@ -23,3 +23,7 @@ ALTER TABLE email_phishing ADD PRIMARY KEY (id);
 DROP TABLE IF EXISTS email_registrant;
 CREATE TABLE email_registrant () INHERITS (email);
 ALTER TABLE email_registrant ADD PRIMARY KEY (id);
+
+DROP TABLE IF EXISTS email_whitelist;
+CREATE TABLE email_whitelist () INHERITS (email);
+ALTER TABLE email_whitelist ADD PRIMARY KEY (id);
