@@ -32,4 +32,6 @@ message FeedType {
     repeated MapType group_map              = 8;
     // TODO: research packed = true
     repeated bytes data                     = 9;
+    
+    optional string uuid                    = 10;
 }
