@@ -12,7 +12,7 @@ Google::ProtocolBuffers->parsefile($f,
     }
 );
 
-$f = './src/feed.proto';
+$f = './protocol/src/feed.proto';
 
 Google::ProtocolBuffers->parsefile($f,
     {

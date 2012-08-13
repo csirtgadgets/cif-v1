@@ -45,6 +45,9 @@ realclean:
 	rm Makefile.in
 	rm configure
 	rm aclocal.m4
+ 
+bindings:
+	$(PERL) ./sbin/gen_protocol_bindings.pl
 
 reconf:
 	autoreconf -vf
