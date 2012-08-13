@@ -46,9 +46,6 @@ my $start_at    = $opts{'S'};
 my $postprocess = $opts{'P'};
 my $dir         = $opts{'F'} || '/opt/cif';
 
-$SIG{__DIE__} = 'cleanup';
-$SIG{'INT'} = 'cleanup';
-
 sub cleanup {
     my $msg = shift;
     if($msg){
@@ -66,7 +63,7 @@ my $feedsdir = $dir.'/etc';
 unless($opts{'c'}){
     # TODO -- this is a confusing error, it means you installed cif to a non-std location and aren't using the -F option
     # we're getting rid of cif_crontool in the future, so this is the shim for now.
-    opendir(F,$feedsdir) || die('the directory: '.$feedsdir.' doesn\'t exist..'."\n".$!);
+    opendir(F,$feedsdir) || die('the directory: '.$feedsdir.' doesn\'t exist.. check your -F option if you installed cif somewhere else'."\n".$!);
     @files = sort { $a cmp $b } grep(/.cfg$/,readdir(F));
     close(F);
 } else {
@@ -130,7 +127,10 @@ Examples:
 Current Feeds:
 $f
 EOF
-} 
+}
+
+$SIG{__DIE__} = 'cleanup';
+$SIG{'INT'} = 'cleanup';
 
 if(-e $mutex){
     print 'already running, mutex found: '.$mutex."\n" if($debug);
@@ -157,11 +157,7 @@ foreach(@crons){
     warn $cmd if($debug);
     my $ret = system($cmd);
     warn $ret if($debug);
-#    unless(defined($ret) && $ret == 0 || $ret == 11){
-#        warn 'retrying...' if($debug);
-#        $ret = system($cmd);
-        die($!) unless(defined($ret) && $ret == 0 || $ret == 11);
-#    }
+    die($!) unless(defined($ret) && $ret == 0 || $ret == 11);
 }
 remove_lock();
 
