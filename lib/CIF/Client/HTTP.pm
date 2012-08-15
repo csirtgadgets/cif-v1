@@ -1,4 +1,4 @@
-package CIF::Client::REST;
+package CIF::Client::HTTP;
 use base 'Class::Accessor';
 use base 'LWP::UserAgent';
 
