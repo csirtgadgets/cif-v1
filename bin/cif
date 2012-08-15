@@ -183,7 +183,10 @@ my $ret;
 });
 
 die $err if($err);
-exit(0) unless($ret);
+unless($ret){
+    print 'no results...'."\n" if($debug);
+    exit(0);
+}
 
 my $feeds = $ret;
 

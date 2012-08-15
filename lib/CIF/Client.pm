@@ -44,7 +44,7 @@ sub new {
     bless($self,$class);
     
     $self->set_config(          $args->{'config'}->param(-block => 'client'));
-    $self->set_driver(          $self->get_config->{'driver'} || 'REST');
+    $self->set_driver(          $self->get_config->{'driver'} || 'HTTP');
     $self->set_driver_config(   $args->{'config'}->param(-block => 'client_'.lc($self->get_driver())));
     $self->set_apikey(          $args->{'apikey'} || $self->get_config->{'apikey'});
         
@@ -215,7 +215,6 @@ sub search {
         data    => \@queries,
     });
     
-    #my ($err,$ret) = $self->get_driver->send($msg->encode());
     my ($err,$ret) = $self->send($msg->encode());
     
     return $err if($err);
@@ -225,16 +224,13 @@ sub search {
         return('failed: '.@{$ret->get_data()}[0]) if($ret->get_status() == MessageType::StatusType::FAILED());
         return('unauthorized') if($ret->get_status() == MessageType::StatusType::UNAUTHORIZED());
     }
-    
+    return(0) unless($ret->{'data'});
     my $uuid = generate_uuid_ns($args->{'apikey'});
 
     warn 'processing...' if($::debug);
    
     ## TODO: finish this so feeds are inline with reg queries
     ## TODO: try to base64 decode and decompress first in try { } catch;
-       
-    ## TODO: clean up all these vars...
-    return (undef,0) unless($ret->get_data());
     foreach my $feed (@{$ret->get_data()}){
         my @array;
         my $err;
