@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 ## TODO -- this should be set my CIF::Message
-our $VERSION = '0.99_02';
+our $VERSION = '0.99_04';
 $VERSION = eval $VERSION;
 
 use Try::Tiny;
