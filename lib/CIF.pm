@@ -4,7 +4,7 @@ use 5.008008;
 use strict;
 use warnings;
 
-our $VERSION = '0.99_04';
+our $VERSION = '0.99_05';
 $VERSION = eval $VERSION;
 
 use DateTime::Format::DateParse;
