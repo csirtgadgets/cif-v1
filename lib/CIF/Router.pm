@@ -348,6 +348,8 @@ sub process_submission {
         status  => MessageType::StatusType::UNAUTHORIZED(),
         data    => $err,
     })->encode();
+    
+    ## TODO -- finish this in RC2
     return $reply unless($ret || 1);
     
     my $state = 0;
