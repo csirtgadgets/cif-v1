@@ -1,6 +1,6 @@
-EXTRA_DIST = lib sbin
+EXTRA_DIST = lib sbin bin
 
-ME=cif-perl
+ME=libcif
 BUILD=$(shell git describe --tags)
 SNAPSHOT=$(ME)-$(BUILD)
 
