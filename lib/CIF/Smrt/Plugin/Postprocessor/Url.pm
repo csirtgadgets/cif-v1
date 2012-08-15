@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 use Regexp::Common qw/URI net/;
-use Iodef::Pb ':all';
+use Iodef::Pb::Simple ':all';
 
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 

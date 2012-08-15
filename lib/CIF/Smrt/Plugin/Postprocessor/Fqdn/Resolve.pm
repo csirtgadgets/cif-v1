@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 use CIF qw(generate_uuid_random);
-use Iodef::Pb ':all';
+use Iodef::Pb::Simple ':all';
 
 my @postprocessors = CIF::Smrt->plugins();
 @postprocessors = grep(/Postprocessor::[0-9a-zA-Z_]+$/,@postprocessors);

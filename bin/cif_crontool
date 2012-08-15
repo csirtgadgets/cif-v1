@@ -201,5 +201,5 @@ sub exit {
 }
 
 sub remove_lock {
-    system('rm '.$mutex);
+    system('rm '.$mutex) if(-e $mutex);
 }

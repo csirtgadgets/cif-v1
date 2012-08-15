@@ -7,7 +7,7 @@ use warnings;
 use CIF qw/generate_uuid_random/;
 use Regexp::Common qw/net/;
 use Net::Abuse::Utils::Spamhaus qw(check_ip);
-use Iodef::Pb qw(/iodef_impacts_first/);
+use Iodef::Pb::Simple ':all';
 
 sub process {
     my $class   = shift;

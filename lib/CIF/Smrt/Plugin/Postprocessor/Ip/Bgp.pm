@@ -4,7 +4,7 @@ use base 'CIF::Smrt::Plugin::Postprocessor::Ip';
 use warnings;
 use strict;
 
-use Iodef::Pb qw/iodef_systems/;
+use Iodef::Pb::Simple ':all';
 
 sub process {
     my $self        = shift;

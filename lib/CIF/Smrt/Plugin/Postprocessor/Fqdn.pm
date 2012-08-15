@@ -4,7 +4,7 @@ use base 'CIF::Smrt::Plugin::Postprocessor';
 use strict;
 use warnings;
 
-use Iodef::Pb qw(:all);
+use Iodef::Pb::Simple ':all';
 require Net::DNS::Resolver;
 
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
