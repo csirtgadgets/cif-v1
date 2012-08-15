@@ -14,6 +14,10 @@ Google::ProtocolBuffers->parsefile($f,
 
 $f = './protocol/src/feed.proto';
 
+unless(-e './lib/CIF/Msg'){
+    system('mkdir lib/CIF/Msg');
+}
+
 Google::ProtocolBuffers->parsefile($f,
     {
         generate_code => './lib/CIF/Msg/Feed.pm',
