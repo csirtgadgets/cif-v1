@@ -47,7 +47,7 @@ sub new {
     $self->set_driver(          $self->get_config->{'driver'} || 'HTTP');
     $self->set_driver_config(   $args->{'config'}->param(-block => 'client_'.lc($self->get_driver())));
     $self->set_apikey(          $args->{'apikey'} || $self->get_config->{'apikey'});
-        
+    
     $self->{'guid'}             = $args->{'guid'}               || $self->get_config->{'default_guid'};
     $self->{'limit'}            = $args->{'limit'}              || $self->get_config->{'limit'};
     $self->{'compress_address'} = $args->{'compress_address'}   || $self->get_config->{'compress_address'};
