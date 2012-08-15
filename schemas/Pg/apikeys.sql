@@ -9,7 +9,7 @@ CREATE TABLE apikeys (
     description text,
     parentid uuid null,
     revoked bool default null,
-    restricted_access bool default 0,
+    restricted_access bool default false,
     write bool default null,
     created timestamp with time zone DEFAULT NOW(),
     expires timestamp with time zone,
