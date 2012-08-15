@@ -137,6 +137,19 @@ DateTime::Format::DateParse 0.05
 OSSP::uuid 1.0501
 Google::ProtocolBuffers 0.08 
 DateTime::Format::DateParse 0.05
+Net::Patricia 1.16
+Config::Simple 4.59
+Digest::SHA 2.10
+MIME::Base64 3.06
+Module::Pluggable 3.8
+Regexp::Common 2.122
+Regexp::Common::net::CIDR 0.02
+URI::Escape 1.56
+LWP::Protocol::https 6.02
+LWP::UserAgent 6.02
+Compress::Snappy 0.18 
+Iodef::Pb::Simple 0.06
+Try::Tiny 0.04
 .
 
 if ($args{'download'}) {

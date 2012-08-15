@@ -28,7 +28,7 @@ Google::ProtocolBuffers->parsefile($f,
 open(F,'./lib/CIF/Msg.pm') || die($!);;
 my @lines = <F>;
 close(F);
-open(F,'>','perl/lib/CIF/Msg.pm');
+open(F,'>','./lib/CIF/Msg.pm');
 no warnings;
 print F "package CIF::Msg;\n";
 foreach (@lines){
