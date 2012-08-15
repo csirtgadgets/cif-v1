@@ -1,4 +1,4 @@
-package CIF::Router::REST;
+package CIF::Router::HTTP;
 
 use strict;
 use warnings;
