@@ -145,39 +145,38 @@ if($add){
         key     => $key,
         group   => $opts{'G'},
     });
+} else {
+    if($expires){
+        die(usage()) unless($key);
+        my $r = $profile->key_set_expires({
+            key     => $key,
+            expires => $expires,
+        });
+    }
+    
+    if($write) {
+        die(usage()) unless($key);
+        my $r = $profile->key_toggle_write({
+            write   => $write,
+            key     => $key,
+        });
+    } 
+    
+    if($revoke){
+        die(usage()) unless($key);
+        my $r = $profile->key_toggle_revoke({
+            revoke  => $revoke,
+            key     => $key,
+        });
+    }
+    
+    if(exists($opts{'d'})){
+        die(usage()) unless($key || $user);
+        my $obj = $key || $user;
+        print 'removing: '.$obj."\n";
+        $profile->remove($obj);
+    }
 }
-
-if($expires){
-    die(usage()) unless($key);
-    my $r = $profile->key_set_expires({
-        key     => $key,
-        expires => $expires,
-    });
-}
-
-if($write) {
-    die(usage()) unless($key);
-    my $r = $profile->key_toggle_write({
-        write   => $write,
-        key     => $key,
-    });
-} 
-
-if($revoke){
-    die(usage()) unless($key);
-    my $r = $profile->key_toggle_revoke({
-        revoke  => $revoke,
-        key     => $key,
-    });
-}
-
-if(exists($opts{'d'})){
-    die(usage()) unless($key || $user);
-    my $obj = $key || $user;
-    print 'removing: '.$obj."\n";
-    $profile->remove($obj);
-}
-
 if(!$user && $key){
     $user = $profile->user_from_key($key);
     unless($user){
