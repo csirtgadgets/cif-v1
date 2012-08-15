@@ -1,7 +1,8 @@
-Revision history for cif-router-perl v1.
+Revision history for cif-router
 
 0.99.04 2012-08-XX
     - added query api restriction (eg: domain/malware, infrastructure/botnet, etc...)
+    - merged in libcif
 
 0.99.03 2012-07031
     - bugfixes

@@ -9,10 +9,9 @@ use warnings;
 BEGIN {
     require File::Spec;
     my @libs = ("lib", "local/lib",
-        '../cif-perl/lib',
-        '../cif-protocol/perl/lib',
-        '../cif-dbi-perl/lib',
-        '../iodef-pb-perl/lib',
+        '../libcif/lib',
+        '../libcif-dbi/lib',
+        '../../iodef-pb-simple-perl/lib',
     );
     my $bin_path;
 

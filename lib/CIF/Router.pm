@@ -213,14 +213,14 @@ sub process {
     $msg = MessageType->decode($msg);
     
     my $reply = MessageType->new({
-        version => $CIF::Msg::VERSION,
+        version => $CIF::VERSION,
         type    => MessageType::MsgType::REPLY(),
         status  => MessageType::StatusType::FAILED(),
     });
     
     my $pversion = sprintf("%4f",$msg->get_version());
-    if($pversion != $CIF::Msg::VERSION){
-        $reply->set_data('invalid protocol version: '.$pversion.', should be: '.$CIF::Msg::VERSION);
+    if($pversion != $CIF::VERSION){
+        $reply->set_data('invalid protocol version: '.$pversion.', should be: '.$CIF::VERSION);
         return $reply->encode();
     }
    
@@ -265,7 +265,7 @@ sub process_query {
             unless($ret){
                 return(
                     MessageType->new({
-                        version => $CIF::Msg::VERSION,
+                        version => $CIF::VERSION,
                         type    => MessageType::MsgType::REPLY(),
                         status  => MessageType::StatusType::UNAUTHORIZED(),
                         data    => $err,
@@ -281,7 +281,7 @@ sub process_query {
             unless($self->authorized_read_query({ apikey => $m->get_apikey(), query => $q->get_query})){
                 return (
                     MessageType->new({
-                        version => $CIF::Msg::VERSION,
+                        version => $CIF::VERSION,
                         type    => MessageType::MsgType::REPLY(),
                         status  => MessageType::StatusType::UNAUTHORIZED(),
                         data    => 'no access to that type of query',
@@ -310,7 +310,7 @@ sub process_query {
                 $dt = $dt->ymd().'T'.$dt->hms().'Z';
                 
                 my $f = FeedType->new({
-                    version         => $CIF::Msg::VERSION,
+                    version         => $CIF::VERSION,
                     confidence      => $m->get_confidence(),
                     description     => $m->get_description(),
                     ReportTime      => $dt,
@@ -326,7 +326,7 @@ sub process_query {
     }
                     
     $reply = MessageType->new({
-        version => $CIF::Msg::VERSION,
+        version => $CIF::VERSION,
         type    => MessageType::MsgType::REPLY(),
         status  => MessageType::StatusType::SUCCESS(),
         data    => $results,
@@ -343,7 +343,7 @@ sub process_submission {
     
     my ($err, $ret) = $self->authorized_write($msg->get_apikey());
     my $reply = MessageType->new({
-        version => $CIF::Msg::VERSION,
+        version => $CIF::VERSION,
         type    => MessageType::MsgType::REPLY(),
         status  => MessageType::StatusType::UNAUTHORIZED(),
         data    => $err,
@@ -388,7 +388,7 @@ sub process_submission {
     }
     warn 'done...';
     return MessageType->new({
-        version => $CIF::Msg::VERSION,
+        version => $CIF::VERSION,
         type    => MessageType::MsgType::REPLY(),
         status  => MessageType::StatusType::SUCCESS(),
         data    => $ret,
