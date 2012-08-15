@@ -32,7 +32,7 @@ sub new {
         $self->proxy(['http','https'],$self->get_config->{'proxy'});
     }
     
-    $self->agent('cif-client-rest/'.$CIF::VERSION);
+    $self->agent('libcif/'.$CIF::VERSION);
 
     return($self);
 }
