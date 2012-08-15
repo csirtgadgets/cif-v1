@@ -48,7 +48,7 @@ sub new {
     my $ret = $self->init($args);
     die $ret unless($ret);
      
-    my $driver = $args->{'driver'} || 'REST';
+    my $driver = $args->{'driver'} || 'HTTP';
     
     if($args->{'config'}->param(-block => 'router_'.lc($driver))){
         $self->set_driver_config($args->{'config'}->param(-block => 'router_'.lc($driver)));
@@ -340,17 +340,15 @@ sub process_submission {
     my $msg = shift;
 
     warn 'type: submission...';
-    
-    my ($err, $ret) = $self->authorized_write($msg->get_apikey());
+    my $ret = $self->authorized_write($msg->get_apikey());
     my $reply = MessageType->new({
         version => $CIF::VERSION,
         type    => MessageType::MsgType::REPLY(),
         status  => MessageType::StatusType::UNAUTHORIZED(),
-        data    => $err,
-    })->encode();
+    });
     
-    ## TODO -- finish this in RC2
-    return $reply unless($ret || 1);
+    return $reply unless($ret);
+    my $err;
     
     my $state = 0;
     $ret = undef;
