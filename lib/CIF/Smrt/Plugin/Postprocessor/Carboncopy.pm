@@ -52,7 +52,8 @@ sub process {
                 IncidentID  => $new_id
             }));           
         }
-        $i->set_AlternativeID($altids);
+        ## TODO -- check this
+        push(@{$i->get_AlternativeID()},@$altids) if($altids);
     }
     push(@{$data->get_Incident()},@new_ids) if($#new_ids > -1);
 }

@@ -90,7 +90,7 @@ sub process {
                 }
             }
         }
-        $i->set_RelatedActivity($altids);
+        $i->set_RelatedActivity($altids) if($altids);
     }
     push(@{$data->get_Incident()},@new_ids);
 }
