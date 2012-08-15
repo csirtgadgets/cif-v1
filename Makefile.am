@@ -16,7 +16,7 @@ fixperms:
 
 install: files-install fixperms
 
-files-install: libs-install
+files-install: libs-install bin-install
 
 depends: fixdeps
 
@@ -33,6 +33,12 @@ libs-install:
     done
 	-( cd lib && find . -type f -print ) | while read file ; do \
     $(INSTALL) -m 0644 "lib/$$file" "$(libdir)/$$file" ; \
+    done
+
+bin-install:	
+	[ -d $(bindir) ] || $(INSTALL) -m 0770 -d $(bindir)
+	-( cd bin && find . -type f -print ) | while read file ; do \
+        $(INSTALL) -m 0750 "bin/$$file" "$(bindir)/$$file" ; \
     done
 
 clean:
