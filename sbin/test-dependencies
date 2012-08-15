@@ -149,6 +149,7 @@ LWP::Protocol::https 6.02
 Linux::Cpuinfo 1.7
 LWP::UserAgent 6.02
 MIME::Base64 3.06
+MIME::Lite 3.027
 Date::Manip 6.11
 DateTime 0.42
 DateTime::Format::DateParse 0.04

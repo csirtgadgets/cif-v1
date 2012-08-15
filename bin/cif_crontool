@@ -34,7 +34,7 @@ use Data::Dumper;
 use MIME::Lite;
 
 my %opts;
-getopts('afdt:T:C:c:p:c:hLS:PF:',\%opts);
+getopts('A:Nafdt:T:C:c:p:c:hLS:PF:',\%opts);
 my $period      = $opts{'p'} || 'daily';
 my $throttle    = $opts{'T'} || 'medium';
 my $threads     = $opts{'t'};
@@ -45,7 +45,12 @@ my $mutex       = $opts{'L'} || '/tmp/cif_crontool.lock.'.$period;
 my $start_at    = $opts{'S'};
 my $postprocess = $opts{'P'};
 my $dir         = $opts{'F'} || '/opt/cif';
+my $admin       = $opts{'A'} || 'root';
+my $fail_open   = $opts{'N'} || 0;
 
+if(! -e $cron_tool){
+    $cron_tool .= $dir.'/'.$cron_tool;
+}
 sub cleanup {
     my $msg = shift;
     if($msg){
@@ -106,6 +111,7 @@ if($opts{'h'}){
 sub usage {
     return <<EOF;
 Usage: $0 -p hourly
+Common:
     -h  --help:     this message
     -f  --first:    "first load", run through the configs where first_run = true
                     don't do NS resolution on domains
@@ -117,8 +123,14 @@ Usage: $0 -p hourly
                     low:    threads = number of cores
                     medium: threads = number of cores * 4
                     high:   threads = number of cores * 8
-    -F  --FeedDir:  what directory $0 should look at for feed configs (eg: /opt/cif/)
-                    if you've installed to a non-standard directory
+
+Advanced:
+    -F  --FeedDir:      what directory $0 should look at for feed configs (eg: /opt/cif/)
+                        if you've installed to a non-standard directory
+    -N  --fail-open:    don't error out if one of the jobs fail, mail the -A admin
+                        (default: $fail_open)
+    -A  --admin:        designate an admin email address where errors should go if we fail open
+                        (default: $admin)
 
 Examples:
     $0 -T high -f -d
@@ -153,6 +165,10 @@ foreach(@crons){
     }
     $cmd .= ' -F' if($first_run);
     $cmd .= ' -P' if($postprocess);
+    if($fail_open){
+        $cmd .= ' -A '.$admin if($admin);
+        $cmd .= ' -N 1' if($fail_open);
+    }
     
     warn $cmd if($debug);
     my $ret = system($cmd);
