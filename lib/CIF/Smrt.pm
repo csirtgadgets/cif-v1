@@ -46,7 +46,7 @@ __PACKAGE__->mk_accessors(qw(
     config db_config feeds_config feeds threads 
     entries defaults feed rules load_full goback 
     client wait_for_server name instance 
-    batch_control client_config postprocess
+    batch_control client_config postprocess apikey
 ));
 
 my @preprocessors = __PACKAGE__->plugins();
@@ -83,7 +83,8 @@ sub init {
     $self->set_load_full(       $args->{'load_full'}        || $self->get_config->{'load_full'}         || 0);
     $self->set_wait_for_server( $args->{'wait_for_server'}  || $self->get_config->{'wait_for_server'}   || 0);
     $self->set_batch_control(   $args->{'batch_control'}    || $self->get_config->{'batch_control'}     || 5000); # arbitrary
-    
+    $self->set_apikey(          $args->{'apikey'}           || $self->get_config->{'apikey'}            || return('missing apikey'));
+   
     $self->init_postprocessors($args);
     
     if($self->get_postprocess()){
@@ -397,11 +398,15 @@ sub process {
         warn 'waiting on message...' if($::debug);
         my $msg = $return->recv();
         warn 'return msg received...' if($::debug);
-
-        $msg = MessageType->decode($msg->data());
-        $total_recs -= ($#{$msg->{'data'}}+1);
-        warn 'total left: '.($total_recs + 1);
-        nanosleep NSECS_PER_MSEC;
+        if($msg->data() =~ /^ERROR: /){
+            print $msg->data()."\n";
+            $total_recs = -1;
+        } else {
+            $msg = MessageType->decode($msg->data());
+            $total_recs -= ($#{$msg->{'data'}}+1);
+            warn 'total left: '.($total_recs + 1);
+            nanosleep NSECS_PER_MSEC;
+        }
     } while($total_recs > -1);
     
     warn 'sending KILL...';
@@ -509,6 +514,7 @@ sub sender_routine {
     # do this within the thread
     my ($err,$client) = CIF::Client->new({
         config  => $self->get_client_config(),
+        apikey  => $self->get_apikey(),
     });
     $self->set_client($client);
     
@@ -558,9 +564,13 @@ sub sender_routine {
                 # 300 is arbitrary || this is the last rec in the batch
                 if(($#{$array}+1) % $self->get_batch_control() == 0 || $total_recs == 0){
                     warn 'sender['.threads->tid().'] sending data to router...' if($::debug > 2);
-                    my $ret = $self->send($array);
+                    my ($err,$ret) = $self->send($array);
                     warn 'sender['.threads->tid().'] returning answer from router...' if($::debug > 2);
-                    $return->send($ret->encode());
+                    if($err){
+                        $return->send('ERROR: '.$err);
+                    } else {
+                        $return->send($ret->encode());
+                    }
                     $array = [];
                     warn 'sender['.threads->tid().'] total recs left: '.($total_recs+1) if($::debug > 2);
                 }
@@ -589,7 +599,6 @@ sub send {
     });
     
     warn 'submitting...';
- 
     return $self->get_client->submit($ret);    
 }
 
