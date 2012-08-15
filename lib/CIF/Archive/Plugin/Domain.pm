@@ -5,7 +5,6 @@ use strict;
 use warnings;
 
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
-
 use Try::Tiny;
 
 __PACKAGE__->table('domain');

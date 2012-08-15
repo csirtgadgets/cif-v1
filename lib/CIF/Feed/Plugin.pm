@@ -45,7 +45,7 @@ sub encode_feed {
         description     => $args->{'description'},
         ReportTime      => $args->{'report_time'},
         data            => $recs,
-        version         => $CIF::Msg::VERSION,
+        version         => $CIF::VERSION,
         confidence      => $args->{'confidence'},
         guid            => $args->{'guid'},
         group_map       => $args->{'group_map'},

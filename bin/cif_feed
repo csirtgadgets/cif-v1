@@ -28,9 +28,8 @@ BEGIN {
 
 }
 
-use lib './lib';
-use lib '../cif-perl/lib';
-use lib '../cif-protocol/perl/lib';
+use lib '../libcif/lib';
+use lib '../../iodef-pb-simple-perl/lib';
 
 use Getopt::Std;
 use DateTime;

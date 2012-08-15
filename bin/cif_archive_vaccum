@@ -28,8 +28,7 @@ BEGIN {
 
 }
 
-use lib './lib';
-use lib '../cif-perl/lib';
+use lib '../libcif/lib';
 
 use Getopt::Std;
 use DateTime;

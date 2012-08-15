@@ -9,7 +9,7 @@ use warnings;
 use Try::Tiny;
 
 use MIME::Base64;
-require Iodef::Pb;
+require Iodef::Pb::Simple;
 require Compress::Snappy;
 
 use Module::Pluggable require => 1, except => qr/::Plugin::\S+::/;
