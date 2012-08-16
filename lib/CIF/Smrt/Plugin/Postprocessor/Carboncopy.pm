@@ -10,6 +10,9 @@ sub process {
     my $class   = shift;
     my $smrt    = shift;
     my $data    = shift;
+    
+    ## TODO -- check this
+    return unless($data && $data->get_Incident());
    
     my @new_ids;
     foreach my $i (@{$data->get_Incident()}){
