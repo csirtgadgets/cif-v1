@@ -37,7 +37,7 @@ sub handler {
     
     require CIF::Router;
     my ($err,$router) = CIF::Router->new({
-        config  => $req->dir_config->get('CIFRouterRESTConfig') || '/home/cif/.cif',
+        config  => $req->dir_config->get('CIFRouterConfig') || '/home/cif/.cif',
     });
     if($err){
         ## TODO -- set debugging variable
