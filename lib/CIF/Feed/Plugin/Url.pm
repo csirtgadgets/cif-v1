@@ -5,6 +5,7 @@ use warnings;
 use strict;
 
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
+use CIF qw/debug/;
 
 __PACKAGE__->table('url');
 __PACKAGE__->columns(All => qw/id uuid guid hash confidence detecttime created/);
@@ -45,7 +46,13 @@ sub generate_feeds {
             restriction_map => $args->{'restriction_map'},
             restriction     => $args->{'restriction'},
         };
+        debug($desc.': generating');
         my $f = $class->SUPER::generate_feeds($feed_args);
+        if(keys %$f){
+            debug($desc.': testing whitelist');
+            $f = $class->test_whitelist({ recs => $f });  
+        }
+        debug($desc.': encoding');
         $f = $class->SUPER::encode_feed({ recs => $f, %$feed_args });
         push(@feeds,$f);
     }
@@ -53,8 +60,29 @@ sub generate_feeds {
     return(\@feeds);
 }
 
+## TODO -- double test this
+sub test_whitelist {
+    my $class = shift;
+    my $args = shift;
+    
+    return $args->{'recs'} if($class->table() =~ /whitelist$/);
+    
+    my @whitelist = $class->search_feed_whitelist(
+        $args->{'start_time'},
+        25000,
+    );
+
+    return $args->{'recs'} unless($#whitelist > -1);
+    my $recs = $args->{'recs'};
+    
+    foreach my $w (@whitelist){
+        delete($recs->{$w->{'hash'}});
+    }
+    return($recs);
+}
+
 __PACKAGE__->set_sql('feed' => qq{
-    SELECT DISTINCT ON (t.hash) t.id, archive.data
+    SELECT DISTINCT ON (t.hash) t.id, t.hash, archive.data
     FROM __TABLE__ t
     LEFT JOIN apikeys_groups ON t.guid = apikeys_groups.guid
     LEFT JOIN archive ON t.uuid = archive.uuid
@@ -70,6 +98,16 @@ __PACKAGE__->set_sql('feed' => qq{
                 AND uw.hash = t.hash
         )
     ORDER BY t.hash ASC, t.id DESC
+    LIMIT ?
+});
+
+__PACKAGE__->set_sql('feed_whitelist' => qq{
+    SELECT DISTINCT ON (t.uuid) t.uuid, hash, confidence
+    FROM url_whitelist t
+    WHERE
+        t.detecttime >= ?
+        AND t.confidence >= 25
+    ORDER BY t.uuid DESC, t.id ASC
     LIMIT ?
 });
     

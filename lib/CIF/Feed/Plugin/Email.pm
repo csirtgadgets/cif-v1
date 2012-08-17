@@ -5,6 +5,7 @@ use warnings;
 use strict;
 
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
+use CIF qw/debug/;
 
 __PACKAGE__->table('email');
 __PACKAGE__->columns(All => qw/id uuid guid hash confidence detecttime created/);
@@ -45,7 +46,9 @@ sub generate_feeds {
             restriction_map => $args->{'restriction_map'},
             restriction     => $args->{'restriction'},
         };
+        debug($desc.': generating');
         my $f = $class->SUPER::generate_feeds($feed_args);
+        debug($desc.': encoding');
         $f = $class->SUPER::encode_feed({ recs => $f, %$feed_args });
         push(@feeds,$f);
     }

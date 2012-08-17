@@ -6,8 +6,8 @@ use warnings;
 
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 use Digest::SHA1 qw/sha1_hex/;
-
 use Try::Tiny;
+use Iodef::Pb::Simple qw(iodef_confidence iodef_impacts iodef_additional_data);
 
 __PACKAGE__->table('search');
 __PACKAGE__->columns(Primary => 'id');
@@ -22,7 +22,7 @@ sub is_search {
     my $class = shift;
     my $data = shift;
     
-    my $impacts = $class->iodef_impacts($data);
+    my $impacts = iodef_impacts($data);
     foreach (@$impacts){
         return 1 if($_->get_content->get_content() =~ /^search/);
     }
@@ -35,7 +35,7 @@ sub insert {
     return unless($class->is_search($data->{'data'}));
    
     my $uuid = $data->{'uuid'};
-    my $confidence = $class->iodef_confidence($data->{'data'});
+    my $confidence = iodef_confidence($data->{'data'});
     $data->{'confidence'} = @{$confidence}[0]->get_content();
     
     my $tbl = $class->table();
@@ -47,7 +47,7 @@ sub insert {
     }
     
     my @ids;
-    my $additional_data = $class->iodef_additional_data($data->{'data'});
+    my $additional_data = iodef_additional_data($data->{'data'});
     return unless(@$additional_data);
     foreach my $entry (@$additional_data){
         ## TODO -- split this into plugins MD5, SHA1, UUID

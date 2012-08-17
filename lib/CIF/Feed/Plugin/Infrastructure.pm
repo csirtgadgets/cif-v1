@@ -5,8 +5,8 @@ use warnings;
 use strict;
 
 use Net::Patricia;
-
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
+use CIF qw/debug/;
 
 __PACKAGE__->table('infrastructure');
 __PACKAGE__->columns(All => qw/id uuid guid address portlist protocol confidence detecttime created/);
@@ -61,14 +61,17 @@ sub generate_feeds {
             restriction_map => $args->{'restriction_map'},
             restriction     => $args->{'restriction'},
         };
+        debug('generating '.$desc);
         my $f = $class->SUPER::generate_feeds($feed_args);
         if(keys %$f){
+            debug('testing whitelist: '.$desc);
             $f = $class->test_whitelist({ recs => $f, %$feed_args }); 
         }
         # we create a feed no matter what
         # because of the way guid's work, it's better to do it this way
         # it's better to get nothing based on your key's 'default guid' rather than
         # a feed from another guid you weren't expecting...
+        debug('encoding: '.$desc);
         $f = $class->SUPER::encode_feed({ recs => $f, %$feed_args });
         push(@feeds,$f);
     }
@@ -82,6 +85,7 @@ sub test_whitelist {
     
     return $args->{'recs'} if($class->table() =~ /whitelist$/);
 
+    debug('generating whitelist');
     my @whitelist = $class->search_feed_whitelist(
         $args->{'start_time'},
         25000,
@@ -90,16 +94,15 @@ sub test_whitelist {
     return $args->{'recs'} unless($#whitelist > -1);
     
     ## TODO: test this a bit more with CIDR blocks
+    debug('filtering');
     my $pt = Net::Patricia->new();
     $pt->add_string($_) foreach @perm_whitelist;
   
     my $recs = $args->{'recs'};
-    foreach my $wl (@whitelist){
-        $pt->add_string($wl->{'address'});
-        foreach my $rec (keys %$recs){
-            my $addr = $recs->{$rec}->{'address'};
-            delete($recs->{$rec}) if($pt->match_string($addr)); 
-        }
+    debug('wl recs: '.$#whitelist);
+    $pt->add_string($_->{'address'}) foreach (@whitelist);
+    foreach my $rec (keys %$recs){
+        delete($recs->{$rec}) if($pt->match_string($recs->{$rec}->{'address'})); 
     }
             
     return($recs) if(keys %$recs);    
