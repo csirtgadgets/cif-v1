@@ -172,8 +172,10 @@ foreach(@crons){
     
     warn $cmd if($debug);
     my $ret = system($cmd);
-    warn $ret if($debug);
-    die($!) unless(defined($ret) && $ret == 0 || $ret == 11);
+    unless(defined($ret) && $ret == 0 || $ret == 11 || $ret == 2){
+        die($!);
+    }
+    die("\ninterrupted") if($ret == 2);
 }
 remove_lock();
 
@@ -183,7 +185,7 @@ sub bail {
         print $msg."\n";
     } else {
         my $msg = MIME::Lite->new(
-            From    => 'CIF',
+            #From    => 'CIF',
             To      => $opts{'a'} || 'root',
             Subject => 'cif_crontool failure',
             Data    => $msg || 'unknown',

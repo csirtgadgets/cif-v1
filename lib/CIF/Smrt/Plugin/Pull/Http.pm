@@ -41,8 +41,9 @@ sub pull {
         if($f->{'mirror'}){
             $f->{'feed'} =~ m/\/([a-zA-Z0-9._-]+)$/;
             my $file = $f->{'mirror'}.'/'.$1;
+            return($file.' isn\'t writeable by our user') unless(-w $file);
             $ua->mirror($f->{'feed'},$file);
-            open(F,$file) || die($!.': '.$file);
+            open(F,$file) || return($!.': '.$file);
             $content = join('',<F>);
             close(F);
             return('no content') unless($content && $content ne '');

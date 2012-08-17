@@ -93,7 +93,8 @@ Examples:
 EOF
 }
 
-my ($err,$ret) = CIF::Smrt->new({
+my $ret;
+my ($err,$smrt) = CIF::Smrt->new({
     config          => $config,
     threads         => $threads,
     feed            => $feed,
@@ -104,20 +105,20 @@ my ($err,$ret) = CIF::Smrt->new({
 
 die(usage()."\n\n".$err) if($err);
 
-($err,$ret) = $ret->process();
+($err,$ret) = $smrt->process();
 unless($err){
     warn 'done...';
     exit(0);
 }
 
-print '[cif-smrt] failure: '.$feed."\n";
+print '[cif-smrt] failure: '.$smrt->get_rules()->{'source'}."\n";
 print $err."\n";
 
 if($fail_open){
     my $msg = MIME::Lite->new(
         To      => $admin,
-        Subject => 'cif-smrt failure: '.$feed,
-        Data    => $err,
+        Subject => 'cif-smrt failure: '.$smrt->get_rules()->{'source'}.' -- '.$feed,
+        Data    => "$err\nfeed: $feed"
     )->send();
     exit(0);
 } else {
