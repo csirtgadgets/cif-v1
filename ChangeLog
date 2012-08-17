@@ -8,6 +8,7 @@ Revision history for cif-smrt
     - cleaned up carbon copy postprocessor
     - adding try {} catches to parsers, to fail more gracefully
     - fixes to write auth
+    - changed default lwp timeout from 10 to 30 secs
 
 0.99.02 2012-07-31
     - zmq support

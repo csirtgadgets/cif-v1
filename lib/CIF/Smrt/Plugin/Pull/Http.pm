@@ -12,8 +12,7 @@ sub pull {
     return unless($f->{'feed'} =~ /^http/);
     return if($f->{'cif'});
     
-
-    my $timeout = $f->{'timeout'} || 10;
+    my $timeout = $f->{'timeout'} || 30;
 
     require LWP::UserAgent;
     my $ua = LWP::UserAgent->new(agent => 'CIF/'.$VERSION);
