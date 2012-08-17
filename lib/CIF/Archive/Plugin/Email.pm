@@ -6,6 +6,7 @@ use warnings;
 
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 use Digest::SHA1 qw(sha1_hex);
+use Iodef::Pb::Simple qw(iodef_addresses iodef_confidence);
 
 __PACKAGE__->table('email');
 __PACKAGE__->columns(Primary => 'id');
@@ -30,7 +31,7 @@ sub insert {
     return unless(ref($data->{'data'}) eq 'IODEFDocumentType');
        
     my @ids;
-    my $addresses = $class->iodef_addresses($data->{'data'});
+    my $addresses = iodef_addresses($data->{'data'});
     return unless(@$addresses);
     
     my $tbl = $class->table();
@@ -39,7 +40,7 @@ sub insert {
             $class->table($_->table());
         }
     }
-    my $confidence = $class->iodef_confidence($data->{'data'});
+    my $confidence = iodef_confidence($data->{'data'});
     $confidence = @{$confidence}[0]->get_content();
     
     foreach my $address (@$addresses){

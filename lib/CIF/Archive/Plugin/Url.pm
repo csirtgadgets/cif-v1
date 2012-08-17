@@ -5,6 +5,7 @@ use strict;
 use warnings;
 
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
+use Iodef::Pb::Simple qw(:all);
 
 my @plugins = __PACKAGE__->plugins();
 
@@ -21,7 +22,7 @@ sub insert {
      
     return unless(ref($data->{'data'}) eq 'IODEFDocumentType');
      
-    my $addresses = $class->iodef_addresses($data->{'data'});
+    my $addresses = iodef_addresses($data->{'data'});
     return unless(@$addresses);
     
     my $tbl = $class->table();
@@ -31,7 +32,7 @@ sub insert {
         }
     }
     
-    my $confidence = $class->iodef_confidence($data->{'data'});
+    my $confidence = iodef_confidence($data->{'data'});
     $confidence = @{$confidence}[0]->get_content();
     $data->{'confidence'} = $confidence;
     

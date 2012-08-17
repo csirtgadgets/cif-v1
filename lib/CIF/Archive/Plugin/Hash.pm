@@ -5,6 +5,7 @@ use strict;
 use warnings;
 
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
+use Iodef::Pb::Simple qw(iodef_confidence);
 
 # work-around for cif-v1
 use Regexp::Common qw/net/;
@@ -41,7 +42,7 @@ sub insert {
         });
         push(@ids,$id);
     } elsif(ref($data->{'data'}) eq 'IODEFDocumentType') {
-        $confidence = $class->iodef_confidence($data->{'data'});
+        $confidence = iodef_confidence($data->{'data'});
         $confidence = @{$confidence}[0]->get_content();
         
         my $msg = $data->{'data'};

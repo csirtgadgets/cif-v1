@@ -7,7 +7,8 @@ use strict;
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 use Regexp::Common qw/net/;
 use Regexp::Common::net::CIDR;
-use Data::Dumper;
+
+use Iodef::Pb::Simple qw(iodef_confidence iodef_systems);
 
 my @plugins = __PACKAGE__->plugins();
 
@@ -35,13 +36,13 @@ sub insert {
     ## TODO -- add these to Plugin
     my $portlist;
     my $protocol;
-    my $confidence = $class->iodef_confidence($data->{'data'});
+    my $confidence = iodef_confidence($data->{'data'});
     $confidence = @{$confidence}[0]->get_content();
     
     my $msg = $data->{'data'};
     
     my @ids;
-    my $systems = $class->iodef_systems($data->{'data'});
+    my $systems = iodef_systems($data->{'data'});
     
     return unless(@$systems);
     foreach my $system (@{$systems}){
