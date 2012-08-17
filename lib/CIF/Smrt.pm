@@ -232,7 +232,8 @@ sub _pull_feed {
     foreach(@pulls){
         my ($err,$ret) = $_->pull($f);
         return('ERROR: '.$err) if($err);
-        return($ret) if($ret);
+        # we don't want to error out if there's just no content
+        return($ret) if($ret || $ret eq '');
     }
     return('ERROR: could not pull feed');
 }
