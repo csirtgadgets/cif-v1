@@ -195,7 +195,7 @@ sub process {
                 push(@ids,$id);
                 warn 'id: '.$id.' confidence: '.$confidence.' desc: '.$f->get_description().' role: '.$role if($::debug);
             }
-            warn 'committing...';
+            warn 'committing...' if($::debug);
             CIF::Archive->dbi_commit() unless(CIF::Archive->db_Main->{'AutoCommit'});
         }
     }
