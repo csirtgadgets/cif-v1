@@ -53,9 +53,8 @@ sub insert {
     }
     catch {
         $err = shift;
-        warn $err;
     };
-    return($err,undef) if($err);
+    return($err) if($err);
     
     ## TODO -- this is all gonna happen as an indexing correlation at some point
     ## router shouldn't be doing this.
@@ -77,10 +76,8 @@ sub insert {
         };
         
         if($err){
-            warn 'fail...';
-            warn $err;
             $class->dbi_rollback() unless($class->db_Main->{'AutoCommit'});
-            return($err,undef);
+            return($err);
         }
     }
     return(undef,$data->{'uuid'});

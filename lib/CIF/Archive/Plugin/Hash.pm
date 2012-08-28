@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
-use Iodef::Pb::Simple qw(iodef_confidence);
+use Iodef::Pb::Simple qw(iodef_confidence iodef_additional_data);
 
 # work-around for cif-v1
 use Regexp::Common qw/net/;
@@ -23,7 +23,6 @@ sub prepare {}
 sub insert {
     my $class   = shift;
     my $data    = shift;
-    
     my $confidence;
     my @ids;
     my $tbl = $class->table();
@@ -50,7 +49,7 @@ sub insert {
         # for now, we expect all hashes to be sent in
         # under Incident.AdditionalData
         # we can improve this in the future
-        my $ad = $class->iodef_additional_data($data);
+        my $ad = iodef_additional_data($data);
         return unless(@$ad);
         my @ids;
         foreach my $a (@$ad){
