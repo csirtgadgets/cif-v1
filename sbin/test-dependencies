@@ -150,6 +150,7 @@ LWP::UserAgent 6.02
 Compress::Snappy 0.18 
 Iodef::Pb::Simple 0.06
 Try::Tiny 0.04
+Net::SSLeay 1.43
 .
 
 if ($args{'download'}) {
