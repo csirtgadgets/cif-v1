@@ -24,7 +24,6 @@ sub pull {
 
     my $content;
     if($f->{'feed_user'}){
-       
        my $req = HTTP::Request->new(GET => $f->{'feed'});
        $req->authorization_basic($f->{'feed_user'},$f->{'feed_password'});
        my $ress = $ua->request($req);
@@ -33,7 +32,6 @@ sub pull {
        }
        $content = $ress->decoded_content();
     } else {
-        
         if(defined($f->{'verify_tls'}) && $f->{'verify_tls'} == 0){
             $ua->ssl_opts(verify_hostname => 0);
         }

@@ -3,6 +3,7 @@ package CIF::Smrt::Plugin::Pull::File;
 sub pull {
     my $class = shift;
     my $f = shift;
+    
     return unless($f->{'feed'} =~ /^(\/\S+|[a-zA-Z]+\/\S+)/);
     my $file = $1;
     if($file =~ /^([a-zA-Z]+)/){

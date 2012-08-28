@@ -30,6 +30,9 @@ use URI::Escape;
 use Try::Tiny;
 use CIF qw/debug/;
 
+use Net::SSLeay;
+Net::SSLeay::SSLeay_add_ssl_algorithms();
+
 use Time::HiRes qw/nanosleep/;
 use ZeroMQ qw/:all/;
 
@@ -232,8 +235,10 @@ sub _pull_feed {
     foreach(@pulls){
         my ($err,$ret) = $_->pull($f);
         return('ERROR: '.$err) if($err);
+        
         # we don't want to error out if there's just no content
-        return($ret) if($ret || $ret eq '');
+        next unless(defined($ret));
+        return($ret);
     }
     return('ERROR: could not pull feed');
 }
