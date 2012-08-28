@@ -224,6 +224,7 @@ sub process {
         return $reply->encode();
     }
    
+    my $err;
     for($msg->get_type()){
         if($_  == MessageType::MsgType::QUERY()){
             $reply = $self->process_query($msg);
@@ -234,9 +235,7 @@ sub process {
             last;
         }
     }
-    
-    ## TODO -- return err messages
-    #warn Dumper($reply);
+
     return $reply->encode();
 }
 
@@ -369,9 +368,13 @@ sub process_submission {
                 feeds   => $self->get_feeds(),
             });
             if($err){
-                $ret = 'submission failed: '.$err;
-                $state = 1;
-                last;
+                warn $err."\n";
+                return MessageType->new({
+                    version => $CIF::VERSION,
+                    type    => MessageType::MsgType::REPLY(),
+                    status  => MessageType::StatusType::FAILED(),
+                    data    => 'submission failed: contact system administrator',
+                });
             }
             push(@$ret,$id);
             ## TODO -- make the 1000 a variable
