@@ -81,13 +81,6 @@ sub new {
     return (undef,$self);
 }
 
-sub send {
-    my $self = shift;
-    my $msg = shift;
-    
-    return $self->get_driver->send($msg);
-}
-
 sub search {
     my $self = shift;
     my $args = shift;
@@ -319,6 +312,13 @@ sub new_query {
     return $msg->encode();
 }
 
+sub send {
+    my $self = shift;
+    my $msg = shift;
+    
+    return $self->get_driver->send($msg);
+}
+
 sub submit {
     my $self = shift;
     my $data = shift;
@@ -334,7 +334,6 @@ sub submit {
     });
     
     my ($err,$ret) = $self->send($msg->encode());
-  
     $ret = MessageType->decode($ret);
  
     unless($ret->get_status() == MessageType::StatusType::SUCCESS()){
