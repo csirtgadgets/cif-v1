@@ -32,7 +32,7 @@ sub test_feed {
     my $class = shift;
     my $data = shift;
     my $feeds = $data->{'feeds'};
-        
+    
     return unless($feeds);
     $feeds = [$feeds] unless(ref($feeds) eq 'ARRAY');
     return unless(@$feeds);
