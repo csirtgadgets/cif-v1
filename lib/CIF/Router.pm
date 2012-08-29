@@ -43,10 +43,10 @@ sub new {
     $self->set_router_db_config($args->{'config'}->param(-block => 'router_db'));
     $self->set_restriction_map( $args->{'config'}->param(-block => 'restriction_map'));
     $self->set_group_map(       $args->{'config'}->param(-block => 'groups'));
-    $self->set_feeds_config(    $args->{'config'}->param(-block => 'cif_feeds'));
+    $self->set_feeds_config(    $args->{'config'}->param(-block => 'cif_feed'));
    
     my $ret = $self->init($args);
-    die $ret unless($ret);
+    return unless($ret);
      
     my $driver = $args->{'driver'} || 'HTTP';
     
@@ -96,7 +96,7 @@ sub init_feeds {
     my $self = shift;
     
     
-    my $feeds = $self->get_feeds_config->{'enabled'} || return;
+    my $feeds = $self->get_feeds_config->{'enabled'};
     $self->set_feeds($feeds);
 }
 
