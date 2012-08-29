@@ -38,7 +38,7 @@ getopts('A:Nafdt:T:C:c:p:c:hLS:PF:',\%opts);
 my $period      = $opts{'p'} || 'daily';
 my $throttle    = $opts{'T'} || 'medium';
 my $threads     = $opts{'t'};
-my $cron_tool   = $opts{'C'} || 'bin/cif_smrt';
+my $cron_tool   = $opts{'C'} || 'cif_smrt';
 my $first_run   = $opts{'f'};
 my $debug       = $opts{'d'};
 my $mutex       = $opts{'L'} || '/tmp/cif_crontool.lock.'.$period;
@@ -49,7 +49,13 @@ my $admin       = $opts{'A'} || 'root';
 my $fail_open   = $opts{'N'} || 0;
 
 if(! -e $cron_tool){
-    $cron_tool .= $dir.'/'.$cron_tool;
+    if(-e './bin/'.$cron_tool){
+       $cron_tool = './bin/'.$cron_tool;
+    } elsif(-e $dir.'/bin/'.$cron_tool){
+        $cron_tool = $dir.'/bin/'.$cron_tool;
+    } else {
+        die 'unable to find '.$cron_tool;
+    }
 }
 sub cleanup {
     my $msg = shift;
@@ -64,7 +70,7 @@ sub cleanup {
 
 my @files;
 ## TODO make this a var
-my $feedsdir = $dir.'/etc';
+my $feedsdir = (-e './etc') ? './etc' : $dir;
 unless($opts{'c'}){
     # TODO -- this is a confusing error, it means you installed cif to a non-std location and aren't using the -F option
     # we're getting rid of cif_crontool in the future, so this is the shim for now.
