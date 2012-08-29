@@ -70,7 +70,7 @@ sub cleanup {
 
 my @files;
 ## TODO make this a var
-my $feedsdir = (-e './etc') ? './etc' : $dir;
+my $feedsdir = (-e './etc') ? './etc' : $dir.'/etc';
 unless($opts{'c'}){
     # TODO -- this is a confusing error, it means you installed cif to a non-std location and aren't using the -F option
     # we're getting rid of cif_crontool in the future, so this is the shim for now.
