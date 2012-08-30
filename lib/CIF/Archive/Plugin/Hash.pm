@@ -106,6 +106,22 @@ __PACKAGE__->set_sql('lookup' => qq{
     LIMIT ?
 });
 
+## TODO - is this really needed?
+# we want the lowest confidence feed given any confidence value
+__PACKAGE__->set_sql('lookup_feed' => qq{
+    SELECT t.id,t.uuid,archive.data
+    FROM __TABLE__ t
+    LEFT JOIN apikeys_groups on t.guid = apikeys_groups.guid
+    LEFT JOIN archive ON archive.uuid = t.uuid
+    WHERE 
+        hash = ?
+        AND confidence >= ?
+        AND apikeys_groups.uuid = ?
+        AND archive.uuid IS NOT NULL
+    ORDER BY t.confidence ASC, t.detecttime DESC, t.created DESC, t.id DESC
+    LIMIT 1
+});
+
 __PACKAGE__->set_sql('lookup_guid' => qq{
     SELECT t.id,t.uuid,archive.data
     FROM __TABLE__ t
