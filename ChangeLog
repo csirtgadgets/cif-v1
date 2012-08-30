@@ -1,6 +1,6 @@
 Revision history for cif-smrt
 
-0.99.03 2012-08
+0.99.03 2012-08-30
     - misc bugfixes
     - changed the default throttle factor to 4 (default is 4 threads per cpu core)
     - enabled specific-class postprocessor enabling (eg: -p fqdn,ip)
