@@ -159,6 +159,7 @@ Encode 2.23
 Iodef::Pb::Simple 0.06
 ZeroMQ 0.21
 Time::HiRes 1.9719
+Net::Abuse::Utils 0.12
 Net::Abuse::Utils::Spamhaus 0.03
 .
 
