@@ -7,7 +7,9 @@ sub pull {
     return unless($f->{'feed'} =~ /^(\/\S+|[a-zA-Z]+\/\S+)/);
     my $file = $1;
     if($file =~ /^([a-zA-Z]+)/){
-        my $bin_path = $FindBin::Bin;
+        ## TODO -- work-around, path should be passed to me by the higher level lib
+        # || /opt/cif/bin is in case we run $ cif_crontool as is with no preceeding path
+        my $bin_path = $FindBin::Bin || '/opt/cif/bin';
         $file = $bin_path.'/../'.$file;
     }
     open(F,$file) || return($!.': '.$file);
