@@ -307,8 +307,7 @@ sub new_query {
             nolog   => $qq->{'nolog'},
         });
     }
-    $msg->set_query($q);
-     
+    $msg->set_query($q);     
     return $msg->encode();
 }
 
