@@ -208,6 +208,7 @@ foreach my $feed (@$feeds){
         restriction         => $feed->get_restriction(),
         reporttime          => $feed->get_ReportTime(),
         table_nowarning     => $cli->get_table_nowarning(),
+        config              => $cli->get_config(),
     });
     
     $t .= "\n";

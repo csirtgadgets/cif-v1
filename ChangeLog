@@ -1,9 +1,10 @@
 Revision history for libcif
 
-0.99.05 2012-08-30
+0.99.05 2012-09
     - implemented cif-protocol perl bindings here
     - merged cif client libs here
     - added net-ssleay 1.43 as a dep (fixes threading)
+    - misc bugfixes
 
 0.99.04 2012-07-31
     - bugfixes

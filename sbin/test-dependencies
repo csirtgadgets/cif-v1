@@ -148,7 +148,7 @@ URI::Escape 1.56
 LWP::Protocol::https 6.02
 LWP::UserAgent 6.02
 Compress::Snappy 0.18 
-Iodef::Pb::Simple 0.07
+Iodef::Pb::Simple 0.08
 Try::Tiny 0.04
 Net::SSLeay 1.43
 .
