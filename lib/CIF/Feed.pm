@@ -76,14 +76,6 @@ sub init_config {
     
     ## TODO: add groups here 
     
-    if(my $c = $args->{'confidence'}){
-        unless(ref($c) eq 'ARRAY'){
-            my @a = split(/,/,$c);
-            $c = \@a;
-        }
-        $self->set_confidence($c);
-    }
-    
     $self->set_limit(       $args->{'limit'}        || $self->get_config->{'limit'}         || 10000);
     $self->set_limit_days(  $args->{'limit_days'}   || $self->get_config->{'limit_days'}    ||3);
     
@@ -99,6 +91,9 @@ sub init_config {
     
     my $confidence = $args->{'confidence'} || $self->get_config->{'confidence'} || '95,85';
     my @array2 = (ref($confidence) eq 'ARRAY') ? @$confidence : split(/,/,$confidence);
+    
+    # we do this to snowball the cache
+    @array2 = sort { $b <=> $a } @array2;
     $self->set_confidence(\@array2);
     
     $self->init_restriction_map();
