@@ -16,11 +16,9 @@ require CIF::Archive;
 require CIF::APIKey;
 require CIF::APIKeyGroups;
 require CIF::APIKeyRestrictions;
-use CIF qw/is_uuid generate_uuid_url/;
+use CIF qw/is_uuid generate_uuid_ns generate_uuid_random/;
 use CIF::Msg;
 use CIF::Msg::Feed;
-
-use Data::Dumper;
 
 my @drivers = __PACKAGE__->plugins();
 
@@ -94,8 +92,7 @@ sub init {
 
 sub init_feeds {
     my $self = shift;
-    
-    
+
     my $feeds = $self->get_feeds_config->{'enabled'};
     $self->set_feeds($feeds);
 }
@@ -106,7 +103,6 @@ sub init_restriction_map {
     return unless($self->get_restriction_map());
     my $array;
     foreach (keys %{$self->get_restriction_map()}){
-        
         ## TODO map to the correct Protobuf RestrictionType
         my $m = FeedType::MapType->new({
             key => $_,
@@ -119,8 +115,6 @@ sub init_restriction_map {
 
 sub init_group_map {
     my $self = shift;
-    
-    return unless($self->get_group_map());
     my $g = $self->get_group_map->{'groups'};
     
     # system wide groups
@@ -128,13 +122,12 @@ sub init_group_map {
     my $array;
     foreach (@$g){
         my $m = FeedType::MapType->new({
-            key     => generate_uuid_url($_),
+            key     => generate_uuid_ns($_),
             value   => $_,
         });
         push(@$array,$m);
     }
     $self->set_group_map($array);
-
 }
 
 sub authorized_read {
@@ -154,7 +147,7 @@ sub authorized_read {
     my $guid = $args->{'guid'};
     if($guid){
         $guid = lc($guid);
-        $ret->{'guid'} = generate_uuid_url($guid) unless(is_uuid($guid));
+        $ret->{'guid'} = generate_uuid_ns($guid) unless(is_uuid($guid));
     } else {
         $ret->{'default_guid'} = $rec->default_guid();
     }
@@ -301,7 +294,6 @@ sub process_query {
             next unless($s);
             push(@res,@$s);
         }
-       
         if($#res > -1){
             ## TODO: SHIM, gatta be a more elegant way to do this
             unless($m->get_feed()){
@@ -316,6 +308,8 @@ sub process_query {
                     group_map       => $apikey_info->{'group_map'}, # so they can't see other groups they're not in
                     restriction_map => $self->get_restriction_map(),
                     data            => \@res,
+                    uuid            => generate_uuid_random(),
+                    guid            => $apikey_info->{'default_guid'},
                 });  
                 push(@$results,$f->encode());
             } else {
