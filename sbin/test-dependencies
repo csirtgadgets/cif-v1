@@ -156,7 +156,7 @@ Digest::SHA 2.10
 File::Spec 0.8
 URI::Escape 1.56
 Encode 2.23
-Iodef::Pb::Simple 0.06
+Iodef::Pb::Simple 0.08
 ZeroMQ 0.21
 Time::HiRes 1.9719
 Net::Abuse::Utils 0.12

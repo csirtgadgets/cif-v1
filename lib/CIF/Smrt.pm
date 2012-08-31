@@ -19,6 +19,12 @@ use constant CTRL_CONNECTION    => 'ipc://ctrl';
 # for figuring out throttle
 use constant DEFAULT_THROTTLE_FACTOR => 4;
 
+# default severity mapping
+use constant DEFAULT_SEVERITY_MAP => {
+    botnet      => 'high',
+};
+    
+
 use Regexp::Common qw/net URI/;
 use Regexp::Common::net::CIDR;
 use Encode qw/encode_utf8/;
@@ -50,6 +56,7 @@ __PACKAGE__->mk_accessors(qw(
     entries defaults feed rules load_full goback 
     client wait_for_server name instance 
     batch_control client_config postprocess apikey
+    severity_map
 ));
 
 my @preprocessors = __PACKAGE__->plugins();
@@ -140,10 +147,23 @@ sub init_config {
     $args->{'config'} = Config::Simple->new($args->{'config'}) || return(undef,'missing config file');
     
     $self->set_config(          $args->{'config'}->param(-block => 'cif_smrt'));
-        
-    $self->set_db_config($args->{'config'}->param(-block => 'db'));
-    $self->set_feeds_config($args->{'config'}->param(-block => 'cif_feeds'));
+    $self->set_db_config(       $args->{'config'}->param(-block => 'db'));
+    $self->set_feeds_config(    $args->{'config'}->param(-block => 'cif_feeds'));
+    
+    $self->init_config_severity($args);
+    
     return(undef,1);
+}
+
+sub init_config_severity {
+    my $self = shift;
+    my $args = shift;
+    
+    my $map = $args->{'config'}->param(-block => 'cif_smrt_severity');
+    $map = DEFAULT_SEVERITY_MAP() unless(keys %$map);
+    
+    $self->set_severity_map($map);
+    
 }
 
 sub init_rules {
@@ -328,6 +348,7 @@ sub preprocess_routine {
     ## TODO -- move this to the threads?
     ## test with alienvault scan's feed
     warn 'mapping...' if($::debug);
+    
     my @array;
     foreach my $r (@$recs){
         foreach my $key (keys %$r){
@@ -342,6 +363,11 @@ sub preprocess_routine {
              
         foreach my $p (@preprocessors){
             $r = $p->process($self->get_rules(),$r);
+        }
+        
+        # TODO -- work-around, make this more configurable
+        unless($r->{'severity'}){
+            $r->{'severity'} = ($self->get_severity_map->{$r->{'assessment'}}) ? $self->get_severity_map->{$r->{'assessment'}} : 'medium';
         }
             
         ## TODO -- if we do this, we need to degrade the count somehow...
