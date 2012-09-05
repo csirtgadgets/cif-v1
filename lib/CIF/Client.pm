@@ -19,7 +19,7 @@ use Digest::SHA1 qw/sha1_hex/;
 use Digest::MD5 qw/md5_hex/;
 use Encode qw(encode_utf8);
 
-use CIF qw(generate_uuid_ns);
+use CIF qw(generate_uuid_ns debug);
 use CIF::Msg;
 use CIF::Msg::Feed;
 
@@ -27,7 +27,7 @@ __PACKAGE__->follow_best_practice();
 __PACKAGE__->mk_accessors(qw(
     config driver_config driver apikey 
     nolog limit guid filter_me no_maprestrictions
-    table_nowarning
+    table_nowarning related
 ));
 
 our @plugins = __PACKAGE__->plugins();
@@ -59,6 +59,7 @@ sub new {
     $self->set_no_maprestrictions(  $args->{'no_maprestrictions'}   || $self->get_config->{'no_maprestrictions'});
     $self->set_filter_me(           $args->{'filter_me'}            || $self->get_config->{'filter_me'});
     $self->set_nolog(               $args->{'nolog'}                || $self->get_config->{'nolog'});
+    $self->set_related(             $args->{'related'}              || $self->get_config->{'related'});
     
     my $nolog = (defined($args->{'nolog'})) ? $args->{'nolog'} : $self->get_config->{'nolog'};
     
@@ -67,15 +68,18 @@ sub new {
     } 
     
     my $driver     = 'CIF::Client::'.$self->get_driver();
-    
+    my $err;
     try {
         $driver     = $driver->new({
             config  => $self->get_driver_config()
         });
     } catch {
-        my $err = shift;
-        warn $err;
+        $err = shift;
     };
+    if($err){
+        debug($err) if($::debug);
+        return($err);
+    }
     
     $self->set_driver($driver);
     return (undef,$self);
@@ -107,6 +111,7 @@ sub search {
     ## TODO -- client should have search plugins for queries (eg: ip, domain, ..)
     ## get this code out of here..
     
+    debug('generating query') if($::debug);
     foreach my $q (@{$args->{'query'}}){
         if(lc($q) =~ /^http(s)?:\/\//){
             $q =~ s/\/$//g;
@@ -208,6 +213,7 @@ sub search {
         data    => \@queries,
     });
     
+    debug('sending query') if($::debug);
     my ($err,$ret) = $self->send($msg->encode());
     
     return $err if($err);
@@ -220,8 +226,8 @@ sub search {
     return(0) unless($ret->{'data'});
     my $uuid = generate_uuid_ns($args->{'apikey'});
 
-    warn 'processing...' if($::debug);
-   
+    debug('processing...') if($::debug);
+
     ## TODO: finish this so feeds are inline with reg queries
     ## TODO: try to base64 decode and decompress first in try { } catch;
     foreach my $feed (@{$ret->get_data()}){
@@ -253,7 +259,8 @@ sub search {
                 
                 # if there are no addresses, we've got nothing or hashes
                 my $found = (@$addresses) ? 0 : 1;
-                foreach my $a (@$addresses){                    
+                foreach my $a (@$addresses){
+                    next unless ($a->get_content =~ /^$RE{'net'}{'IPv4'}/);               
                     # if we have a match great
                     # if we don't we need to test and see if this address
                     # contains our original query

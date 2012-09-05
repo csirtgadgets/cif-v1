@@ -32,6 +32,7 @@ use lib '../../iodef-pb-simple-perl/lib';
 use CIF::Client;
 use Getopt::Std;
 use Data::Dumper;
+use CIF qw/debug/;
 
 ## TODO -- generate CIF::Format to wrap this
 use Iodef::Pb::Format;
@@ -184,7 +185,7 @@ my $ret;
 
 die $err if($err);
 unless($ret){
-    print 'no results...'."\n" if($debug);
+    debug('no results...') if($debug);
     exit(0);
 }
 
