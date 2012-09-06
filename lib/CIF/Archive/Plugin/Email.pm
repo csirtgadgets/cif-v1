@@ -6,7 +6,7 @@ use warnings;
 
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 use Digest::SHA1 qw(sha1_hex);
-use Iodef::Pb::Simple qw(iodef_addresses iodef_confidence);
+use Iodef::Pb::Simple qw(iodef_addresses iodef_confidence iodef_guid);
 
 __PACKAGE__->table('email');
 __PACKAGE__->columns(Primary => 'id');
@@ -29,42 +29,49 @@ sub insert {
     my $data = shift;
     
     return unless(ref($data->{'data'}) eq 'IODEFDocumentType');
-       
-    my @ids;
+
     my $addresses = iodef_addresses($data->{'data'});
     return unless(@$addresses);
     
     my $tbl = $class->table();
-    foreach(@plugins){
-        if($_->prepare($data)){
-            $class->table($_->table());
+    my @ids;
+    foreach my $i (@{$data->{'data'}->get_Incident()}){
+        foreach(@plugins){
+            if($_->prepare($i)){
+                $class->table($_->table());
+                last;
+            }
         }
-    }
-    my $confidence = iodef_confidence($data->{'data'});
-    $confidence = @{$confidence}[0]->get_content();
-    
-    foreach my $address (@$addresses){
-        my $addr = lc($address->get_content());
-        next unless(is_email($addr));
-        my $hash = $class->SUPER::generate_sha1($addr);
-        if($class->test_feed($data)){
-            $class->SUPER::insert({
-                guid        => $data->{'guid'},
-                uuid        => $data->{'uuid'},
-                hash        => $hash,
-                confidence  => $confidence,
-            });
-        }
-        $addr =~ /\@([a-z0-9.-]+\.[a-z0-9.-]{2,5}$)/;
-        $addr = $1;
-        my @a1 = reverse(split(/\./,$addr));
-        my @a2 = @a1;
-        foreach (0 ... $#a1-1){
-            my $a = join('.',reverse(@a2));
-            pop(@a2);
-            my $hash = $class->SUPER::generate_sha1($a);
-            my $id = $class->insert_hash($data,$hash);
-            push(@ids,$id);
+        my $confidence = iodef_confidence($i);
+        $confidence = @{$confidence}[0]->get_content();
+        
+        foreach my $address (@$addresses){
+            my $addr = lc($address->get_content());
+            next unless(is_email($addr));
+            my $hash = $class->SUPER::generate_sha1($addr);
+            if($class->test_feed()){
+                $class->SUPER::insert({
+                    guid        => iodef_guid($i) || $data->{'guid'},
+                    uuid        => $i->get_IncidentID->get_content(),
+                    hash        => $hash,
+                    confidence  => $confidence,
+                });
+            }
+            $addr =~ /\@([a-z0-9.-]+\.[a-z0-9.-]{2,5}$)/;
+            $addr = $1;
+            my @a1 = reverse(split(/\./,$addr));
+            my @a2 = @a1;
+            foreach (0 ... $#a1-1){
+                my $a = join('.',reverse(@a2));
+                pop(@a2);
+                my $hash = $class->SUPER::generate_sha1($a);
+                my $id = $class->insert_hash({ 
+                    uuid => $data->{'uuid'}, 
+                    guid => $data->{'guid'}, 
+                    confidence => $confidence 
+                },$hash);
+                push(@ids,$id);
+            }
         }
     }
     $class->table($tbl);

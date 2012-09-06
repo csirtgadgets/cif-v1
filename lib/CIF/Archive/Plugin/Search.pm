@@ -7,7 +7,7 @@ use warnings;
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 use Digest::SHA1 qw/sha1_hex/;
 use Try::Tiny;
-use Iodef::Pb::Simple qw(iodef_confidence iodef_impacts iodef_additional_data);
+use Iodef::Pb::Simple qw(iodef_confidence iodef_impacts iodef_additional_data iodef_guid);
 
 __PACKAGE__->table('search');
 __PACKAGE__->columns(Primary => 'id');
@@ -33,40 +33,43 @@ sub insert {
     my $data = shift;
 
     return unless($class->is_search($data->{'data'}));
-   
-    my $uuid = $data->{'uuid'};
-    my $confidence = iodef_confidence($data->{'data'});
-    $data->{'confidence'} = @{$confidence}[0]->get_content();
-    
     my $tbl = $class->table();
-    foreach(@plugins){
-        if($_->prepare($data)){
-            $class->table($class->sub_table($_));
-            last;
-        }
-    }
-    
     my @ids;
-    my $additional_data = iodef_additional_data($data->{'data'});
-    return unless(@$additional_data);
-    foreach my $entry (@$additional_data){
-        ## TODO -- split this into plugins MD5, SHA1, UUID
-        next unless($entry);
-        next unless($entry->get_meaning() eq 'hash');
-        next unless($entry->get_content() =~ /^[a-f0-9]{40}$/);
-        if($class->test_feed($data)){
-            $class->SUPER::insert({
-                guid        => $data->{'guid'},
-                uuid        => $data->{'uuid'},
-                hash        => $entry->get_content(),
-                confidence  => $data->{'confidence'},
-            });
+    foreach my $i (@{$data->{'data'}->get_Incident()}){
+        my $confidence = iodef_confidence($i);
+        $confidence = @{$confidence}[0]->get_content();
+     
+        foreach(@plugins){
+            if($_->prepare($data)){
+                $class->table($class->sub_table($_));
+                last;
+            }
         }
-        
-        my $id = $class->insert_hash($data,$entry->get_content());
-        push(@ids,$id);
-    }    
-      
+ 
+        my $additional_data = iodef_additional_data($i);
+        return unless(@$additional_data);
+        foreach my $entry (@$additional_data){
+            ## TODO -- split this into plugins MD5, SHA1, UUID
+            next unless($entry);
+            next unless($entry->get_meaning() eq 'hash');
+            next unless($entry->get_content() =~ /^[a-f0-9]{40}$/);
+            if($class->test_feed($data)){
+                $class->SUPER::insert({
+                    guid        => iodef_guid($i) || $data->{'guid'},
+                    uuid        => $i->get_IncidentID->get_content(),
+                    hash        => $entry->get_content(),
+                    confidence  => $confidence,
+                });
+            }
+            
+            my $id = $class->insert_hash({ 
+                uuid => $data->{'uuid'}, 
+                guid => $data->{'guid'}, 
+                confidence => $confidence 
+            },$entry->get_content());
+            push(@ids,$id);
+        }    
+    }
     $class->table($tbl);
     return(undef,\@ids);
 }

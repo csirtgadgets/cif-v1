@@ -5,6 +5,7 @@ use warnings;
 use strict;
 
 use Digest::SHA1 qw/sha1_hex/;
+use Iodef::Pb::Simple qw/iodef_guid iodef_confidence/;
 
 sub query {}
 
@@ -30,8 +31,7 @@ sub generate_sha1 {
 
 sub test_feed {
     my $class = shift;
-    my $data = shift;
-    my $feeds = $data->{'feeds'};
+    my $feeds = shift->{'feeds'};
     
     return unless($feeds);
     $feeds = [$feeds] unless(ref($feeds) eq 'ARRAY');

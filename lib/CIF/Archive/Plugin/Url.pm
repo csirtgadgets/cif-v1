@@ -26,33 +26,38 @@ sub insert {
     return unless(@$addresses);
     
     my $tbl = $class->table();
-    foreach(@plugins){
-        if($_->prepare($data)){
-            $class->table($_->table());
-        }
-    }
-    
-    my $confidence = iodef_confidence($data->{'data'});
-    $confidence = @{$confidence}[0]->get_content();
-    $data->{'confidence'} = $confidence;
-    
     my @ids;
-    foreach my $address (@$addresses){
-        my $addr = lc($address->get_content());
-        next unless($addr =~ /^(ftp|https?):\/\//);
-        ## TODO -- pull this out of the IODEF ?
-        my $hash = $class->SUPER::generate_sha1($addr);
-        if($class->test_feed($data)){
-            $class->SUPER::insert({
-                guid        => $data->{'guid'},
-                uuid        => $data->{'uuid'},
-                hash        => $hash,
-                confidence  => $confidence,
-            });
+    foreach my $i (@{$data->{'data'}->get_Incident()}){
+        foreach(@plugins){
+            if($_->prepare($data)){
+                $class->table($_->table());
+            }
         }
         
-        my $id = $class->insert_hash($data,$hash);
-        push(@ids,$id);
+        my $confidence = iodef_confidence($i);
+        $confidence = @{$confidence}[0]->get_content();       
+        
+        foreach my $address (@$addresses){
+            my $addr = lc($address->get_content());
+            next unless($addr =~ /^(ftp|https?):\/\//);
+            ## TODO -- pull this out of the IODEF ?
+            my $hash = $class->SUPER::generate_sha1($addr);
+            if($class->test_feed($data)){
+                $class->SUPER::insert({
+                    guid        => iodef_guid($i) || $data->{'guid'},
+                    uuid        => $i->get_IncidentID->get_content(),
+                    hash        => $hash,
+                    confidence  => $confidence,
+                });
+            }
+            
+            my $id = $class->insert_hash({ 
+                    uuid => $data->{'uuid'}, 
+                    guid => $data->{'guid'}, 
+                    confidence => $confidence 
+                },$hash);
+            push(@ids,$id);
+        }
     }
     $class->table($tbl);
     return(undef,\@ids);

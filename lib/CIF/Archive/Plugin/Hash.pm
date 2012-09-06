@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
-use Iodef::Pb::Simple qw(iodef_confidence iodef_additional_data);
+use Iodef::Pb::Simple qw(iodef_confidence iodef_additional_data iodef_guid);
 
 # work-around for cif-v1
 use Regexp::Common qw/net/;
@@ -40,17 +40,16 @@ sub insert {
             confidence  => $confidence,
         });
         push(@ids,$id);
-    } elsif(ref($data->{'data'}) eq 'IODEFDocumentType') {
+    } elsif(ref($data) eq 'IncidentType') {
         $confidence = iodef_confidence($data->{'data'});
         $confidence = @{$confidence}[0]->get_content();
-        
-        my $msg = $data->{'data'};
-    
+     
         # for now, we expect all hashes to be sent in
         # under Incident.AdditionalData
         # we can improve this in the future
         my $ad = iodef_additional_data($data);
         return unless(@$ad);
+        
         my @ids;
         foreach my $a (@$ad){
             next unless($a->get_meaning() && lc($a->get_meaning()) =~ /^(md5|sha(\d+)|uuid)$/);
@@ -61,8 +60,8 @@ sub insert {
             }
             my $id = $class->SUPER::insert({
                 hash        => $hash,
-                uuid        => $data->{'uuid'},
-                guid        => $data->{'guid'},
+                uuid        => $data->get_IncidentID->get_content(),
+                guid        => iodef_guid($data),
                 confidence  => $confidence,
             });
             push(@ids,$id);
