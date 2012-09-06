@@ -7,7 +7,7 @@ __PACKAGE__->columns(All => qw/uuid uuid_alias description parentid revoked writ
 __PACKAGE__->sequence('apikeys_id_seq');
 __PACKAGE__->has_many(groups  => 'CIF::APIKeyGroups');
 
-use CIF qw/is_uuid generate_uuid_random generate_uuid_url/;
+use CIF qw/is_uuid generate_uuid_random generate_uuid_url generate_uuid_ns/;
 
 # because UUID's are really primary keys too in our schema
 # this overrides some of the default functionality of Class::DBI and 'id'
@@ -55,15 +55,16 @@ sub default_guid {
 }
 
 sub inGroup {
-    return in_group(\@_);
+    return in_group(@_);
 }
 
 sub in_group {
     my $self = shift;
     my $grp = shift;
+    
     return unless($grp);
     $grp = lc($grp);
-    $grp = generate_uuid_url($grp) unless(is_uuid($grp));
+    $grp = generate_uuid_ns($grp) unless(is_uuid($grp));
 
     my @groups = $self->groups();
     foreach (@groups){
