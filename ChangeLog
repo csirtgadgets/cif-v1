@@ -1,6 +1,7 @@
 Revision history for cif-dbi
 
 0.99.04 2012-08-30
+    - added spamvertising plugin
     - renamed cif_feeds to cif_feed in various places
     - added url_whitelisting (whooops...)
     - added apikeys_restriction access control (eg: domain/malware, infrastructure/suspicious, etc...)

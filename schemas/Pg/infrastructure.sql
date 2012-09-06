@@ -38,6 +38,10 @@ DROP TABLE IF EXISTS infrastructure_spam;
 CREATE TABLE infrastructure_spam () INHERITS (infrastructure);
 ALTER TABLE infrastructure_spam ADD PRIMARY KEY (id);
 
+DROP TABLE IF EXISTS infrastructure_spamvertising;
+CREATE TABLE infrastructure_spamvertising () INHERITS (infrastructure);
+ALTER TABLE infrastructure_spamvertising ADD PRIMARY KEY (id);
+
 DROP TABLE IF EXISTS infrastructure_suspicious;
 CREATE TABLE infrastructure_suspicious () INHERITS (infrastructure);
 ALTER TABLE infrastructure_suspicious ADD PRIMARY KEY (id);
