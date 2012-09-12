@@ -1,7 +1,7 @@
 Welcome
 -------
 
-This is the SMRT intelligence parser (formally cif_feedparser)
+This is the SMRT intelligence rule-set.
 
 Building and installation
 -------------------------
@@ -13,7 +13,7 @@ Resources
 ---------
 
 Website: collectiveintel.net
-Git repository: github.com/collectiveintel/cif-smrt-perl
+Git repository: github.com/collectiveintel/cif-smrt-rules
 
 
 COPYRIGHT AND LICENCE
