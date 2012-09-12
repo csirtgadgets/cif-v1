@@ -2,7 +2,7 @@
 guid = everyone
 feed = 'http://data.phishtank.com/data/XXXXXXXXXXXXXXXXXXXXXXXXXXXX INSERT YOUR KEY HERE XXXXXXXXXXXXXXXXXXXXXX/online-valid.json.gz'
 feed = http://data.phishtank.com/data/online-valid.json.gz
-impact = 'phishing url'
+assessment = 'phishing url'
 source = 'phishtank.com'
 fields = 'url,target,phish_detail_url'
 fields_map = 'address,description,alternativeid'
