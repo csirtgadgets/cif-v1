@@ -35,7 +35,7 @@ etc-link:
     
 etc-install:
 	[ -d $(sysconfdir) ] || $(INSTALL) -m 0755 -d $(sysconfdir)
-	-( cd etc && find . -type d -print ) | while read dir ; do \
+	-( cd rules/etc && find . -type d -print ) | while read dir ; do \
     $(INSTALL) -m 0750 -d "$(sysconfdir)/$$dir" ; \
     done
 	-( cd etc && find . -type f -print ) | while read file ; do \
