@@ -560,6 +560,7 @@ sub worker_routine {
             }
     
             debug('generating iodef...') if($::debug > 3);
+
             my $iodef = Iodef::Pb::Simple->new($msg);
                   
             my @results;
@@ -577,6 +578,7 @@ sub worker_routine {
 
                 # we don't do +1 here cause the parent already knows about the
                 # original record
+
                 if($#results > -1){
                     @results = map { IODEFDocumentType->new({ lang => 'EN', Incident => $_ })->encode() } @results;
                     # sometimes the $sender->send_as will get there faster

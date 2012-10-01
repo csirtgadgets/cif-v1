@@ -35,6 +35,7 @@ use CIF::Smrt;
 use Config::Simple;
 use Data::Dumper;
 use MIME::Lite;
+use CIF qw/debug/;
 
 my %opts;
 getopts('hNA:s:T:t:dFc:f:r:v:Pp:',\%opts);
@@ -106,7 +107,7 @@ die(usage()."\n\n".$err) if($err);
 
 ($err,$ret) = $smrt->process();
 unless($err){
-    warn 'done...';
+    debug('done...') if($debug);
     exit(0);
 }
 

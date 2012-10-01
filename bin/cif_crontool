@@ -34,19 +34,20 @@ use Data::Dumper;
 use MIME::Lite;
 
 my %opts;
-getopts('A:Nafdt:T:C:c:p:c:hLS:PF:',\%opts);
+getopts('A:Nafdt:T:C:c:p:c:hLS:PF:v:',\%opts);
 my $period      = $opts{'p'} || 'daily';
 my $throttle    = $opts{'T'} || 'medium';
 my $threads     = $opts{'t'};
 my $cron_tool   = $opts{'C'} || 'cif_smrt';
 my $first_run   = $opts{'f'};
 my $debug       = $opts{'d'};
+my $debug_level = $opts{'v'};
 my $mutex       = $opts{'L'} || '/tmp/cif_crontool.lock.'.$period;
 my $start_at    = $opts{'S'};
 my $postprocess = $opts{'P'};
 my $dir         = $opts{'F'} || '/opt/cif';
 my $admin       = $opts{'A'} || 'root';
-my $fail_open   = $opts{'N'} || 0;
+my $fail_open   = $opts{'N'} || 1;
 
 if(! -e $cron_tool){
     if(-e './bin/'.$cron_tool){
@@ -70,7 +71,7 @@ sub cleanup {
 
 my @files;
 ## TODO make this a var
-my $feedsdir = (-e './etc') ? './etc' : $dir.'/etc';
+my $feedsdir = (-e './rules/etc') ? './rules/etc' : $dir.'/etc';
 unless($opts{'c'}){
     # TODO -- this is a confusing error, it means you installed cif to a non-std location and aren't using the -F option
     # we're getting rid of cif_crontool in the future, so this is the shim for now.
@@ -163,6 +164,9 @@ foreach(@crons){
     my $cmd = $c_tool.' -r '.$_->{'config'}.' -f '.$_->{'feed'};
     if($debug){
         $cmd .= ' -d';
+    }
+    if($debug_level){
+        $cmd .= ' -v '.$debug_level;
     }
     if($threads){
         $cmd .= ' -t '.$threads;
