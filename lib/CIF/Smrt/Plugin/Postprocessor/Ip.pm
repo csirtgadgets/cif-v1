@@ -18,9 +18,12 @@ sub process {
     my $addresses = iodef_addresses($data);
     return unless($#{$addresses} > -1);
 
+    my $array;
     foreach (@plugins){
-        $_->process($smrt,$data);
+        my $r = $_->process($smrt,$data);
+        push(@$array,@$r) if($r && @$r);
     }
+    return $array;
 }
 
 sub is_ipv4 {

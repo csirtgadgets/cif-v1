@@ -19,15 +19,25 @@ sub process {
     my @new_incidents;
     
     foreach my $i (@{$data->get_Incident()}){
-        next unless($i->get_purpose && $i->get_purpose == IncidentType::IncidentPurpose::Incident_purpose_mitigation());
+        #next unless($i->get_purpose && $i->get_purpose == IncidentType::IncidentPurpose::Incident_purpose_mitigation());
         next unless($i->get_EventData());
         my $restriction = $i->get_restriction();
+        
         my $assessment = $i->get_Assessment();
-        my $impact = iodef_impacts_first($data);
+        my $impact = iodef_impacts_first($i);
+        
         my $description = $i->get_Description->get_content();
         my $confidence = @{$assessment}[0]->get_Confidence();
         $confidence = $confidence->get_content();
         $confidence = $class->degrade_confidence($confidence);
+        
+        my $guid;
+        if(my $iad = $i->get_AdditionalData()){
+            foreach (@$iad){
+                next unless($_->get_meaning() =~ /^guid/);
+                $guid = $_->get_content();
+            }
+        }
         foreach my $e (@{$i->get_EventData()}){
             $restriction = $e->get_restriction() if($e->get_restriction());
             my @flows = (ref($e->get_Flow()) eq 'ARRAY') ? @{$e->get_Flow()} : $e->get_Flow();
@@ -37,23 +47,28 @@ sub process {
                     my @nodes = (ref($s->get_Node()) eq 'ARRAY') ? @{$s->get_Node()} : $s->get_Node();
                     $restriction = $s->get_restriction() if($s->get_restriction());
                     my @additional_data;
+                    my $service = $s->get_Service();
+                    my ($protocol,$portlist);
+                    if($service){
+                        $service = @{$service}[0] if(ref($service) eq 'ARRAY');
+                        $protocol = $service->get_ip_protocol();
+                        $portlist = $service->get_Portlist();
+                    }
                     foreach my $n (@nodes){
                         my $addresses = $n->get_Address();
                         $addresses = [$addresses] if(ref($addresses) eq 'AddressType');
                         foreach my $addr (@$addresses){
                             next unless($class->is_fqdn($addr));
-                            
                             my $ret = $class->resolve($addr->get_content());
                             foreach my $rr (@$ret){
-                                ## TODO -- CNAME, etc...
-                                next unless($rr->{'type'} eq 'A');
-                                    
+                                next unless($rr->{'type'} =~ /^(A|CNAME)$/);
+                                my $thing = ($rr->{'type'} eq 'A') ? 'address' : 'cname';
                                 push(@additional_data,ExtensionType->new({
-                                    dtype   => ExtensionType::DtypeType::dtype_type_string(),
-                                    meaning => 'A',
-                                    content => $rr->{'address'},
-                                }));
-                                
+                                        dtype       => ExtensionType::DtypeType::dtype_type_string(),
+                                        formatid    => $rr->{'type'},
+                                        meaning     => 'rdata',
+                                        content     => $rr->{$thing},
+                                }));                     
                                 my $id = IncidentIDType->new({
                                     content     => generate_uuid_random(),
                                     instance    => $smrt->get_instance(),
@@ -61,25 +76,31 @@ sub process {
                                     restriction => $restriction,
                                 });
                                 my $new = Iodef::Pb::Simple->new({
-                                    purpose         => 'traceback',
                                     description     => $description,
-                                    address         => $rr->{'address'},
+                                    address         => $rr->{$thing},
                                     IncidentID      => $id,
-                                    assessment      => $impact->get_content(),
+                                    assessment      => $impact->get_content()->get_content(),
                                     confidence      => $confidence,
                                     RelatedActivity => RelatedActivityType->new({
                                         IncidentID  => $i->get_IncidentID(),
+                                        restriction => $restriction,
                                     }),
                                     restriction     => $restriction,
-                                    
+                                    guid            => $guid,
+                                    portlist        => $portlist,
+                                    ip_protocol     => $protocol,
                                 });
-                                ## TODO -- these stack on eachother
-                                foreach (@postprocessors){
-                                    $_->process($new);
+                               
+                                # block against CDN's that might thrash us into a for-loop of darkness
+                                if($confidence > 15){
+                                    foreach (@postprocessors){
+                                        my $ret = $_->process($smrt,$new);
+                                        push(@new_incidents,@$ret) if($ret);
+                                    }
                                 }
                                 push(@new_incidents,@{$new->get_Incident()});
                                 my $altids = $i->get_RelatedActivity();
-                                push(@$altids, RelatedActivityType->new({IncidentID => $id }));
+                                push(@$altids, RelatedActivityType->new({IncidentID => $id, restriction => $restriction }));
                                 $i->set_RelatedActivity($altids);
                             }
                         }
@@ -94,7 +115,7 @@ sub process {
             }
         }
     }
-    push(@{$data->get_Incident()},@new_incidents) if($#new_incidents > -1);
+    return(\@new_incidents);
 }
 
 1;

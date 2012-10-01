@@ -16,7 +16,6 @@ sub process {
    
     my @new_ids;
     foreach my $i (@{$data->get_Incident()}){
-        #next unless($i->get_purpose && $i->get_purpose == IncidentType::IncidentPurpose::Incident_purpose_mitigation());
         next unless($i->get_Contact());
         my $restriction = $i->get_restriction();
         my @contacts = (ref($i->get_Contact()) eq 'ARRAY') ? @{$i->get_Contact()} : $i->get_Contact();
@@ -58,6 +57,6 @@ sub process {
         ## TODO -- check this
         push(@{$i->get_AlternativeID()},@$altids) if($altids);
     }
-    push(@{$data->get_Incident()},@new_ids) if($#new_ids > -1);
+    return(\@new_ids);
 }
 1;

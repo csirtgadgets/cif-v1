@@ -18,9 +18,7 @@ sub process {
     return $rec if($address =~ /^(ftp|https?):\/\//);
     return $rec if($address =~ /^$RE{'net'}{'IPv4'}$/ || $address =~ /^$RE{'net'}{'CIDR'}{'IPv4'}$/);
     
-    #return $rec unless($address =~ /^$RE{'net'}{'IPv4'}/);
-    return $rec if($rec->{'address'} =~ /[\s]+/);
-    if($rec->{'address'} =~ /[\/]+/){
+    if($rec->{'address'} =~ /^([a-z0-9.-]+[a-z]{2,6}|\b(?:\d{1,3}\.){3}\d{1,3}\b)(:\d+)?\/+/){
         $rec->{'address'} = 'http://'.$rec->{'address'};
     }
     return $rec;

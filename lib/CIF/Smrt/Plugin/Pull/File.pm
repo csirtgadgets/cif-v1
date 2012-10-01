@@ -10,7 +10,12 @@ sub pull {
         ## TODO -- work-around, path should be passed to me by the higher level lib
         # || /opt/cif/bin is in case we run $ cif_crontool as is with no preceeding path
         my $bin_path = $FindBin::Bin || '/opt/cif/bin';
-        $file = $bin_path.'/../'.$file;
+        # see if we're working out of a -dev directory
+        if(-e './rules'){
+            $file = $bin_path.'/../rules/'.$file;
+        } else {
+            $file = $bin_path.'/../'.$file;
+        }
     }
     open(F,$file) || return($!.': '.$file);
     my @lines = <F>;

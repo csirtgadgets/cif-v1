@@ -16,7 +16,6 @@ sub process {
     
     my @new_ids;
     foreach my $i (@{$data->get_Incident()}){
-        next unless($i->get_purpose && $i->get_purpose == IncidentType::IncidentPurpose::Incident_purpose_mitigation());
         next unless($i->get_EventData());
         
         my $restriction = $i->get_restriction();
@@ -25,10 +24,11 @@ sub process {
         $confidence = $confidence->get_content();
         $confidence = $class->degrade_confidence($confidence);
         
-        my $impact = iodef_impacts_first($data);
+        my $impact = iodef_impacts_first($i);
+        ## TODO -- this is a work-around
         return if($impact->get_content()->get_content() =~ /^scan/);
         
-        my $altids = $i->get_AlternativeID();
+        my $altids = $i->get_RelatedActivity();
         foreach my $e (@{$i->get_EventData()}){
             $restriction = $e->get_restriction() if($e->get_restriction());
             my @flows = (ref($e->get_Flow()) eq 'ARRAY') ? @{$e->get_Flow()} : $e->get_Flow();
@@ -52,17 +52,16 @@ sub process {
                                 });
                                 my $asn = $class->resolve_bgp($addr);
                                 my $new = Iodef::Pb::Simple->new({
-                                    purpose     => 'traceback',
-                                    address     => $addr,
-                                    prefix      => $asn->{'prefix'},
-                                    cc          => $asn->{'cc'},
-                                    rir         => $asn->{'rir'},
-                                    asn         => $asn->{'asn'},
-                                    asn_desc    => $asn->{'asn_desc'},
-                                    IncidentID  => $new_id,
-                                    assessment  => $rr->{'assessment'},
-                                    description => $rr->{'description'},
-                                    confidence  => 95,
+                                    address         => $addr,
+                                    prefix          => $asn->{'prefix'},
+                                    cc              => $asn->{'cc'},
+                                    rir             => $asn->{'rir'},
+                                    asn             => $asn->{'asn'},
+                                    asn_desc        => $asn->{'asn_desc'},
+                                    IncidentID      => $new_id,
+                                    assessment      => $rr->{'assessment'},
+                                    description     => $rr->{'description'},
+                                    confidence      => 95,
                                     restriction     => $restriction,
                                     RelatedActivity => [
                                         RelatedActivityType->new({
@@ -70,7 +69,7 @@ sub process {
                                                 content     => 'http://www.spamhaus.org/query/bl?ip='.$addr,
                                                 instance    => 'zen.spamhaus.org',
                                                 name        => 'spamhaus.org',
-                                                restriction => 'public',
+                                                restriction => RestrictionType::restriction_type_public(),
                                             }),
                                         }),
                                         RelatedActivityType->new({
@@ -79,6 +78,7 @@ sub process {
                                         })
                                     ],
                                     Contact         => $i->get_Contact(),
+                                    guid            => iodef_guid($i),
                                     
                                 });
                                 push(@new_ids,@{$new->get_Incident()}[0]);
@@ -92,7 +92,7 @@ sub process {
         }
         $i->set_RelatedActivity($altids) if($altids);
     }
-    push(@{$data->get_Incident()},@new_ids);
+    return(\@new_ids);
 }
 
 1;
