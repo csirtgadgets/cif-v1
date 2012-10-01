@@ -38,7 +38,7 @@ etc-install:
 	-( cd rules/etc && find . -type d -print ) | while read dir ; do \
     $(INSTALL) -m 0750 -d "$(sysconfdir)/$$dir" ; \
     done
-	-( cd etc && find . -type f -print ) | while read file ; do \
+	-( cd rules/etc && find . -type f -print ) | while read file ; do \
     $(INSTALL) -m 0640 "rules/etc/$$file" "$(sysconfdir)/$$file" ; \
     done
     
