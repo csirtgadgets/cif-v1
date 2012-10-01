@@ -1,12 +1,13 @@
-package CIF::Client::HTTP;
+package CIF::Client::Transport::HTTP;
 use base 'Class::Accessor';
 use base 'LWP::UserAgent';
 
 use strict;
 use warnings;
 
-use CIF;
+use CIF qw/debug/;
 require LWP::UserAgent;
+use Try::Tiny;
 
 __PACKAGE__->follow_best_practice();
 __PACKAGE__->mk_accessors(qw(config));
@@ -42,7 +43,33 @@ sub send {
     my $data = shift;
     return unless($data);
     
-    my $ret = $self->post($self->get_config->{'host'}.'/',Content => $data);
+    my ($err,$ret);
+    my $x = 0;
+    
+    do {
+        try {
+            $ret = $self->post($self->get_config->{'host'}.'/',Content => $data);
+        } catch {
+            $err = shift;
+        };
+        if($err){
+            for(lc($err)){
+                if(/^server closed connection/){
+                    debug('server closed the connection, retrying...') if($::debug);
+                    $err = undef;
+                    sleep(5);
+                    last;
+                }
+                if(/connection refused/){
+                    debug('server connection refused, retrying...') if($::debug);
+                    $err = undef;
+                    sleep(5);
+                    last;
+                }
+                $x = 5;
+            }
+        }
+    } while(!$ret && ($x++ < 5));
     return($ret->status_line()) unless($ret->is_success());
     return(undef,$ret->decoded_content());
 }

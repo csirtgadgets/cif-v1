@@ -38,7 +38,7 @@ use CIF qw/debug/;
 use Iodef::Pb::Format;
 
 my %opts;
-getopt('O:G:l:g:THL:p:f:q:c:s:r:C:zP:F', \%opts);
+getopt('D:S:O:G:l:g:THL:p:f:q:c:s:r:C:zP:F', \%opts);
 
 our $debug       = ($opts{'d'}) ? 1 : 0;
 
@@ -67,7 +67,10 @@ our $relateduuid        = $opts{'R'} || 0;
 my $round_confidence    = $opts{'I'} || 0;
 my $group_map           = (defined($opts{'G'})) ? $opts{'G'} : 1;
 my $compress_address    = (defined($opts{'z'})) ? $opts{'z'} : 1;
+my $table_showmeta      = $opts{'M'} || 0;
 my $filter_me           = $opts{'F'};
+my $sortby              = $opts{'S'} || 'detecttime';
+my $sortby_direction    = $opts{'D'} || 'DESC';
 
 die usage() unless($query);
 die usage() if($opts{'h'});
@@ -166,7 +169,7 @@ my ($err,$cli) = CIF::Client->new({
     config          => $ENV{'HOME'}.'/.cif',
 });
 
-die $err if($err);
+die 'ERROR: '.$err if($err);
 
 if($outfile){
     open(F,">",$outfile) || die($!);
@@ -183,7 +186,7 @@ my $ret;
     limit               => $limit,
 });
 
-die $err if($err);
+die 'ERROR: '.$err if($err);
 unless($ret){
     debug('no results...') if($debug);
     exit(0);
@@ -191,6 +194,7 @@ unless($ret){
 
 my $feeds = $ret;
 
+debug('formatting as '.ucfirst($plugin).'...');
 my @text;
 foreach my $feed (@$feeds){
     next unless($feed->get_data());
@@ -210,6 +214,11 @@ foreach my $feed (@$feeds){
         reporttime          => $feed->get_ReportTime(),
         table_nowarning     => $cli->get_table_nowarning(),
         config              => $cli->get_config(),
+        table_uuid          => $uuid,
+        table_relatedid     => $relateduuid,
+        table_showmeta      => $table_showmeta,
+        sortby              => $sortby,
+        sortby_direction    => $sortby_direction,
     });
     
     $t .= "\n";
@@ -228,3 +237,4 @@ if($outfile){
         print $_;
     }
 }
+debug('done');

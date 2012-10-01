@@ -21,7 +21,10 @@ our @ISA = qw(Exporter);
 # This allows declaration   use CIF::Utils ':all';
 # If you do not need this, moving things directly into @EXPORT or @EXPORT_OK
 # will save memory.
-our %EXPORT_TAGS = ( 'all' => [ qw(is_uuid generate_uuid_random generate_uuid_url generate_uuid_hash normalize_timestamp generate_uuid_ns debug) ] );
+our %EXPORT_TAGS = ( 'all' => [ qw(
+    is_uuid generate_uuid_random generate_uuid_url generate_uuid_hash 
+    normalize_timestamp generate_uuid_ns debug
+) ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw//;
 
@@ -72,12 +75,14 @@ sub is_uuid {
 sub debug {
     return unless($::debug);
     my $msg = shift;
-    
-    my ($pkg,$f,$line) = caller();
+    my ($pkg,$f,$line,$sub) = caller(1);
+    $sub = '' unless($sub);
     my $ts = DateTime->from_epoch(epoch => time());
     $ts = $ts->ymd().'T'.$ts->hms().'Z';
-    if($::debug > 2){
-        print "[DEBUG][$ts][$f:$line]: $msg\n";
+    if($::debug > 5){
+        print "[DEBUG][$ts][$f:$sub:$line]: $msg\n";
+    } elsif($::debug > 1) {
+        print "[DEBUG][$ts][$sub]: $msg\n";
     } else {
         print "[DEBUG][$ts]: $msg\n";
     }
