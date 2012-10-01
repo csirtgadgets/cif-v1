@@ -20,10 +20,16 @@ use CIF qw/is_uuid generate_uuid_ns generate_uuid_random/;
 use CIF::Msg;
 use CIF::Msg::Feed;
 
+use Data::Dumper;
+
 my @drivers = __PACKAGE__->plugins();
 
 __PACKAGE__->follow_best_practice();
-__PACKAGE__->mk_accessors(qw(config db_config router_db_config driver driver_config restriction_map group_map groups feeds feeds_config));
+__PACKAGE__->mk_accessors(qw(
+    config db_config router_db_config 
+    driver driver_config restriction_map 
+    group_map groups feeds feeds_config
+));
 
 sub new {
     my $class = shift;
@@ -280,7 +286,8 @@ sub process_query {
                     })
                 );
             }
-            my $s = CIF::Archive->search({
+            
+            my ($err,$s) = CIF::Archive->search({
                 query           => $q->get_query(),
                 limit           => $m->get_limit(),
                 confidence      => $m->get_confidence(),
@@ -291,6 +298,17 @@ sub process_query {
                 description     => $m->get_description(),
                 feeds           => $self->get_feeds(),
             });
+            if($err){
+                warn $err;
+                return(
+                    MessageType->new({
+                        version => $CIF::VERSION,
+                        type    => MessageType::MsgType::REPLY(),
+                        status  => MessageType::StatusType::FAILED(),
+                        data    => 'query failed, contact system administrator',
+                    })
+                );
+            }
             next unless($s);
             push(@res,@$s);
         }
@@ -372,7 +390,7 @@ sub process_submission {
             }
             push(@$ret,$id);
             ## TODO -- make the 1000 a variable
-            if($i % 1000 == 0){
+            if($i % 5000 == 0){
                 CIF::Archive->dbi_commit();
                 warn 'committing...';
                 $state = 1;

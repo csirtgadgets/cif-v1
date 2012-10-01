@@ -1,6 +1,6 @@
 Revision history for cif-router
 
-0.99.04 2012-08-30
+0.99.04 2012-10-01
     - added query api restriction (eg: domain/malware, infrastructure/botnet, etc...)
     - merged in libcif
     - renamed REST driver to generic HTTP driver
