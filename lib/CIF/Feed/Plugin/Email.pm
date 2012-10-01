@@ -40,7 +40,6 @@ sub generate_feeds {
                 $args->{'confidence'},
                 $args->{'guid'},
                 $args->{'start_time'},
-                $args->{'limit'},
             ],
             group_map       => $args->{'group_map'},
             restriction_map => $args->{'restriction_map'},
@@ -48,6 +47,7 @@ sub generate_feeds {
         };
         debug($desc.': generating');
         my $f = $class->SUPER::generate_feeds($feed_args);
+        debug('final count: '.keys(%$f));
         debug($desc.': encoding');
         $f = $class->SUPER::encode_feed({ recs => $f, %$feed_args });
         push(@feeds,$f);
@@ -58,13 +58,18 @@ sub generate_feeds {
 
 __PACKAGE__->set_sql('feed' => qq{
     SELECT DISTINCT ON (t.hash) t.hash, t.id, archive.data
-    FROM __TABLE__ t
+    FROM (
+        SELECT t1.hash, t1.id, t1.uuid, t1.guid
+        FROM __TABLE__ t1
+        WHERE
+            t1.detecttime >= ?
+            AND t1.confidence >= ?
+        ORDER by t1.id DESC
+    ) t
     LEFT JOIN apikeys_groups ON t.guid = apikeys_groups.guid
     LEFT JOIN archive ON t.uuid = archive.uuid
     WHERE 
-        detecttime >= ?
-        AND t.confidence >= ?
-        AND t.guid = ?
+        t.guid = ?
         AND NOT EXISTS (
             SELECT w.hash FROM email_whitelist w
             WHERE
@@ -72,8 +77,6 @@ __PACKAGE__->set_sql('feed' => qq{
                 AND w.confidence > 25
                 AND w.hash = t.hash
         )
-    ORDER BY t.hash, t.id ASC, confidence DESC
-    LIMIT ?
 });
     
 1;

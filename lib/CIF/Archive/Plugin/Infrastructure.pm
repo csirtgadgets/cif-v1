@@ -39,11 +39,10 @@ sub insert {
         my $protocol;
         my $confidence = iodef_confidence($i);
         $confidence = @{$confidence}[0]->get_content();
-      
-        
+
         my $systems = iodef_systems($i);
         
-        return unless(@$systems);
+        next unless($systems);
         foreach my $system (@{$systems}){
             my @nodes = (ref($system->get_Node()) eq 'ARRAY') ? @{$system->get_Node()} : $system->get_Node();
             foreach my $node (@nodes){
@@ -128,7 +127,7 @@ sub insert {
         }
     }
     $class->table($tbl);
-    return(undef,@ids);
+    return(undef,\@ids);
 }
     
 1;

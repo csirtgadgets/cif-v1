@@ -1,6 +1,6 @@
 EXTRA_DIST = lib bin sbin schemas
 
-ME=cif-dbi-perl
+ME=libcif-dbi
 BUILD=$(shell git describe --tags)
 SNAPSHOT=$(ME)-$(BUILD)
 
@@ -78,6 +78,9 @@ drop_archive:
 
 drop_index:
 	$(PSQL) -U $(DB_DBA) -h $(DB_HOST) -p $(DB_PORT) -c "DROP TABLESPACE IF EXISTS index"
+	
+purgedb:
+	$(PSQL) -U $(DB_DBA) -h $(DB_HOST) -p $(DB_PORT) -d $(DB_DATABASE) < "schemas/pg_purge.sql"
 
 clean:
 	rm Makefile

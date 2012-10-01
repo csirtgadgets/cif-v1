@@ -35,6 +35,8 @@ sub generate_feeds {
     
     my $tbl = $class->table();
     
+    my $whitelist = $class->generate_whitelist($args);
+    
     my @feeds;
     foreach my $p (@plugins){
         my $t = $p;
@@ -65,7 +67,7 @@ sub generate_feeds {
         my $f = $class->SUPER::generate_feeds($feed_args);
         if(keys %$f){
             debug('testing whitelist: '.$desc);
-            $f = $class->test_whitelist({ recs => $f, %$feed_args }); 
+            $f = $class->test_whitelist({ recs => $f, %$feed_args, whitelist => $whitelist }); 
         }
         # we create a feed no matter what
         # because of the way guid's work, it's better to do it this way
@@ -79,64 +81,76 @@ sub generate_feeds {
     return(\@feeds);
 }
 
+sub generate_whitelist {
+    my $class = shift;
+    my $args = shift;
+    
+    debug('generating whitelist');
+    my @wl_recs = $class->search_feed_whitelist(
+        $args->{'start_time'},
+        25000,
+    );
+    
+    debug('wl recs: '.$#wl_recs);
+    
+    debug('generating ip_tree');
+    my $whitelist = Net::Patricia->new();
+    $whitelist->add_string($_) foreach @perm_whitelist;
+    $whitelist->add_string($_->{'address'}) foreach (@wl_recs);
+    return $whitelist;
+}
+
 sub test_whitelist {
     my $class = shift;
     my $args = shift;
     
     return $args->{'recs'} if($class->table() =~ /whitelist$/);
-
-    debug('generating whitelist');
-    my @whitelist = $class->search_feed_whitelist(
-        $args->{'start_time'},
-        25000,
-    );
-
-    return $args->{'recs'} unless($#whitelist > -1);
+    return $args->{'recs'} unless($args->{'whitelist'}->climb());
     
-    ## TODO: test this a bit more with CIDR blocks
-    debug('filtering');
-    my $pt = Net::Patricia->new();
-    $pt->add_string($_) foreach @perm_whitelist;
-  
+    my $whitelist = $args->{'whitelist'};
     my $recs = $args->{'recs'};
-    debug('wl recs: '.$#whitelist);
-    $pt->add_string($_->{'address'}) foreach (@whitelist);
+    
     foreach my $rec (keys %$recs){
-        delete($recs->{$rec}) if($pt->match_string($recs->{$rec}->{'address'})); 
+        delete($recs->{$rec}) if($whitelist->match_string($recs->{$rec}->{'address'})); 
     }
             
     return($recs) if(keys %$recs);    
 }
 
 __PACKAGE__->set_sql('feed' => qq{
-    SELECT DISTINCT ON (address,protocol,portlist) t.address, t.id, archive.data
-    FROM __TABLE__ t
-    LEFT JOIN apikeys_groups ON t.guid = apikeys_groups.guid
-    LEFT JOIN archive ON t.uuid = archive.uuid
-    WHERE 
-        detecttime >= ?
-        AND t.confidence >= ?
-        AND t.guid = ?
-        AND NOT EXISTS (
-            SELECT iw.address FROM infrastructure_whitelist iw 
-            WHERE 
-                iw.detecttime >= ?
-                -- TODO: this should be a calculated var
-                AND iw.confidence >= 25 
-                AND iw.address = t.address
-        ) 
-    ORDER BY address,protocol,portlist ASC, confidence DESC, detecttime DESC, t.id DESC 
+    SELECT DISTINCT ON (t1.address,t1.protocol,t1.portlist) t1.address, t1.id, archive.data
+    FROM (
+        SELECT t.address, t.protocol, t.portlist, t.id, t.uuid, t.guid
+        FROM __TABLE__ t
+        WHERE 
+            detecttime >= ?
+            AND t.confidence >= ?            
+        ORDER BY id DESC
+    ) t1
+    LEFT JOIN archive ON t1.uuid = archive.uuid
+    LEFT JOIN apikeys_groups ON t1.guid = apikeys_groups.guid
+    WHERE t1.guid = ?
+    AND NOT EXISTS (
+        SELECT w.address FROM infrastructure_whitelist w
+        WHERE
+                w.detecttime >= ?
+                AND w.confidence >= 25
+                AND w.address = t1.address
+    )
     LIMIT ?
 });
 
 __PACKAGE__->set_sql('feed_whitelist' => qq{
-    SELECT DISTINCT ON (t.uuid) t.uuid, address, confidence
-    FROM infrastructure_whitelist t
-    WHERE
-        t.detecttime >= ?
-        AND t.confidence >= 25
-    ORDER BY t.uuid DESC, t.id ASC
-    LIMIT ?
+    SELECT DISTINCT on (t1.address) t1.address
+    FROM (
+        SELECT t2.address
+        FROM infrastructure_whitelist t2
+        WHERE
+            t2.detecttime >= ?
+            AND t2.confidence >= 25
+        ORDER BY id DESC
+        LIMIT ?
+    ) t1
 });
 
     

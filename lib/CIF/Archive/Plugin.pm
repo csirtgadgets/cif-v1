@@ -31,10 +31,12 @@ sub generate_sha1 {
 
 sub test_feed {
     my $class = shift;
-    my $feeds = shift->{'feeds'};
-    
+    my $feeds = shift;
+
     return unless($feeds);
+    $feeds = $feeds->{'feeds'};
     $feeds = [$feeds] unless(ref($feeds) eq 'ARRAY');
+
     return unless(@$feeds);
     foreach my $f (@$feeds){
         return 1 if(lc($class) =~ /$f$/);

@@ -11,9 +11,10 @@ use Try::Tiny;
 use MIME::Base64;
 require Iodef::Pb::Simple;
 require Compress::Snappy;
+use Data::Dumper;
 
 use Module::Pluggable require => 1, except => qr/::Plugin::\S+::/;
-use CIF qw/generate_uuid_url generate_uuid_random is_uuid generate_uuid_ns/;
+use CIF qw/generate_uuid_url generate_uuid_random is_uuid generate_uuid_ns debug/;
 
 __PACKAGE__->table('archive');
 __PACKAGE__->columns(Primary => 'id');
@@ -30,23 +31,28 @@ sub insert {
     my $class = shift;
     my $data = shift;
         
-    ## TODO -- adapt this to take in array references
-    ## $data = [$data] unless(ref($data) eq 'ARRAY');
-
-    my $id;
+    my $msg = Compress::Snappy::decompress(decode_base64($data->{'data'}));
     
-    $data->{'uuid'}     = generate_uuid_random()                    unless($data->{'uuid'});
+    my $uuid;
+
+    if($data->{'format'} && $data->{'format'} eq 'feed'){
+        $msg = FeedType->decode($msg);
+    } else {
+        $msg = IODEFDocumentType->decode($msg);
+        $uuid = @{$msg->get_Incident}[0]->get_IncidentID->get_content();
+    }
+
+    $data->{'uuid'}     = $data->{'uuid'} || $uuid || generate_uuid_random();
+    
     $data->{'guid'}     = generate_uuid_ns('root')                  unless($data->{'guid'});
     $data->{'created'}  = DateTime->from_epoch(epoch => time())     unless($data->{'created'});
-        
-    my $err;
+   
+    my ($err,$id);
     try {
         $id = $class->SUPER::insert({
             uuid        => $data->{'uuid'},
             guid        => $data->{'guid'},
-            format      => $data->{'format'},
-            ## TODO -- move encode/compress to the client?
-            #data        => encode_base64(Compress::Snappy::compress($data->{'data'}->encode())),
+            format      => $CIF::VERSION,
             data        => $data->{'data'},
             created     => $data->{'created'},
         });
@@ -54,18 +60,9 @@ sub insert {
     catch {
         $err = shift;
     };
-    return($err) if($err);
+    return ($err) if($err);
     
-    ## TODO -- this is all gonna happen as an indexing correlation at some point
-    ## router shouldn't be doing this.
-    
-    $data->{'data'} = Compress::Snappy::decompress(decode_base64($data->{'data'}));
-    
-    if($data->{'format'} && $data->{'format'} eq 'feed'){
-        $data->{'data'} = FeedType->decode($data->{'data'});
-    } else {
-        $data->{'data'} = IODEFDocumentType->decode($data->{'data'});
-    }
+    $data->{'data'} = $msg;    
     
     foreach my $p (@plugins){
         my ($pid,$err);
@@ -74,10 +71,10 @@ sub insert {
         } catch {
             $err = shift;
         };
-        
         if($err){
+            warn $err;
             $class->dbi_rollback() unless($class->db_Main->{'AutoCommit'});
-            return($err);
+            return $err;
         }
     }
     return(undef,$data->{'uuid'});
@@ -95,10 +92,12 @@ sub search {
  
     my $ret;
     if(is_uuid($data->{'query'})){
-        # TODO -- finish
+        $ret = $class->SUPER::retrieve(uuid => $data->{'query'});
     } else {
         # log the query first
+        debug('running query');
         unless($data->{'nolog'}){
+            debug('logging search');
             my ($err,$ret) = $class->log_search($data);
             return($err) if($err);
         }
@@ -108,16 +107,17 @@ sub search {
                 $ret = $p->query($data);
             } catch {
                 $err = shift;
-                warn $err if($::debug);
-                warn $err;
             };
-            return($err,undef) if($err);
+            if($err){
+                warn $err;
+                return($err);
+            }
             last if(defined($ret));
         }
     }
 
-    return(undef,undef) unless($ret);
-    my @recs = (ref($ret) ne 'CIF::Archive') ? reverse($ret->slice(0,$ret->count())) : @$ret;
+    return unless($ret);
+    my @recs = (ref($ret) ne 'CIF::Archive') ? reverse($ret->slice(0,$ret->count())) : ($ret);
     my @rr;
     foreach (@recs){
         # protect against orphans
@@ -156,6 +156,7 @@ sub log_search {
     # thread friendly to load here
     ## TODO this could go in the client...?
     require Iodef::Pb::Simple;
+    my $uuid = generate_uuid_random();
     ## TODO -- have the client pass along a description
     my $doc = Iodef::Pb::Simple->new({
         description => $desc,
@@ -176,9 +177,9 @@ sub log_search {
                 rating  => ConfidenceType::ConfidenceRating::Confidence_rating_numeric(),
             }),
         }),
-        $q_type     => $q,
+        $q_type             => $q,
         IncidentID          => IncidentIDType->new({
-            content => generate_uuid_random(),
+            content => $uuid,
             name    => $source,
         }),
         detecttime  => $dt,
@@ -187,23 +188,16 @@ sub log_search {
         guid        => $guid,
         restriction => RestrictionType::restriction_type_private(),
     });
-    
+   
     my $err;
-    try {
-        $id = $class->insert({
-            uuid    => generate_uuid_random(),
-            guid    => $guid,
-            data    => $doc,
-            created => $dt,
-            feeds   => $data->{'feeds'},
-        });
-    } catch {
-        $err = shift;
-        warn $err;
-        $class->dbi_rollback() unless($class->db_Main->{'AutoCommit'});
-    };
-    warn $err if($err);
-    return($err,undef) if($err);
+    ($err,$id) = $class->insert({
+        uuid    => $uuid,
+        guid    => $guid,
+        data    => encode_base64(Compress::Snappy::compress($doc->encode())),
+        created => $dt,
+        feeds   => $data->{'feeds'},
+    });
+    return($err) if($err);
     $class->dbi_commit() unless($class->db_Main->{'AutoCommit'});
     return(undef,$id);
 }

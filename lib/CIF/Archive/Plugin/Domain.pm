@@ -28,7 +28,7 @@ sub insert {
  
     foreach my $i (@{$data->{'data'}->get_Incident()}){
         foreach(@plugins){
-            if($_->prepare($data)){
+            if($_->prepare($i)){
                 $class->table($class->sub_table($_));
                 last;
             }
@@ -72,7 +72,7 @@ sub insert {
         }
     }
     $class->table($tbl);
-    return(undef,@ids);
+    return(undef,\@ids);
 }
 
 1;

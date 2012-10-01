@@ -48,16 +48,34 @@ sub generate_feeds {
         };
         debug($desc.': generating');
         my $f = $class->SUPER::generate_feeds($feed_args);
+        debug('records: '.keys %$f);
         if(keys %$f){
             debug($desc.': testing whitelist');
             $f = $class->test_whitelist({ recs => $f });  
         }
+        debug('total records: '.keys %$f);
         debug($desc.': encoding');
         $f = $class->SUPER::encode_feed({ recs => $f, %$feed_args });
         push(@feeds,$f);
     }
     $class->table($tbl);
     return(\@feeds);
+}
+
+sub generate_whitelist {
+    my $class = shift;
+    my $args = shift;
+    
+    debug('generating whitelist');
+    my @whitelist = $class->search_feed_whitelist(
+        $args->{'start_time'},
+        25000,
+    );
+    
+    return unless($#whitelist > -1 );
+    my $wl;
+    map { $wl->{lc($_->{'address'})} = 1 } @whitelist;
+    return($wl);
 }
 
 ## TODO -- double test this
@@ -67,48 +85,53 @@ sub test_whitelist {
     
     return $args->{'recs'} if($class->table() =~ /whitelist$/);
     
-    my @whitelist = $class->search_feed_whitelist(
-        $args->{'start_time'},
-        25000,
-    );
-
-    return $args->{'recs'} unless($#whitelist > -1);
+    my $whitelist = $args->{'whitelist'};
     my $recs = $args->{'recs'};
-    
-    foreach my $w (@whitelist){
-        delete($recs->{$w->{'hash'}});
+        
+    my %hash;
+    foreach my $rec (keys %$recs){
+        my $a = lc($recs->{$rec}->{'hash'});
+        next if(exists($whitelist->{$a}));
+        $hash{$a} = $recs->{$rec};
     }
-    return($recs);
+    return(\%hash);
 }
 
 __PACKAGE__->set_sql('feed' => qq{
-    SELECT DISTINCT ON (t.hash) t.id, t.hash, archive.data
-    FROM __TABLE__ t
-    LEFT JOIN apikeys_groups ON t.guid = apikeys_groups.guid
-    LEFT JOIN archive ON t.uuid = archive.uuid
-    WHERE
-        detecttime >= ?
-        AND t.confidence >= ?
-        AND t.guid = ?
+    SELECT DISTINCT ON (t1.hash) t1.hash, t1.id, archive.data
+    FROM (
+        SELECT t.hash, t.id, t.uuid, t.guid
+        FROM __TABLE__ t
+        WHERE
+            t.detecttime >= ?
+            AND t.confidence >= ?
+        ORDER by t.id DESC
+    ) t1
+    LEFT JOIN archive ON t1.uuid = archive.uuid
+    LEFT JOIN apikeys_groups ON t1.guid = apikeys_groups.guid
+    WHERE 
+        t1.guid = ?
         AND NOT EXISTS (
-            SELECT uw.hash FROM url_whitelist uw
+            SELECT w.hash FROM url_whitelist w
             WHERE
-                uw.detecttime >= ?
-                AND uw.confidence > 25
-                AND uw.hash = t.hash
+                w.detecttime >= ?
+                AND w.confidence > 25
+                AND w.hash = t1.hash
         )
-    ORDER BY t.hash ASC, t.id DESC
     LIMIT ?
 });
 
 __PACKAGE__->set_sql('feed_whitelist' => qq{
-    SELECT DISTINCT ON (t.uuid) t.uuid, hash, confidence
-    FROM url_whitelist t
-    WHERE
-        t.detecttime >= ?
-        AND t.confidence >= 25
-    ORDER BY t.uuid DESC, t.id ASC
-    LIMIT ?
+    SELECT DISTINCT on (t1.hash) t1.hash
+    FROM (
+        SELECT t2.hash
+        FROM url_whitelist t2
+        WHERE
+            t2.detecttime >= ?
+            AND t2.confidence >= 25
+        ORDER BY id DESC
+        LIMIT ?
+    ) t1
 });
     
 1;

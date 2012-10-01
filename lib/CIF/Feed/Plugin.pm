@@ -8,7 +8,7 @@ use strict;
 use Try::Tiny;
 use CIF::Msg;
 use CIF::Msg::Feed;
-use CIF qw/generate_uuid_random/;
+use CIF qw/generate_uuid_random debug/;
 
 __PACKAGE__->columns(All => qw/id uuid/);
 __PACKAGE__->columns(Primary => 'id');
@@ -24,11 +24,13 @@ sub generate_feeds {
     my @vars = @{$args->{'vars'}};
     
     my $sth = $class->sql_feed();
+    debug('executing');
     my $ret = $sth->execute(@vars);
     return unless($ret);
     ## TODO: protect against orphan keys
     ## if there's nothing in the data section, trigger a warning
     ## or a delete?
+    debug('fetching');
     return($sth->fetchall_hashref('id'));
 }
 
@@ -37,7 +39,11 @@ sub encode_feed {
     my $args = shift;
   
     my $recs = $args->{'recs'};
+    if(keys %$recs){
     $recs = [ map { $recs->{$_}->{'data'} } keys (%$recs) ];
+    } else {
+        $recs = [];
+    }
     
     delete($args->{'recs'});
         

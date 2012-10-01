@@ -31,11 +31,14 @@ sub is_search {
 sub insert {
     my $class = shift;
     my $data = shift;
+    
+    return unless(ref($data->{'data'}) eq 'IODEFDocumentType');
 
-    return unless($class->is_search($data->{'data'}));
     my $tbl = $class->table();
     my @ids;
+
     foreach my $i (@{$data->{'data'}->get_Incident()}){
+        next unless($class->is_search($i));
         my $confidence = iodef_confidence($i);
         $confidence = @{$confidence}[0]->get_content();
      

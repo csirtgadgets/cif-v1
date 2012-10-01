@@ -39,6 +39,7 @@ sub generate_feeds {
     };
     debug($desc.': generating');
     my $f = $class->SUPER::generate_feeds($feed_args);
+    debug('records: '.keys %$f);
     debug($desc.': encoding');
     $f = $class->SUPER::encode_feed({ recs => $f, %$feed_args });
     push(@feeds,$f);
@@ -47,15 +48,19 @@ sub generate_feeds {
 }
 
 __PACKAGE__->set_sql('feed' => qq{
-    SELECT DISTINCT ON (t.hash) t.hash, t.id, archive.data
-    FROM __TABLE__ t
-    LEFT JOIN apikeys_groups ON t.guid = apikeys_groups.guid
-    LEFT JOIN archive ON t.uuid = archive.uuid
+    SELECT DISTINCT ON (t1.hash) t1.hash, t1.id, archive.data
+    FROM (
+        SELECT t.hash, t.id, t.uuid, t.guid
+        FROM __TABLE__ t
+        WHERE
+            t.detecttime >= ?
+            AND t.confidence >= ?
+        ORDER by t.id DESC
+    ) t1
+    LEFT JOIN archive ON t1.uuid = archive.uuid
+    LEFT JOIN apikeys_groups ON t1.guid = apikeys_groups.guid
     WHERE 
-        detecttime >= ?
-        AND t.confidence >= ?
-        AND t.guid = ?
-    ORDER BY t.hash, t.id ASC, confidence DESC
+        t1.guid = ?
     LIMIT ?
 });
     

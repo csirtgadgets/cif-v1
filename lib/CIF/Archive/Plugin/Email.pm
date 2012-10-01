@@ -32,7 +32,7 @@ sub insert {
 
     my $addresses = iodef_addresses($data->{'data'});
     return unless(@$addresses);
-    
+
     my $tbl = $class->table();
     my @ids;
     foreach my $i (@{$data->{'data'}->get_Incident()}){
@@ -49,10 +49,10 @@ sub insert {
             my $addr = lc($address->get_content());
             next unless(is_email($addr));
             my $hash = $class->SUPER::generate_sha1($addr);
-            if($class->test_feed()){
+            if($class->test_feed($data)){
                 $class->SUPER::insert({
-                    guid        => iodef_guid($i) || $data->{'guid'},
-                    uuid        => $i->get_IncidentID->get_content(),
+                    uuid        => $data->{'uuid'},
+                    guid        => $data->{'guid'},
                     hash        => $hash,
                     confidence  => $confidence,
                 });

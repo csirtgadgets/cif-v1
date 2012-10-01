@@ -6,6 +6,7 @@ use strict;
 
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 use CIF qw/debug/;
+use Net::DNS::Match;
 
 __PACKAGE__->table('domain');
 __PACKAGE__->columns(All => qw/id uuid guid address confidence detecttime created/);
@@ -13,13 +14,15 @@ __PACKAGE__->sequence('domain_id_seq');
 
 ## TODO: database config?
 my @plugins = __PACKAGE__->plugins();
-push(@plugins, ('suspicious','botnet','malware','fastflux','phishing','nameserver','whitelist'));
+push(@plugins, ('suspicious','botnet','malware','fastflux','phishing','whitelist'));
 
 sub generate_feeds {
     my $class   = shift;
     my $args    = shift;
     
     my $tbl = $class->table();
+    
+    my $whitelist = $class->generate_whitelist($args);
   
     my @feeds;
     foreach my $p (@plugins){
@@ -39,7 +42,7 @@ sub generate_feeds {
                 $args->{'start_time'},
                 $args->{'confidence'},
                 $args->{'guid'},
-                $args->{'start_time'},
+                #$args->{'start_time'},
                 $args->{'limit'},
             ],
             group_map       => $args->{'group_map'},
@@ -48,10 +51,13 @@ sub generate_feeds {
         };
         debug($desc.': generating');
         my $f = $class->SUPER::generate_feeds($feed_args);
+        debug('found: '.keys(%$f));
+        
         if(keys %$f){
             debug($desc.': testing whitelist');
-            $f = $class->test_whitelist({ recs => $f });  
+            $f = $class->test_whitelist({ recs => $f, %$feed_args, whitelist => $whitelist });  
         }
+        debug('final count: '.keys(%$f));
         debug($desc.': encoding');
         $f = $class->SUPER::encode_feed({ recs => $f, %$feed_args });
         push(@feeds,$f);
@@ -60,70 +66,78 @@ sub generate_feeds {
     return(\@feeds);
 }
 
-sub test_whitelist {
+sub generate_whitelist {
     my $class = shift;
     my $args = shift;
     
-    return $args->{'recs'} if($class->table() =~ /whitelist$/);
+    return if($class->table() =~ /_whitelist$/);
     
-    my $recs = $args->{'recs'};
-  
-    my %hash;
-    foreach(keys %$recs){
-        next if(exists($hash{$recs->{$_}->{'address'}}));
-        $hash{$recs->{$_}->{'address'}} = $recs->{$_};
-    }
+    debug('generating whitelist');
     my @whitelist = $class->search_feed_whitelist(
         $args->{'start_time'},
-        25000,
+        25000
     );
     
-    foreach my $w (@whitelist){
-        my $wa = $w->{'address'};
-        # linear approach first
-        if(exists($hash{$wa})){
-            delete($hash{$wa});
-        } else {
-            # else rip through the keys and make sure
-            # test1.yahoo.com doesn't exist in the whitelist as yahoo.com
-            foreach my $x (keys %hash){
-                    if($x =~ /\.$wa$/){
-                        delete($hash{$x});
-                    }
-            }
-        }   
-    }
+    return unless($#whitelist > -1 );
+    
+    @whitelist = map { $_ = $_->{'address'} } @whitelist;
+    
+    return(\@whitelist);
+} 
+
+sub test_whitelist {
+    my $class = shift;
+    my $args = shift;
+
+    return $args->{'recs'} if($class->table() =~ /whitelist$/);
+    return $args->{'recs'} unless($args->{'whitelist'}); 
+    my $whitelist = $args->{'whitelist'};
+    
+    my $wl_tree = Net::DNS::Match->new();
+    $wl_tree->add($whitelist);
+     
+    my $recs = $args->{'recs'};
+
+    debug('filtering through '.(keys %$recs).' records');
+    
+    my %hash;
+    foreach(keys %$recs){
+        my $a = $recs->{$_}->{'address'};
+        next if(exists($hash{$a}));
+        next if($wl_tree->match($a));
+        $hash{$a} = $recs->{$_};
+    }   
+
     return(\%hash);
 }
 
 __PACKAGE__->set_sql('feed' => qq{
-    SELECT DISTINCT ON (t.address) t.address, t.id, archive.data
-    FROM __TABLE__ t
-    LEFT JOIN apikeys_groups ON t.guid = apikeys_groups.guid
-    LEFT JOIN archive ON t.uuid = archive.uuid
-    WHERE 
-        detecttime >= ?
-        AND t.confidence >= ?
-        AND t.guid = ?
-        AND NOT EXISTS (
-            SELECT dw.address FROM domain_whitelist dw
-            WHERE
-                dw.detecttime >= ?
-                AND dw.confidence >= 25
-                AND dw.address = t.address
-        )
-    ORDER BY t.address, t.id ASC, confidence DESC
+    SELECT DISTINCT ON (t1.address) t1.address, t1.id, archive.data
+    FROM (
+        SELECT t.address, t.id, t.uuid, t.guid
+        FROM __TABLE__ t
+            WHERE 
+                detecttime >= ?
+                AND t.confidence >= ?            
+        ORDER BY id DESC
+    ) t1
+    LEFT JOIN archive ON t1.uuid = archive.uuid
+    LEFT JOIN apikeys_groups ON t1.guid = apikeys_groups.guid
+    WHERE t1.guid = ?
     LIMIT ?
 });
 
 __PACKAGE__->set_sql('feed_whitelist' => qq{
-    SELECT DISTINCT ON (t.uuid) t.uuid, address, confidence
-    FROM domain_whitelist t
-    WHERE
-        t.detecttime >= ?
-        AND t.confidence >= 25
-    ORDER BY t.uuid DESC, t.id ASC
-    LIMIT ?
+    SELECT DISTINCT on (t1.address) t1.address
+    FROM (
+        SELECT t2.address
+        FROM domain_whitelist t2
+        WHERE
+            t2.detecttime >= ?
+            AND t2.confidence >= 25
+        ORDER BY id DESC
+        LIMIT ?
+    ) t1
 });
 
     

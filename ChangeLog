@@ -1,6 +1,6 @@
 Revision history for cif-dbi
 
-0.99.04 2012-08-30
+0.99.04 2012-10-01
     - added spamvertising plugin
     - renamed cif_feeds to cif_feed in various places
     - added url_whitelisting (whooops...)

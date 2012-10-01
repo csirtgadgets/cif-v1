@@ -26,7 +26,7 @@ sub insert {
     my $confidence;
     my @ids;
     my $tbl = $class->table();
-    
+
     if($data->{'hash'}){
         $confidence = $data->{'confidence'};
         
@@ -40,36 +40,37 @@ sub insert {
             confidence  => $confidence,
         });
         push(@ids,$id);
-    } elsif(ref($data) eq 'IncidentType') {
-        $confidence = iodef_confidence($data->{'data'});
-        $confidence = @{$confidence}[0]->get_content();
-     
-        # for now, we expect all hashes to be sent in
-        # under Incident.AdditionalData
-        # we can improve this in the future
-        my $ad = iodef_additional_data($data);
-        return unless(@$ad);
-        
-        my @ids;
-        foreach my $a (@$ad){
-            next unless($a->get_meaning() && lc($a->get_meaning()) =~ /^(md5|sha(\d+)|uuid)$/);
-            next unless($a->get_content());
-            my $hash = $a->get_content();
-            if(my $t = return_table($hash)){
-                $class->table($t);
+    } elsif(ref($data->{'data'}) eq 'IODEFDocumentType') {
+        foreach my $i (@{$data->{'data'}->get_Incident()}){
+            $confidence = iodef_confidence($i);
+            $confidence = @{$confidence}[0]->get_content();
+         
+            # for now, we expect all hashes to be sent in
+            # under Incident.AdditionalData
+            # we can improve this in the future
+            my $ad = iodef_additional_data($i);
+            return unless(@$ad);
+            
+            my @ids;
+            foreach my $a (@$ad){
+                next unless($a->get_meaning() && lc($a->get_meaning()) =~ /^(md5|sha(\d+)|uuid|hash)$/);
+                next unless($a->get_content());
+                my $hash = $a->get_content();
+                if(my $t = return_table($hash)){
+                    $class->table($t);
+                }
+                my $id = $class->SUPER::insert({
+                    hash        => $hash,
+                    uuid        => $data->{'uuid'},
+                    guid        => $data->{'guid'},
+                    confidence  => $confidence,
+                });
+                push(@ids,$id);
             }
-            my $id = $class->SUPER::insert({
-                hash        => $hash,
-                uuid        => $data->get_IncidentID->get_content(),
-                guid        => iodef_guid($data),
-                confidence  => $confidence,
-            });
-            push(@ids,$id);
         }
-    } else { return; }
+    }
     $class->table($tbl);
-   
-    return(\@ids);   
+    return(undef,\@ids); 
 }
 
 sub return_table {
