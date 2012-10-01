@@ -1,6 +1,6 @@
-EXTRA_DIST = lib bin sbin etc
+EXTRA_DIST = lib bin sbin rules/etc
 
-ME=cif-smrt-perl
+ME=cif-smrt
 BUILD=$(shell git describe --tags)
 SNAPSHOT=$(ME)-$(BUILD)
 
