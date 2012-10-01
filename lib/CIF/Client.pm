@@ -10,7 +10,7 @@ use Config::Simple;
 use Digest::SHA1 qw/sha1_hex/;
 use Compress::Snappy;
 use MIME::Base64;
-use Iodef::Pb::Simple;
+use Iodef::Pb::Simple qw/iodef_addresses iodef_confidence iodef_impacts/;
 use Regexp::Common qw/net/;
 use Regexp::Common::net::CIDR;
 use Net::Patricia;
@@ -30,7 +30,8 @@ __PACKAGE__->mk_accessors(qw(
     table_nowarning related
 ));
 
-our @plugins = __PACKAGE__->plugins();
+our @queries = __PACKAGE__->plugins();
+@queries = map { $_ =~ /::Query::/ } @queries;
 
 sub new {
     my $class = shift;
@@ -67,7 +68,7 @@ sub new {
         @{$self->{'fields'}} = split(/,/,$args->{'fields'}); 
     } 
     
-    my $driver     = 'CIF::Client::'.$self->get_driver();
+    my $driver     = 'CIF::Client::Transport::'.$self->get_driver();
     my $err;
     try {
         $driver     = $driver->new({
@@ -101,108 +102,33 @@ sub search {
         $args->{'query'} = \@a;
     }
     
-    my $pt;
     my @queries;
-    my @orig_queries;
+    my @orig_queries = @{$args->{'query'}};
     
-    ## TODO -- keep track of the actual query vs the index search
-    ## apply NOLOG to each of the queries
-    
-    ## TODO -- client should have search plugins for queries (eg: ip, domain, ..)
-    ## get this code out of here..
+    # we have to pass this along so we can check it later in the code
+    # for our original queries since the server will give us back more 
+    # than we asked for
+    my $ip_tree = Net::Patricia->new();
     
     debug('generating query') if($::debug);
     foreach my $q (@{$args->{'query'}}){
-        if(lc($q) =~ /^http(s)?:\/\//){
-            $q =~ s/\/$//g;
-            ## escape unsafe chars, that's what the data-warehouse does
-            ## TODO -- doc this
-            $q = uri_escape($q,'\x00-\x1f\x7f-\xff');
-        }
-        ## TODO -- double check this
-        $q = lc($q);
-        
-        ## TODO -- fix this regex a bit
-        if($q =~ /^([a-z\/]+([0-9])?)$/){
-            my @bits = split(/\//,$q);
-            my $qq = join(' ',reverse(@bits)).' feed';
-            my %args2 = %$args;
-            delete($args2{'query'});
-            $args2{'description'} = 'search '.$qq;
-            $args2{'limit'} = 1;
-            ## TODO: this is a hack, gatta find a better way to handle these
-            $args2{'feed'} = 1;
+        my ($err,$ret) = CIF::Client::Query->new({
+            query       => $q,
+            apikey      => $args->{'apikey'},
+            limit       => $args->{'limit'},
+            confidence  => $args->{'confidence'},
+            guid        => $args->{'guid'},
+            nolog       => $args->{'nolog'},
+            description => $args->{'description'} || 'search '.$q,
+            pt          => $ip_tree,
             
-            ## TODO: fix this, if we log a feed search, the next search this will pop-up
-            ##       instead of the feed itself (since we're looking at the hash table)
-            $args->{'nolog'} = 1;
-            
-            ## TODO -- this could cause problems based on what comes in through the api
-            ## feeds we wanna default higher than regular searches... i think..?
-            $args2{'confidence'} = ($args->{'confidence'}) ? $args->{'confidence'} : 85;
-            push(@queries, $self->new_query({ query => [ {query => $qq, nolog => $args->{'nolog'}}], %args2 }));
-        } elsif($q =~ /^$RE{'net'}{'IPv4'}$/){
-            $pt = Net::Patricia->new();
-            $pt->add_string($q);
-            push(@orig_queries,$q);
-            my @array = split(/\./,$q);
-            
-            # we're gonna overwrite the original
-            # keep the rest of the data
-            my %args2 = %$args;
-            $args2{'filter_me'} = $filter_me;
-            $args2{'description'} = 'search '.$q;
-            delete($args2{'query'});
-         
-            # we wanna keep the first 'nolog'
-            push(@queries, (
-                $self->new_query({ 
-                    query => [
-                        { query => $q,                                              nolog => $args2{'nolog'} },
-                        { query => $array[0].'.'.$array[1].'.'.$array[2].'.0/24',   nolog => 1, },
-                        { query => $array[0].'.'.$array[1].'.0.0/16',               nolog => 1, },
-                        { query => $array[0].'.0.0.0/8',                            nolog => 1, },
-                    ],
-                    %args2
-                }),
-            ));
-        } elsif ($q =~ /^$RE{'net'}{'CIDR'}{'IPv4'}{-keep}$/){
-            $pt = Net::Patricia->new();
-            $pt->add_string($q);
-            push(@orig_queries,$q);
-            my $addr = $1;
-            my $mask = $2;  
-            my @array = split(/\./,$addr);
-            return 'mask too low; minimum value is 8' if($mask < 8);
-            
-            my %args2 = %$args;
-            delete($args2{'nolog'});
-            delete($args2{'query'});
-            $args2{'description'} = 'search '.$q;
-            
-            my @x;
-            
-            for($mask){
-                if($_ > 8){
-                    push(@x, { query => $array[0].'.0.0.0/8', nolog => 1 });
-                }
-                if($_ > 16){
-                    push(@x, { query => $array[0].'.'.$array[1].'.0.0/16', nolog => 1 });
-                }
-                if($_ > 24){
-                    push(@x, { query => $array[0].'.'.$array[1].'.'.$array[2].'.0/24', nolog => 1 });
-                }
-            }
-            push(@x, { query => $q, nolog => $args->{'nolog'} });
-            push(@queries, $self->new_query({ query => \@x, %args2 }));
-        } else {
-            my %args2 = %$args;
-            delete($args2{'query'});
-            $args2{'description'} = 'search '.$q;
-            push(@queries, $self->new_query({ query => [ { query => $q, nolog => $args->{'nolog'}} ],%args2 }));
-            #die ::Dumper(@queries);
-        }
-    }
+            ## TODO -- not sure how else to do this atm
+            ## needs to be passed to the IPv4 query so we
+            ## can get back the tree and check it against the feed
+        });
+        return($err) if($err);
+        push(@queries,$ret) if($ret);
+    }        
         
     my $msg = MessageType->new({
         version => $CIF::VERSION,
@@ -226,7 +152,7 @@ sub search {
     return(0) unless($ret->{'data'});
     my $uuid = generate_uuid_ns($args->{'apikey'});
 
-    debug('processing...') if($::debug);
+    debug('decoding...') if($::debug);
 
     ## TODO: finish this so feeds are inline with reg queries
     ## TODO: try to base64 decode and decompress first in try { } catch;
@@ -245,6 +171,7 @@ sub search {
         }
         next unless($feed->get_data());
         my %uuids;
+        debug('processing: '.$#{$feed->get_data}.' items') if($::debug);
         foreach my $e (@{$feed->get_data()}){
             $e = Compress::Snappy::decompress(decode_base64($e));
             $e = IODEFDocumentType->decode($e);
@@ -254,8 +181,8 @@ sub search {
                 next if($id eq $uuid);
             }
             my $docid = @{$e->get_Incident()}[0]->get_IncidentID->get_content();
-            if($pt){
-                my $addresses = $self->iodef_addresses($e);
+            if($ip_tree->climb()){
+                my $addresses = iodef_addresses($e);
                 
                 # if there are no addresses, we've got nothing or hashes
                 my $found = (@$addresses) ? 0 : 1;
@@ -264,11 +191,13 @@ sub search {
                     # if we have a match great
                     # if we don't we need to test and see if this address
                     # contains our original query
-                    unless($pt->match_string($a->get_content())){
-                        my $pt2 = Net::Patricia->new();
-                        $pt2->add_string($a->get_content());
+                    unless($ip_tree->match_string($a->get_content())){
+                        my $ip_tree2 = Net::Patricia->new();
+                        $ip_tree2->add_string($a->get_content());
                         foreach (@orig_queries){
-                            if($pt2->match_string($_)){
+                            ## TODO -- work-around for uuid searches
+                            unless(/^$RE{'net'}{'IPv4'}/){ $found = 1; last; }
+                            if($ip_tree2->match_string($_)){
                                 $found = 1;
                                 last;
                             }
@@ -285,38 +214,18 @@ sub search {
                 $uuids{$docid} = 1;
             }
         }
-        $feed->set_data(\@array);
+        if($#array > -1){
+            debug('final results: '.$#array) if($::debug);
+            $feed->set_data(\@array);
+        } else {
+            $feed->set_data(undef);
+        }
     }
+    debug('done processing');
     return(undef,$ret->get_data());
 }
 
-sub new_query {
-    my $self    = shift;
-    my $args    = shift;
-   
-    my $msg = MessageType::QueryType->new({
-        apikey      => $args->{'apikey'},
-        limit       => $args->{'limit'},
-        confidence  => $args->{'confidence'},
-        guid        => $args->{'guid'},
-        description => $args->{'description'},
-        
-        ## TODO: clean this up...
-        feed        => $args->{'feed'},
-    });
-    
-    my $q = $args->{'query'};
 
-    foreach my $qq (@$q){
-        $qq->{'query'} = sha1_hex($qq->{'query'}) unless($qq->{'query'} =~ /^[a-f0-9]{40}$/);
-        $qq = MessageType::QueryStruct->new({
-            query   => $qq->{'query'},
-            nolog   => $qq->{'nolog'},
-        });
-    }
-    $msg->set_query($q);     
-    return $msg->encode();
-}
 
 sub send {
     my $self = shift;
@@ -366,31 +275,4 @@ sub new_submission {
     });
     return $msg->encode();
 }
-
-sub iodef_addresses {
-    my $class = shift;
-    my $iodef = shift;
-    
-    my @array;
-    foreach my $i (@{$iodef->get_Incident()}){
-        next unless($i->get_EventData());
-        foreach my $e (@{$i->get_EventData()}){
-            my @flows = (ref($e->get_Flow()) eq 'ARRAY') ? @{$e->get_Flow()} : $e->get_Flow();
-            foreach my $f (@flows){
-                my @systems = (ref($f->get_System()) eq 'ARRAY') ? @{$f->get_System()} : $f->get_System();
-                foreach my $s (@systems){
-                    my @nodes = (ref($s->get_Node()) eq 'ARRAY') ? @{$s->get_Node()} : $s->get_Node();
-                    foreach my $n (@nodes){
-                        my $addresses = $n->get_Address();
-                        $addresses = [$addresses] if(ref($addresses) eq 'AddressType');
-                        push(@array,@$addresses);
-                    }
-                }
-            }
-        }
-    }
-    return(\@array);
-}
-
-
 1;
