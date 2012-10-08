@@ -14,7 +14,7 @@ __PACKAGE__->sequence('domain_id_seq');
 
 ## TODO: database config?
 my @plugins = __PACKAGE__->plugins();
-push(@plugins, ('suspicious','botnet','malware','fastflux','phishing','whitelist'));
+push(@plugins, ('suspicious','botnet','malware','fastflux','phishing','whitelist','passive'));
 
 sub generate_feeds {
     my $class   = shift;

@@ -20,3 +20,6 @@ CREATE INDEX idx_domain_phishing ON domain_phishing (detecttime DESC, confidence
 
 DROP INDEX IF EXISTS idx_domain_nameserver;
 CREATE INDEX idx_domain_nameserver ON domain_nameserver (detecttime DESC, confidence DESC, guid, address);
+
+DROP INDEX IF EXISTS idx_domain_passive;
+CREATE INDEX idx_domain_passive ON domain_passive (detecttime DESC, confidence DESC, guid, address);
