@@ -18,10 +18,12 @@ __PACKAGE__->add_trigger(after_delete => \&trigger_after_delete);
 
 sub trigger_after_delete {
     my $class = shift;
-    my $rec = CIF::Archive->retrieve(uuid => $class->uuid());
-    # protect against orphans
-    return unless($rec);
-    $rec->delete();
+    
+    my $hash = CIF::Archive::Plugin::Hash->retrieve(uuid => $class->uuid());
+    $hash->delete() if($hash);
+    
+    my $archive = CIF::Archive->retrieve(uuid => $class->uuid());
+    $archive->delete() if($archive);
 }
 
 sub insert {
@@ -41,10 +43,23 @@ sub insert {
         hash        => $hash,
         confidence  => $data->{'confidence'},
     });
-    
     my $id = $class->insert_hash($data,$hash);
     
     return(undef,$id);
 }
 
+__PACKAGE__->set_sql(feeds => qq{
+    SELECT count(hash),hash,confidence 
+    FROM __TABLE__ t
+    GROUP BY hash,confidence
+    ORDER BY count desc
+});
+
+__PACKAGE__->set_sql(feed_group => qq{
+    SELECT *
+    FROM __TABLE__ t
+    WHERE hash = ?
+    AND confidence = ?
+    ORDER BY id ASC
+});
 1;

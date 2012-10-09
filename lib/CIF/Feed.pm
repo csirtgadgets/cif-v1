@@ -18,7 +18,7 @@ __PACKAGE__->mk_accessors(qw(
     config db_config feeds confidence 
     roles limit limit_days start_time 
     report_time group_map restriction_map
-    restriction
+    restriction feed_retention
 ));
 
 my @plugins = __PACKAGE__->plugins();
@@ -61,6 +61,7 @@ sub init {
     $self->set_start_time($start_time->ymd().'T'.$start_time->hms().'Z');
     
     $self->set_restriction(normalize_restriction($args->{'restriction'} || $self->get_config->{'restriction'} || 'private'));
+    $self->set_feed_retention($args->{'feed_retention'} || $self->get_config->{'feed_retention'} || 3);
 }
 
 sub init_config {
@@ -77,7 +78,7 @@ sub init_config {
     ## TODO: add groups here 
     
     $self->set_limit(       $args->{'limit'}        || $self->get_config->{'limit'}         || 10000);
-    $self->set_limit_days(  $args->{'limit_days'}   || $self->get_config->{'limit_days'}    ||3);
+    $self->set_limit_days(  $args->{'limit_days'}   || $self->get_config->{'limit_days'}    || 3);
     
     if(my $roles = $args->{'roles'} || $self->get_config->{'roles'}){
         unless(ref($roles) eq 'ARRAY'){
@@ -249,6 +250,21 @@ sub purge_feeds {
             
         }
         CIF::Archive::Plugin::Feed->dbi_commit() unless(CIF::Archive::Plugin::Feed->db_Main->{'AutoCommit'});
+    }
+    
+    my @feeds = CIF::Archive::Plugin::Feed->search_feeds();
+    my $retention = $self->get_feed_retention() + 1;
+    foreach my $f (@feeds){
+        last if($f->{'count'} <= $retention);   
+        my @array = CIF::Archive::Plugin::Feed->search_feed_group($f->{'hash'},$f->{'confidence'});
+        my $size = $f->{'count'};
+        foreach my $a (@array){
+            warn 'removing: '.$a->uuid() if($::debug);
+            $a->delete();
+            last if($size-- <= $retention);
+        }
+        CIF::Archive::Plugin::Feed->dbi_commit() unless(CIF::Archive::Plugin::Feed->db_Main->{'AutoCommit'});
+        
     }
 }
     

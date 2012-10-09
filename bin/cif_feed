@@ -30,6 +30,7 @@ BEGIN {
 
 use lib '../libcif/lib';
 use lib '../../iodef-pb-simple-perl/lib';
+use lib '../../net-dns-match-perl/lib';
 
 use Getopt::Std;
 use DateTime;
@@ -134,7 +135,9 @@ my $timestamp = DateTime->from_epoch(epoch => (time() - ((1 + $limit_days) * 846
 $timestamp = $timestamp->ymd().'T00:00:00Z';
 
 debug('purging...');
-$ret = $obj->purge_feeds({ timestamp => $timestamp });
+$ret = $obj->purge_feeds({ 
+    timestamp   => $timestamp,
+});
 
 debug('vaccuming: '.$timestamp);
 $ret = $obj->vaccum({ timestamp => $timestamp });

@@ -9,3 +9,6 @@ CREATE TABLE feed (
     reporttime timestamp with time zone default NOW(),
     created timestamp with time zone DEFAULT NOW()
 );
+
+DROP INDEX IF EXISTS idx_feed;
+CREATE INDEX idx_feed ON feed (uuid);

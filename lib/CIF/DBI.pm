@@ -65,7 +65,7 @@ sub vaccum {
 }
 
 __PACKAGE__->set_sql('retrieve_uuid' => qq{
-    SELECT id,uuid,format,data
+    SELECT *
     FROM __TABLE__
     WHERE uuid = ?
     ORDER BY id DESC
