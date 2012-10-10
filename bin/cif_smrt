@@ -36,6 +36,7 @@ use Config::Simple;
 use Data::Dumper;
 use MIME::Lite;
 use CIF qw/debug/;
+use Sys::MemInfo qw(totalmem);
 
 my %opts;
 getopts('hNA:s:T:t:dFc:f:r:v:Pp:',\%opts);
@@ -53,6 +54,14 @@ my $throttle    = $opts{'T'} || 'medium';
 my $threads     = $opts{'t'};
 my $admin       = $opts{'A'} || 'root';
 my $fail_open   = $opts{'N'} || 0;
+
+if((&totalmem / (1024*1024*1024)) < 1){
+    #print "total memory: ".(&totalmem / (1024*1024*1024))."\n";
+    print '*** WARNING ***'."\n";
+    print "$0 should be run on a system with at-least 2-4GB of memory\n";
+    print "performance may suffer, or segfaults may occur frequently as a result\n";
+    print '*** WARNING ***'."\n";
+}
 
 if(!$threads){
     $threads = CIF::Smrt::throttle($throttle);
