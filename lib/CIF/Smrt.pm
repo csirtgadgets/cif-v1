@@ -375,6 +375,10 @@ sub preprocess_routine {
         push(@array,$r);
     }
     debug('done mapping...') if($::debug);
+    debug('records to be processed: '.($#array+1)) if($::debug);
+    if($#array == -1){
+        debug('your goback is too small, if you want records, increase the goback time') if($::debug);
+    }
 
     return(undef,\@array);
 }
@@ -402,7 +406,16 @@ sub process {
     
     my $workers_sum = $context->socket(ZMQ_PULL);
     $workers_sum->bind(WORKER_SUM_CONNECTION());
-
+    
+    # this needs to be started first
+    debug('starting sender thread...');
+    threads->create('sender_routine',$self)->detach();
+    # thread/zmq safety requirement
+    # if the workers start too fast, this gets messed up, give it a 'tick' head-start
+    # if we still see a race condition, send a warmup message to the sender either here
+    # or through the workers as a 'checkin'
+    nanosleep NSECS_PER_MSEC;
+    
     ## TODO -- req/reply checkins?
     debug('creating '.$self->get_threads().' worker threads...');
     for (1 ... $self->get_threads()) {
@@ -424,7 +437,6 @@ sub process {
     debug('processing: '.$master_count.' records...');
 
     debug('master count: '.$master_count);
-    threads->create('sender_routine',$self)->detach();
 
     ## TODO -- batch this out a little
     debug('sending to workers...') if($::debug);
@@ -661,6 +673,7 @@ sub sender_routine {
             for($msg){
                 if(/^TOTAL:(\d+)$/){
                     $total_recs = $1;
+                    debug('total received: '.$total_recs) if($::debug > 2);
                     last;
                 }
             }
@@ -672,7 +685,7 @@ sub sender_routine {
             my $num_msgs = ($#{$msg}+1);
             debug('msgs recvieved: '.$num_msgs) if($::debug > 2);
             push(@$queue,@$msg);
-            debug('msgs in queue: '.($#{$queue}+1)) if($::debug > 4);
+            debug('msgs in queue: '.($#{$queue}+1)) if($::debug > 2);
         }
         
         # we're not done till we at-least have a total from the 
