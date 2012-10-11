@@ -23,10 +23,12 @@ our @ISA = qw(Exporter);
 # will save memory.
 our %EXPORT_TAGS = ( 'all' => [ qw(
     is_uuid generate_uuid_random generate_uuid_url generate_uuid_hash 
-    normalize_timestamp generate_uuid_ns debug
+    normalize_timestamp generate_uuid_ns debug init_logging
 ) ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw//;
+
+use vars qw($Logger);
 
 =head1 NAME
 
@@ -72,21 +74,55 @@ sub is_uuid {
 
 =cut
 
+## TODO -- clean this and init_logging up
+
 sub debug {
     return unless($::debug);
+
     my $msg = shift;
     my ($pkg,$f,$line,$sub) = caller(1);
     $sub = '' unless($sub);
     my $ts = DateTime->from_epoch(epoch => time());
     $ts = $ts->ymd().'T'.$ts->hms().'Z';
-    if($::debug > 5){
-        print "[DEBUG][$ts][$f:$sub:$line]: $msg\n";
-    } elsif($::debug > 1) {
-        print "[DEBUG][$ts][$sub]: $msg\n";
+    
+    if($CIF::Logger){
+         if($::debug > 5){
+            $CIF::Logger->debug("[DEBUG][$ts][$f:$sub:$line]: $msg");
+        } elsif($::debug > 1) {
+            $CIF::Logger->debug("[DEBUG][$ts][$sub]: $msg");
+        } else {
+            $CIF::Logger->debug("[DEBUG][$ts]: $msg");
+        }
     } else {
-        print "[DEBUG][$ts]: $msg\n";
+        if($::debug > 5){
+            print("[DEBUG][$ts][$f:$sub:$line]: $msg\n");
+        } elsif($::debug > 1) {
+            print("[DEBUG][$ts][$sub]: $msg\n");
+        } else {
+            print("[DEBUG][$ts]: $msg\n");
+        }
     }
 }
+
+sub init_logging {
+    my $d = shift;
+    return unless($d);
+    
+    $::debug = $d;
+    require Log::Dispatch;
+    unless($CIF::Logger){
+        $CIF::Logger = Log::Dispatch->new();
+        require Log::Dispatch::Screen;
+        $CIF::Logger->add( 
+            Log::Dispatch::Screen->new(
+                name        => 'screen',
+                min_level   => 'debug',
+                stderr      => 1,
+                newline     => 1
+             )
+        );
+    }
+}   
 
 =item generate_uuid()
 

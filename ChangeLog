@@ -1,5 +1,8 @@
 Revision history for libcif
 
+0.99.06 2012-11
+    - added log::dispatch init_logging functions
+
 0.99.05 2012-10-01
     - implemented cif-protocol perl bindings here
     - merged cif client libs here
