@@ -190,7 +190,8 @@ if($#recs > -1){
     foreach (@recs){
         my $groups = $profile->groups($_->uuid());
         foreach my $g (@$groups){
-            my $isDefaultGuid = ($g eq $profile->group_default($_->uuid())) ? 'true' : '';
+            my $default = $profile->group_default($_->uuid()) || 0;
+            my $isDefaultGuid = ($g eq $default) ? 'true' : '';
             $t->load([$_->uuid_alias(),$_->uuid(),$_->description(),$g,$isDefaultGuid,$_->restricted_access(),$_->write(),$_->revoked(),$_->expires(),$_->created()]);
         }
     }

@@ -132,10 +132,10 @@ sub user_add {
     my $self = shift;
     my $args = shift;
     
-    my $group           = $args->{'group'}          || 'everyone';
+    my $group           = $args->{'groups'}          || 'everyone';
     my $default_group   = $args->{'default_group'}  || 'everyone';
     my $isRestricted    = ($args->{'restricted_access'}) ? 1 : 0;
-        
+    
     my $r = $self->key_add({
         uuid_alias          => $args->{'uuid_alias'}    || $args->{'userid'},
         description         => $args->{'description'},
@@ -153,6 +153,7 @@ sub user_add {
         restriction => $args->{'restricted_access'},
         key         => $r->uuid(),
     }) if($isRestricted);
+    return $r;
 }
 
 sub restriction_add {
