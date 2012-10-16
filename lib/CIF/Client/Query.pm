@@ -60,7 +60,7 @@ sub new {
         ## TODO: clean this up...
         feed        => $args->{'feed'},
     });
-        
+            
     return (undef,$msg->encode());
 }
 

@@ -153,14 +153,20 @@ sub search {
     my $uuid = generate_uuid_ns($args->{'apikey'});
 
     debug('decoding...') if($::debug);
-
-    ## TODO: finish this so feeds are inline with reg queries
+        ## TODO: finish this so feeds are inline with reg queries
     ## TODO: try to base64 decode and decompress first in try { } catch;
     foreach my $feed (@{$ret->get_data()}){
         my @array;
         my $err;
-        my $test = Compress::Snappy::decompress(decode_base64($feed));
+        my $test;
+        try {
+            $test = Compress::Snappy::decompress(decode_base64($feed));
+        } catch {
+            $err = shift;
+        };
         $feed = $test if($test);
+        $err = undef;
+
         try {
             $feed = FeedType->decode($feed);
         } catch {
@@ -221,11 +227,10 @@ sub search {
             $feed->set_data(undef);
         }
     }
+    
     debug('done processing');
     return(undef,$ret->get_data());
 }
-
-
 
 sub send {
     my $self = shift;
@@ -249,11 +254,13 @@ sub submit {
     });
     
     my ($err,$ret) = $self->send($msg->encode());
+    return('ERROR: server failure, contact system administrator') unless($ret);
+    
     $ret = MessageType->decode($ret);
- 
+    
     unless($ret->get_status() == MessageType::StatusType::SUCCESS()){
-        return('failed: '.@{$ret->get_data()}[0]) if($ret->get_status() == MessageType::StatusType::FAILED());
-        return('unauthorized') if($ret->get_status() == MessageType::StatusType::UNAUTHORIZED());
+        return('ERROR: '.@{$ret->get_data()}[0]) if($ret->get_status() == MessageType::StatusType::FAILED());
+        return('ERROR: unauthorized') if($ret->get_status() == MessageType::StatusType::UNAUTHORIZED());
     }
     
     return (undef,$ret);
