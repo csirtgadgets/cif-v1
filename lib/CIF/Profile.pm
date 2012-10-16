@@ -132,7 +132,7 @@ sub user_add {
     my $self = shift;
     my $args = shift;
     
-    my $group           = $args->{'groups'}          || 'everyone';
+    my $group           = $args->{'groups'}         || 'everyone';
     my $default_group   = $args->{'default_group'}  || 'everyone';
     my $isRestricted    = ($args->{'restricted_access'}) ? 1 : 0;
     
@@ -213,7 +213,7 @@ sub user_remove {
     my $self = shift;
     my $args = shift;
     
-    my @recs = CIF::APIKey->search(uuid => $args->{'key'});
+    my @recs = CIF::APIKey->search(uuid_alias => $args->{'user'});
     $_->delete() foreach(@recs);
 }
 

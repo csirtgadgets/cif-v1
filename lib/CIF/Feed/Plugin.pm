@@ -69,4 +69,35 @@ sub test_whitelist {
     return $args->{'recs'} if(keys %{$args->{'recs'}});
 }
 
+__PACKAGE__->set_sql('feed' => qq{
+    SELECT DISTINCT ON (t1.hash) t1.hash, t1.id, archive.data
+    FROM (
+        SELECT t.hash, t.id, t.uuid, t.guid
+        FROM __TABLE__ t
+        WHERE
+            t.detecttime >= ?
+            AND t.confidence >= ?
+        ORDER by t.id DESC
+        LIMIT ?
+    ) t1
+    LEFT JOIN archive ON t1.uuid = archive.uuid
+    LEFT JOIN apikeys_groups ON t1.guid = apikeys_groups.guid
+    WHERE apikeys_groups.uuid = ?
+});
+
+__PACKAGE__->set_sql('feed_whitelist' => qq{
+    SELECT DISTINCT on (t1.hash) t1.hash
+    FROM (
+        SELECT t2.hash
+        FROM __TABLE__ t2
+        WHERE
+            t2.detecttime >= ?
+            AND t2.confidence >= ?
+        ORDER BY id DESC
+        LIMIT ?
+    ) t1
+});
+
+
+
 1;

@@ -148,16 +148,24 @@ sub log_search {
     $source = generate_uuid_ns($source);
     
     my $id;
-    my $q_type = 'address';
-    
-    ## TODO: clean this up
-    $q_type = 'hash' if($q =~ /^([a-f0-9]{40}|[a-f0-9]{32})$/);
+   
+    my ($q_type,$q_thing);
+    for(lc($desc)){
+        if(/^search ([a-f0-9]{40}|[a-f0-9]{32})$/){
+            $q_type = 'hash';
+            $q_thing = $1;
+        } else {
+            m/^search (\S+)$/;
+            $q_type = 'address',
+            $q_thing = $1;
+        }
+    }
    
     # thread friendly to load here
     ## TODO this could go in the client...?
     require Iodef::Pb::Simple;
     my $uuid = generate_uuid_random();
-    ## TODO -- have the client pass along a description
+    
     my $doc = Iodef::Pb::Simple->new({
         description => $desc,
         assessment  => AssessmentType->new({
@@ -177,7 +185,7 @@ sub log_search {
                 rating  => ConfidenceType::ConfidenceRating::Confidence_rating_numeric(),
             }),
         }),
-        $q_type             => $q,
+        $q_type             => $q_thing,
         IncidentID          => IncidentIDType->new({
             content => $uuid,
             name    => $source,

@@ -13,5 +13,5 @@ CREATE TABLE archive (
 
 SET default_tablespace = 'index';
 ALTER TABLE archive ADD PRIMARY KEY (id);
-CREATE INDEX idx_archive_created ON archive (created);
 CREATE INDEX idx_archive_uuid ON archive (uuid);
+CREATE INDEX idx_archive_created ON archive (created);

@@ -6,12 +6,12 @@ use strict;
 use warnings;
 
 use CIF qw/generate_uuid_ns generate_uuid_random is_uuid debug/;
-use CIF::APIKey;
 use Module::Pluggable require => 1, except => qr/CIF::Feed::Plugin::\S+::/;
 use Data::Dumper;
 use Digest::SHA1 qw(sha1_hex);
 use MIME::Base64;
 require Compress::Snappy;
+use CIF::Profile;
 
 __PACKAGE__->follow_best_practice;
 __PACKAGE__->mk_accessors(qw(
@@ -68,6 +68,7 @@ sub init_config {
     my $self = shift;
     my $args = shift;
     
+    my $cfg = $args->{'config'};
     $args->{'config'} = Config::Simple->new($args->{'config'}) || return(undef,'missing config file');
     
     $self->set_config(          $args->{'config'}->param(-block => 'cif_feed'));
@@ -84,6 +85,20 @@ sub init_config {
         unless(ref($roles) eq 'ARRAY'){
             my @a = split(/,/,$roles);
             $roles = \@a;
+        }
+        
+        ## TODO -- clean this up
+        my $profile = CIF::Profile->new({
+            config  => $cfg,
+        });
+        foreach (@$roles){
+            my @recs = $profile->user_list({ user => $_ });
+            my $h = {
+                name    => $_,
+                uuid    => $recs[0]->{'uuid'},
+                guid    => $profile->group_default($recs[0]->{'uuid'}),
+            };
+            $_ = $h;
         }
         $self->set_roles($roles);
     }
@@ -164,10 +179,11 @@ sub process {
     foreach my $confidence (@{$self->get_confidence()}){
         foreach my $role (@{$self->get_roles()}){
             my $p = 'CIF::Feed::Plugin::'.ucfirst($feed);
-            debug('generating '.$confidence.'% '.$role.' '.$feed.' feed') if($::debug);
+            debug('generating '.$confidence.'% '.$role->{'name'}.' '.$feed.' feed') if($::debug);
             my $ret = $p->generate_feeds({
                 confidence      => $confidence,
-                guid            => generate_uuid_ns($role),
+                uuid            => $role->{'uuid'},
+                guid            => $role->{'guid'},
                 limit           => $self->get_limit(),
                 start_time      => $self->get_start_time(),
                 report_time     => $self->get_report_time(),
@@ -189,7 +205,7 @@ sub process {
                     return($err);
                 }
                 push(@ids,$id);
-                warn 'id: '.$id.' confidence: '.$confidence.' desc: '.$f->get_description().' role: '.$role if($::debug);
+                debug('id: '.$id.' confidence: '.$confidence.' desc: '.$f->get_description().' role: '.$role->{'name'});
             }
             warn 'committing...' if($::debug);
             CIF::Archive->dbi_commit() unless(CIF::Archive->db_Main->{'AutoCommit'});
@@ -245,7 +261,7 @@ sub purge_feeds {
 
     if($#array > -1){
         foreach (@array){
-            warn 'removing: '.$_->uuid() if($::debug);
+            debug('removing: '.$_->uuid());
             $_->delete();
             
         }
@@ -259,7 +275,7 @@ sub purge_feeds {
         my @array = CIF::Archive::Plugin::Feed->search_feed_group($f->{'hash'},$f->{'confidence'});
         my $size = $f->{'count'};
         foreach my $a (@array){
-            warn 'removing: '.$a->uuid() if($::debug);
+            debug('removing: '.$a->uuid());
             $a->delete();
             last if($size-- <= $retention);
         }

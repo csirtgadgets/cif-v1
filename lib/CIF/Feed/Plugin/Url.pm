@@ -21,6 +21,8 @@ sub generate_feeds {
     
     my $tbl = $class->table();
     
+    my $whitelist = $class->generate_whitelist($args);
+    
     my @feeds;
     foreach my $p (@plugins){
         my $t = $p;
@@ -38,9 +40,8 @@ sub generate_feeds {
             vars    => [
                 $args->{'start_time'},
                 $args->{'confidence'},
-                $args->{'guid'},
-                $args->{'start_time'},
                 $args->{'limit'},
+                $args->{'uuid'},
             ],
             group_map       => $args->{'group_map'},
             restriction_map => $args->{'restriction_map'},
@@ -51,7 +52,7 @@ sub generate_feeds {
         debug('records: '.keys %$f);
         if(keys %$f){
             debug($desc.': testing whitelist');
-            $f = $class->test_whitelist({ recs => $f });  
+            $f = $class->test_whitelist({ recs => $f, %$feed_args, whitelist => $whitelist });  
         }
         debug('total records: '.keys %$f);
         debug($desc.': encoding');
@@ -62,6 +63,9 @@ sub generate_feeds {
     return(\@feeds);
 }
 
+## TODO re-use net-dns-match-perl?
+## easily could be a binary search
+
 sub generate_whitelist {
     my $class = shift;
     my $args = shift;
@@ -70,11 +74,12 @@ sub generate_whitelist {
     my @whitelist = $class->search_feed_whitelist(
         $args->{'start_time'},
         25000,
+        $args->{'guid'},
     );
     
     return unless($#whitelist > -1 );
     my $wl;
-    map { $wl->{lc($_->{'address'})} = 1 } @whitelist;
+    map { $wl->{lc($_->{'hash'})} = 1 } @whitelist;
     return($wl);
 }
 
@@ -87,6 +92,8 @@ sub test_whitelist {
     
     my $whitelist = $args->{'whitelist'};
     my $recs = $args->{'recs'};
+    
+    debug('filtering through '.(keys %$recs).' records');
         
     my %hash;
     foreach my $rec (keys %$recs){
@@ -97,34 +104,10 @@ sub test_whitelist {
     return(\%hash);
 }
 
-__PACKAGE__->set_sql('feed' => qq{
-    SELECT DISTINCT ON (t1.hash) t1.hash, t1.id, archive.data
-    FROM (
-        SELECT t.hash, t.id, t.uuid, t.guid
-        FROM __TABLE__ t
-        WHERE
-            t.detecttime >= ?
-            AND t.confidence >= ?
-        ORDER by t.id DESC
-    ) t1
-    LEFT JOIN archive ON t1.uuid = archive.uuid
-    LEFT JOIN apikeys_groups ON t1.guid = apikeys_groups.guid
-    WHERE 
-        t1.guid = ?
-        AND NOT EXISTS (
-            SELECT w.hash FROM url_whitelist w
-            WHERE
-                w.detecttime >= ?
-                AND w.confidence > 25
-                AND w.hash = t1.hash
-        )
-    LIMIT ?
-});
-
 __PACKAGE__->set_sql('feed_whitelist' => qq{
     SELECT DISTINCT on (t1.hash) t1.hash
     FROM (
-        SELECT t2.hash
+        SELECT t2.hash,t2.guid
         FROM url_whitelist t2
         WHERE
             t2.detecttime >= ?
@@ -132,6 +115,8 @@ __PACKAGE__->set_sql('feed_whitelist' => qq{
         ORDER BY id DESC
         LIMIT ?
     ) t1
+    LEFT JOIN apikeys_groups ON t1.guid = apikeys_groups.guid
+    WHERE t1.guid = ?
 });
     
 1;

@@ -55,6 +55,7 @@ my $parentid        = $opts{'p'};
 my $expires         = $opts{'E'};
 my $config          = $opts{'c'} || $ENV{'HOME'}.'/.cif';
 my $restricted      = $opts{'R'};
+my $quiet           = $opts{'q'};
 
 if($user){
     die(usage()) unless($key || $opts{'l'} || $opts{'a'} || $opts{'d'});
@@ -180,10 +181,11 @@ if($add){
 if(!$user && $key){
     $user = $profile->user_from_key($key);
     unless($user){
-        print 'no keys found'."\n";
+        print 'no keys found'."\n" unless($quiet);
         exit(0);
     }
 }
+exit(0) if($quiet);
 my @recs = $profile->user_list({ user => $user });
 if($#recs > -1){
     my $t = Text::Table->new('userid','key','description','guid','default_guid','restricted access','write','revoked','expires','created');

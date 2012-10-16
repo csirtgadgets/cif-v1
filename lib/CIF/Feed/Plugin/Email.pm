@@ -38,8 +38,8 @@ sub generate_feeds {
             vars    => [
                 $args->{'start_time'},
                 $args->{'confidence'},
-                $args->{'guid'},
-                $args->{'start_time'},
+                $args->{'limit'},
+                $args->{'uuid'},
             ],
             group_map       => $args->{'group_map'},
             restriction_map => $args->{'restriction_map'},
@@ -55,28 +55,5 @@ sub generate_feeds {
     $class->table($tbl);
     return(\@feeds);
 }
-
-__PACKAGE__->set_sql('feed' => qq{
-    SELECT DISTINCT ON (t.hash) t.hash, t.id, archive.data
-    FROM (
-        SELECT t1.hash, t1.id, t1.uuid, t1.guid
-        FROM __TABLE__ t1
-        WHERE
-            t1.detecttime >= ?
-            AND t1.confidence >= ?
-        ORDER by t1.id DESC
-    ) t
-    LEFT JOIN apikeys_groups ON t.guid = apikeys_groups.guid
-    LEFT JOIN archive ON t.uuid = archive.uuid
-    WHERE 
-        t.guid = ?
-        AND NOT EXISTS (
-            SELECT w.hash FROM email_whitelist w
-            WHERE
-                w.detecttime >= ?
-                AND w.confidence > 25
-                AND w.hash = t.hash
-        )
-});
     
 1;

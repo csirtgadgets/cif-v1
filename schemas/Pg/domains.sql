@@ -5,7 +5,7 @@ CREATE TABLE domain (
     id BIGSERIAL PRIMARY KEY NOT NULL,
     uuid uuid NOT NULL,
     guid uuid,
-    address text,
+    hash text,
     confidence real,
     detecttime timestamp with time zone default NOW(),
     reporttime timestamp with time zone default NOW(),

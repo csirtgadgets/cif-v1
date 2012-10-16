@@ -45,7 +45,7 @@ getopts('dC:S:R:c:D:l:h',\%opts);
 our $debug          = $opts{'d'};
 my $config          = $opts{'C'} || $ENV{'HOME'}.'/.cif';
 my $specific_feed   = $opts{'S'};
-my $roles            = $opts{'R'} || 'everyone';
+my $roles           = $opts{'R'};
 my $confidence      = $opts{'c'};
 my $limit_days      = $opts{'D'} || 7;
 my $limit           = $opts{'l'} || 50000;

@@ -1,5 +1,5 @@
 package CIF::Feed::Plugin::Domain;
-use base 'CIF::Feed::Plugin';
+use base 'CIF::Feed::Plugin::Address';
 
 use warnings;
 use strict;
@@ -9,7 +9,6 @@ use CIF qw/debug/;
 use Net::DNS::Match;
 
 __PACKAGE__->table('domain');
-__PACKAGE__->columns(All => qw/id uuid guid address confidence detecttime created/);
 __PACKAGE__->sequence('domain_id_seq');
 
 ## TODO: database config?
@@ -41,9 +40,8 @@ sub generate_feeds {
             vars    => [
                 $args->{'start_time'},
                 $args->{'confidence'},
-                $args->{'guid'},
-                #$args->{'start_time'},
                 $args->{'limit'},
+                $args->{'uuid'},
             ],
             group_map       => $args->{'group_map'},
             restriction_map => $args->{'restriction_map'},
@@ -73,11 +71,14 @@ sub generate_whitelist {
     return if($class->table() =~ /_whitelist$/);
     
     debug('generating whitelist');
+    my $tbl = $class->table();
+    $class->table('infrastructure_whitelist');
     my @whitelist = $class->search_feed_whitelist(
         $args->{'start_time'},
-        25000
+        25, #confidence
+        25000 # limit
     );
-    
+    $class->table($tbl);
     return unless($#whitelist > -1 );
     
     @whitelist = map { $_ = $_->{'address'} } @whitelist;
@@ -110,35 +111,6 @@ sub test_whitelist {
 
     return(\%hash);
 }
-
-__PACKAGE__->set_sql('feed' => qq{
-    SELECT DISTINCT ON (t1.address) t1.address, t1.id, archive.data
-    FROM (
-        SELECT t.address, t.id, t.uuid, t.guid
-        FROM __TABLE__ t
-            WHERE 
-                detecttime >= ?
-                AND t.confidence >= ?            
-        ORDER BY id DESC
-    ) t1
-    LEFT JOIN archive ON t1.uuid = archive.uuid
-    LEFT JOIN apikeys_groups ON t1.guid = apikeys_groups.guid
-    WHERE t1.guid = ?
-    LIMIT ?
-});
-
-__PACKAGE__->set_sql('feed_whitelist' => qq{
-    SELECT DISTINCT on (t1.address) t1.address
-    FROM (
-        SELECT t2.address
-        FROM domain_whitelist t2
-        WHERE
-            t2.detecttime >= ?
-            AND t2.confidence >= 25
-        ORDER BY id DESC
-        LIMIT ?
-    ) t1
-});
 
     
 1;

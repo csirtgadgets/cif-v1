@@ -1,7 +1,7 @@
 SET default_tablespace = 'index';
 DROP TABLE IF EXISTS hash CASCADE;
 CREATE TABLE hash (
-    id BIGSERIAL PRIMARY KEY NOT NULL,
+    id BIGSERIAL,
     uuid uuid NOT NULL,
     guid uuid NOT NULL,
     hash text not null,

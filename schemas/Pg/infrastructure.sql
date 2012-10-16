@@ -5,9 +5,7 @@ CREATE TABLE infrastructure (
     id BIGSERIAL PRIMARY KEY NOT NULL,
     uuid uuid NOT NULL,
     guid uuid,
-    address text,
-    portlist varchar(255),
-    protocol int,
+    hash text,
     confidence real,
     detecttime timestamp with time zone DEFAULT NOW(),
     reporttime timestamp with time zone DEFAULT NOW(),
@@ -57,3 +55,7 @@ ALTER TABLE infrastructure_nameserver ADD PRIMARY KEY (id);
 DROP TABLE IF EXISTS infrastructure_warez;
 CREATE TABLE infrastructure_warez () INHERITS (infrastructure);
 ALTER TABLE infrastructure_warez ADD PRIMARY KEY (id);
+
+DROP TABLE IF EXISTS infrastructure_passive;
+CREATE TABLE infrastructure_passive () INHERITS (infrastructure);
+ALTER TABLE infrastructure_passive ADD PRIMARY KEY (id);

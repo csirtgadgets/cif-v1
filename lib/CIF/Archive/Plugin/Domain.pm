@@ -7,10 +7,11 @@ use warnings;
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 use Try::Tiny;
 use Iodef::Pb::Simple qw(iodef_addresses iodef_confidence iodef_guid);
+use Digest::SHA1 qw/sha1_hex/;
 
 __PACKAGE__->table('domain');
 __PACKAGE__->columns(Primary => 'id');
-__PACKAGE__->columns(All => qw/id uuid guid address confidence detecttime created/);
+__PACKAGE__->columns(All => qw/id uuid guid hash address confidence detecttime created/);
 __PACKAGE__->sequence('domain_id_seq');
 
 my @plugins = __PACKAGE__->plugins();
@@ -51,6 +52,7 @@ sub insert {
                 $class->SUPER::insert({
                     uuid        => $data->{'uuid'},
                     guid        => $data->{'guid'},
+                    hash        => sha1_hex($addr),
                     address     => $addr,
                     confidence  => $confidence,
                 });

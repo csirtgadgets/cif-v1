@@ -1,5 +1,5 @@
 package CIF::Feed::Plugin::Infrastructure;
-use base 'CIF::Feed::Plugin';
+use base 'CIF::Feed::Plugin::Address';
 
 use warnings;
 use strict;
@@ -9,12 +9,11 @@ use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 use CIF qw/debug/;
 
 __PACKAGE__->table('infrastructure');
-__PACKAGE__->columns(All => qw/id uuid guid address portlist protocol confidence detecttime created/);
 __PACKAGE__->sequence('infrastructure_id_seq');
 
 ## TODO: database config?
 my @plugins = __PACKAGE__->plugins();
-push(@plugins, ('suspicious','botnet','malware','fastflux','phishing','scan','whitelist'));
+push(@plugins, ('suspicious','botnet','malware','fastflux','phishing','scan','whitelist','passive'));
 
 ## TODO -- IPv6
 my @perm_whitelist = (
@@ -55,9 +54,8 @@ sub generate_feeds {
             vars    => [
                 $args->{'start_time'},
                 $args->{'confidence'},
-                $args->{'guid'},
-                $args->{'start_time'},
                 $args->{'limit'},
+                $args->{'uuid'},
             ],
             group_map       => $args->{'group_map'},
             restriction_map => $args->{'restriction_map'},
@@ -65,10 +63,12 @@ sub generate_feeds {
         };
         debug('generating '.$desc);
         my $f = $class->SUPER::generate_feeds($feed_args);
+        debug('found: '.keys(%$f));
         if(keys %$f){
             debug('testing whitelist: '.$desc);
             $f = $class->test_whitelist({ recs => $f, %$feed_args, whitelist => $whitelist }); 
         }
+        debug('final count: '.keys(%$f));
         # we create a feed no matter what
         # because of the way guid's work, it's better to do it this way
         # it's better to get nothing based on your key's 'default guid' rather than
@@ -81,22 +81,31 @@ sub generate_feeds {
     return(\@feeds);
 }
 
+## TODO - refactor this with domain.pm
 sub generate_whitelist {
     my $class = shift;
     my $args = shift;
     
+    return if($class->table() eq 'infrastructure_whitelist');
+    
     debug('generating whitelist');
+    my $tbl = $class->table();
+    $class->table('infrastructure_whitelist');
     my @wl_recs = $class->search_feed_whitelist(
         $args->{'start_time'},
+        25,
         25000,
     );
-    
+    $class->table($tbl);
     debug('wl recs: '.$#wl_recs);
     
-    debug('generating ip_tree');
     my $whitelist = Net::Patricia->new();
+    debug('generating ip_tree');
     $whitelist->add_string($_) foreach @perm_whitelist;
-    $whitelist->add_string($_->{'address'}) foreach (@wl_recs);
+    
+    if($#wl_recs > -1){
+        $whitelist->add_string($_->{'address'}) foreach (@wl_recs);
+    }
     return $whitelist;
 }
 
@@ -117,41 +126,4 @@ sub test_whitelist {
     return($recs) if(keys %$recs);    
 }
 
-__PACKAGE__->set_sql('feed' => qq{
-    SELECT DISTINCT ON (t1.address,t1.protocol,t1.portlist) t1.address, t1.id, archive.data
-    FROM (
-        SELECT t.address, t.protocol, t.portlist, t.id, t.uuid, t.guid
-        FROM __TABLE__ t
-        WHERE 
-            detecttime >= ?
-            AND t.confidence >= ?            
-        ORDER BY id DESC
-    ) t1
-    LEFT JOIN archive ON t1.uuid = archive.uuid
-    LEFT JOIN apikeys_groups ON t1.guid = apikeys_groups.guid
-    WHERE t1.guid = ?
-    AND NOT EXISTS (
-        SELECT w.address FROM infrastructure_whitelist w
-        WHERE
-                w.detecttime >= ?
-                AND w.confidence >= 25
-                AND w.address = t1.address
-    )
-    LIMIT ?
-});
-
-__PACKAGE__->set_sql('feed_whitelist' => qq{
-    SELECT DISTINCT on (t1.address) t1.address
-    FROM (
-        SELECT t2.address
-        FROM infrastructure_whitelist t2
-        WHERE
-            t2.detecttime >= ?
-            AND t2.confidence >= 25
-        ORDER BY id DESC
-        LIMIT ?
-    ) t1
-});
-
-    
 1;

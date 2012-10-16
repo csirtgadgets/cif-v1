@@ -7,6 +7,9 @@ use strict;
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 use Regexp::Common qw/net/;
 use Regexp::Common::net::CIDR;
+use Digest::SHA1 qw/sha1_hex/;
+use Parse::Range qw(parse_range);
+use JSON::XS;
 
 use Iodef::Pb::Simple qw(iodef_confidence iodef_systems iodef_guid);
 
@@ -14,7 +17,7 @@ my @plugins = __PACKAGE__->plugins();
 
 __PACKAGE__->table('infrastructure');
 __PACKAGE__->columns(Primary => 'id');
-__PACKAGE__->columns(All => qw/id uuid guid address portlist protocol confidence detecttime created/);
+__PACKAGE__->columns(All => qw/id uuid guid hash address confidence detecttime created/);
 __PACKAGE__->sequence('infrastructure_id_seq');
 
 sub insert {
@@ -22,7 +25,8 @@ sub insert {
     my $data = shift;
     
     return unless(ref($data->{'data'}) eq 'IODEFDocumentType');       
-       my @ids;
+    my @ids;
+    
     ## TODO -- clean this up, refactor
     my $tbl = $class->table();
     foreach my $i (@{$data->{'data'}->get_Incident()}){
@@ -56,28 +60,29 @@ sub insert {
                     my $id;
                     # we do this here cause it's faster than doing 
                     # it as a seperate check in the main class (1 less extra for loop)
+                    my $hash = sha1_hex($a->get_content());
+                    
                     if($class->test_feed($data)){
+                        # we just need a unique hash based on port/protocol
+                        # this is a fast way to stringify what we have and hash it
                         my $services = $system->get_Service();
                         $services = (ref($system->get_Service()) eq 'ARRAY') ? $system->get_Service() : [$system->get_Service] if($services);
-                        
-                        my $hash = {
+                        if($services){
+                            my $ranges;
+                            foreach my $service (@$services){
+                                push(@{$ranges->{$service->get_ip_protocol()}},parse_range($service->get_Portlist()));
+                            }
+                            $hash = sha1_hex($hash.encode_json($ranges))
+                        }
+      
+                        $class->SUPER::insert({
                             guid        => $data->{'guid'},
                             uuid        => $data->{'uuid'},
-                            address     => $a->get_content(),
                             confidence  => $confidence,
-                        };
-                                                  
-                        if($services){  
-                            foreach my $service (@$services){
-                                $class->SUPER::insert({
-                                    portlist    => $service->get_Portlist(),
-                                    protocol    => $service->get_ip_protocol(),
-                                    %$hash,
-                                });
-                            }
-                        } else {
-                            $class->SUPER::insert($hash);
-                        }
+                            hash        => $hash,
+                            address     => $a->get_content(),
+                        });
+                        
                     }
                     
                     ## TODO -- clean this up into a function, map with ipv6
