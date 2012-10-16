@@ -16,11 +16,9 @@ require CIF::Archive;
 require CIF::APIKey;
 require CIF::APIKeyGroups;
 require CIF::APIKeyRestrictions;
-use CIF qw/is_uuid generate_uuid_ns generate_uuid_random/;
+use CIF qw/is_uuid generate_uuid_ns generate_uuid_random debug/;
 use CIF::Msg;
 use CIF::Msg::Feed;
-
-use Data::Dumper;
 
 my @drivers = __PACKAGE__->plugins();
 
@@ -30,6 +28,8 @@ __PACKAGE__->mk_accessors(qw(
     driver driver_config restriction_map 
     group_map groups feeds feeds_config
 ));
+
+our $debug = 0;
 
 sub new {
     my $class = shift;
@@ -67,7 +67,7 @@ sub new {
             $driver = $driver->new($args);
         } catch {
             $err = shift;
-            warn $err;
+            debug($err);
         };
         $self->set_driver($driver);
     }
@@ -91,7 +91,9 @@ sub init {
     
     $self->init_restriction_map();
     $self->init_group_map();
-    $self->init_feeds();   
+    $self->init_feeds();
+    
+    $debug = $self->get_config->{'debug'};
     
     return ($ret);
 }
@@ -163,10 +165,14 @@ sub authorized_read {
     my @groups = ($self->get_group_map()) ? @{$self->get_group_map()} : undef;
    
     my @array;
+    debug('groups: '.join(',',map { $_->get_key() } @groups));
+    
     foreach my $g (@groups){
         next unless($rec->inGroup($g->get_key()));
         push(@array,$g);
     }
+
+    debug('groups: '.join(',',map { $_->get_key() } @array)) if($debug > 3);
 
     $ret->{'group_map'} = \@array;
     
@@ -186,7 +192,6 @@ sub authorized_read_query {
     # if there are no restrictions, return 1
     return 1 unless($#recs > -1);
     foreach (@recs){
-        warn $_->access();
         # if we've given explicit access to that query (eg: domain/malware, domain/botnet, etc...)
         # return 1
         return 1 if($_->access() eq $args->{'query'});
@@ -259,6 +264,7 @@ sub process_query {
         # with multiple apikeys; but just in case *shrug*
         unless($authorized){
             my $apikey = $m->get_apikey();
+            debug('apikey: '.$apikey) if($debug > 3);
             my ($err, $ret) = $self->authorized_read($apikey);
             unless($ret){
                 return(
@@ -273,8 +279,10 @@ sub process_query {
             $apikey_info = $ret; 
         }
         $authorized = 1;
+        debug('authorized stage1') if($debug > 3);
         my @res;
         foreach my $q (@{$m->get_query()}){
+            debug('query: '.$q->get_query()) if($debug > 3);
             ## TODO -- there has got to be a better way to do this...
             unless($self->authorized_read_query({ apikey => $m->get_apikey(), query => $q->get_query})){
                 return (
@@ -286,6 +294,7 @@ sub process_query {
                     })
                 );
             }
+            debug('authorized to make this query') if($debug > 3);
             
             my ($err,$s) = CIF::Archive->search({
                 query           => $q->get_query(),
@@ -350,18 +359,19 @@ sub process_submission {
     my $self = shift;
     my $msg = shift;
 
-    warn 'type: submission...';
+    debug('type: submission...');
     my $ret = $self->authorized_write($msg->get_apikey());
     my $reply = MessageType->new({
         version => $CIF::VERSION,
         type    => MessageType::MsgType::REPLY(),
         status  => MessageType::StatusType::UNAUTHORIZED(),
     });
-    
     return $reply unless($ret);
-    my $err;
     
+    my $err;
     my $state = 0;
+    my $commit_size = $self->get_config->{'dbi_commit_size'} || 10000;
+    
     $ret = undef;
     foreach (@{$msg->get_data()}){
         my $m = MessageType::SubmissionType->decode($_);
@@ -370,7 +380,7 @@ sub process_submission {
         my $guid = $m->get_guid() || $ret->{'default_guid'};
         ## TODO -- copy foreach loop from SMRT; commit every X objects
         
-        warn 'entries: '.($#{$array} + 1);
+        debug('entries: '.($#{$array} + 1));
         for(my $i = 0; $i <= $#{$array}; $i++){
             next unless(@{$array}[$i]);
             $state = 0;
@@ -380,7 +390,7 @@ sub process_submission {
                 feeds   => $self->get_feeds(),
             });
             if($err){
-                warn $err."\n";
+                warn $err;
                 return MessageType->new({
                     version => $CIF::VERSION,
                     type    => MessageType::MsgType::REPLY(),
@@ -390,18 +400,18 @@ sub process_submission {
             }
             push(@$ret,$id);
             ## TODO -- make the 1000 a variable
-            if($i % 5000 == 0){
+            if($i % $commit_size == 0){
                 CIF::Archive->dbi_commit();
-                warn 'committing...';
+                debug('committing...');
                 $state = 1;
             }           
         }
     }
     unless($state){
-        warn 'final commit...';
+        debug('final commit...');
         CIF::Archive->dbi_commit();
     }
-    warn 'done...';
+    debug('done...');
     return MessageType->new({
         version => $CIF::VERSION,
         type    => MessageType::MsgType::REPLY(),
