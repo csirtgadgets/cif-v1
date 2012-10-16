@@ -92,7 +92,7 @@ sub init {
     $self->set_goback(          $args->{'goback'}           || $self->get_config->{'goback'}            || 3);
     $self->set_load_full(       $args->{'load_full'}        || $self->get_config->{'load_full'}         || 0);
     $self->set_wait_for_server( $args->{'wait_for_server'}  || $self->get_config->{'wait_for_server'}   || 0);
-    $self->set_batch_control(   $args->{'batch_control'}    || $self->get_config->{'batch_control'}     || 5000); # arbitrary
+    $self->set_batch_control(   $args->{'batch_control'}    || $self->get_config->{'batch_control'}     || 10000); # arbitrary
     $self->set_apikey(          $args->{'apikey'}           || $self->get_config->{'apikey'}            || return('missing apikey'));
    
     $self->init_postprocessors($args);
@@ -280,7 +280,13 @@ sub parse {
             $return = CIF::Smrt::ParseDelim::parse($f,$content,$d);
         } else {
             # try to auto-detect the file
-            if($content =~ /<\?xml version=/){
+            debug('testing...');
+            ## todo -- very hard to detect iodef-pb strings
+            # might have to rely on base64 encoding decode first?
+            if($content =~ /0.01EN"/){
+                #require CIF::Smrt::ParsePbIodef;
+                #$return = CIF::Smrt::ParsePbIodef::parse($f,$content);
+            } elsif($content =~ /<\?xml version=/){
                 if($content =~ /<rss version=/ && !$f->{'nodes'}){
                     require CIF::Smrt::ParseRss;
                     $return = CIF::Smrt::ParseRss::parse($f,$content);
@@ -338,6 +344,8 @@ sub preprocess_routine {
     debug('parsing...') if($::debug);
     my ($err,$recs) = $self->parse();
     return($err) if($err);
+    
+    debug('parsed records: '."\n".Dumper($recs)) if($::debug > 9);
     
     return unless($#{$recs} > -1);
     
@@ -500,7 +508,7 @@ sub process {
         # total_recs is based on 0 ... X not -1 ... X
         debug('sent recs: '.$sent_recs);
         debug('total recs: '.$total_recs);
-    } while($sent_recs < $total_recs);
+    } while($sent_recs != -1 && $sent_recs < $total_recs);
 
     $ctrl->send('WRK_DONE');
     
@@ -700,14 +708,13 @@ sub sender_routine {
         if($total_recs && ($sent_recs == $total_recs)){
             $done = 1;
         }
-        
-        $batch_control = 5000;
+
         if($#{$queue} > $batch_control || $done){
             debug('sending data to router: '.($#{$queue}+1)) if($::debug > 2);
             my ($err,$ret) = $self->send($queue);
             debug('returning answer from router...') if($::debug > 2);
             if($err){
-                $return->send('ERROR: '.$err);
+                $return->send($err);
             } else {
                 $return->send($ret->encode());
             }
