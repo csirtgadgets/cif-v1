@@ -1,7 +1,7 @@
 Welcome
 -------
 
-The CIF Routing Framework
+The Collective Intelligence Framework
 
 Building and installation
 -------------------------
@@ -13,13 +13,13 @@ Resources
 ---------
 
 Website: collectiveintel.net
-Git repository: github.com/collectiveintel/cif-router-perl
+Git repository: github.com/collectiveintel/cif-v1
 
 
 COPYRIGHT AND LICENCE
 ---------------------
-Copyright (C) 2012 Wes Young (claimid.com/wesyoung)
 Copyright (C) 2012 REN-ISAC and The Trustees of Indiana University (ren-isac.net)
+Copyright (C) 2012 Wes Young (wesyoung.me)
 
 Free use of this software is granted under the terms of the GNU Lesser General
 Public License (LGPL). For details see the files `COPYING` included with the 
