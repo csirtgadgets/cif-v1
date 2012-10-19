@@ -87,11 +87,11 @@ sub debug {
     
     if($CIF::Logger){
          if($::debug > 5){
-            $CIF::Logger->debug("[DEBUG][$ts][$f:$sub:$line]: $msg");
+            $CIF::Logger->debug("[DEBUG][$ts][$f:$sub:$line]: $msg\n");
         } elsif($::debug > 1) {
-            $CIF::Logger->debug("[DEBUG][$ts][$sub]: $msg");
+            $CIF::Logger->debug("[DEBUG][$ts][$sub]: $msg\n");
         } else {
-            $CIF::Logger->debug("[DEBUG][$ts]: $msg");
+            $CIF::Logger->debug("[DEBUG][$ts]: $msg\n");
         }
     } else {
         if($::debug > 5){
