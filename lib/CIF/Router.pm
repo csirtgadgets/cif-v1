@@ -93,7 +93,7 @@ sub init {
     $self->init_group_map();
     $self->init_feeds();
     
-    $debug = $self->get_config->{'debug'};
+    $debug = $self->get_config->{'debug'} || 0;
     
     return ($ret);
 }
@@ -295,7 +295,6 @@ sub process_query {
                 );
             }
             debug('authorized to make this query') if($debug > 3);
-            
             my ($err,$s) = CIF::Archive->search({
                 query           => $q->get_query(),
                 limit           => $m->get_limit(),
@@ -324,6 +323,7 @@ sub process_query {
         if($#res > -1){
             ## TODO: SHIM, gatta be a more elegant way to do this
             unless($m->get_feed()){
+                debug('generating feed');
                 my $dt = DateTime->from_epoch(epoch => time());
                 $dt = $dt->ymd().'T'.$dt->hms().'Z';
                 
@@ -344,6 +344,7 @@ sub process_query {
             }
         }
     }
+    debug('replying...');
                     
     $reply = MessageType->new({
         version => $CIF::VERSION,
