@@ -4,9 +4,6 @@
 [submodule "cif-smrt"]
 	path = cif-smrt
 	url = git@github.com:collectiveintel/cif-smrt.git
-[submodule "cif-router"]
-	path = cif-router
-	url = git@github.com:collectiveintel/cif-router.git
 [submodule "libcif-dbi"]
 	path = libcif-dbi
 	url = git@github.com:collectiveintel/libcif-dbi.git
