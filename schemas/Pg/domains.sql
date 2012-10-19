@@ -6,6 +6,7 @@ CREATE TABLE domain (
     uuid uuid NOT NULL,
     guid uuid,
     hash text,
+    address text,
     confidence real,
     detecttime timestamp with time zone default NOW(),
     reporttime timestamp with time zone default NOW(),

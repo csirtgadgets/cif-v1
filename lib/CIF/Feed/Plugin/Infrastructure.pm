@@ -123,7 +123,7 @@ sub test_whitelist {
         delete($recs->{$rec}) if($whitelist->match_string($recs->{$rec}->{'address'})); 
     }
             
-    return($recs) if(keys %$recs);    
+    return($recs);    
 }
 
 1;

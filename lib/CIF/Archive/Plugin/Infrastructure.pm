@@ -70,7 +70,11 @@ sub insert {
                         if($services){
                             my $ranges;
                             foreach my $service (@$services){
-                                push(@{$ranges->{$service->get_ip_protocol()}},parse_range($service->get_Portlist()));
+                                my $portlist = $service->get_Portlist();
+                                if($portlist){
+                                    $portlist = parse_range($portlist);
+                                    push(@{$ranges->{$service->get_ip_protocol()}},$portlist);
+                                }
                             }
                             $hash = sha1_hex($hash.encode_json($ranges))
                         }

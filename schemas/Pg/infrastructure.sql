@@ -6,6 +6,7 @@ CREATE TABLE infrastructure (
     uuid uuid NOT NULL,
     guid uuid,
     hash text,
+    address text,
     confidence real,
     detecttime timestamp with time zone DEFAULT NOW(),
     reporttime timestamp with time zone DEFAULT NOW(),
