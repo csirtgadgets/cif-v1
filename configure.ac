@@ -5,6 +5,13 @@ AC_PREREQ([2.64])
 AC_INIT(cif-v1, m4_esyscmd_s([git describe --tags]), [ci-framework@googlegroups.com])
 AM_INIT_AUTOMAKE
 
+# setup
+
+AC_CONFIG_SUBDIRS([libcif libcif-dbi cif-router cif-smrt])
+AC_CONFIG_FILES([
+    Makefile
+])
+
 # Checks for programs.
 AC_ARG_VAR([PERL],[Perl interpreter command])
 AC_PATH_PROG([PERL], [perl], [not found])
@@ -12,26 +19,10 @@ if test "$PERL" = 'not found'; then
     AC_MSG_ERROR([cannot use $PACKAGE_NAME without perl])
 fi
 
-AC_ARG_VAR([PSQL],[Postgres psql command])
-AC_PATH_PROG([PSQL],[psql],[not found])
-if test "$PSQL" = 'not found'; then
-    AC_MSG_ERROR([cannot use $PACKAGE_NAME without postgres psql])
-fi
-
 dnl Defaults paths for installation
 AC_PREFIX_DEFAULT([/opt/cif])
 
-AC_CONFIG_FILES([
-                 Makefile
-])
-
-
 # Checks for libraries.
-
-## apache stuff
-## to be split out in v2?
-PKG_CHECK_MODULES([apr],[apr-1 >= 1.4.2])
-PKG_CHECK_MODULES([apr_util],[apr-util-1 >= 1.3.9]) 
 
 # Checks for header files.
 
@@ -95,9 +86,23 @@ AC_SUBST(DB_DBA)
 dnl DB_DATABASE
 AC_ARG_WITH(db-database,
         AC_HELP_STRING([--with-db-database=DBNAME],
-                   [name of the database to use (default: cif_route)]),
+                   [name of the database to use (default: cif)]),
             DB_DATABASE=$withval,
             DB_DATABASE=cif)
 AC_SUBST(DB_DATABASE)
+
+AC_ARG_WITH(db-index-location,
+        AC_HELP_STRING([--with-db-index-location=/mnt/index/data],
+                    [default index storage location (default: /mnt/index/data)]),
+            DB_INDEX_LOC=$withval,
+            DB_INDEX_LOC=/mnt/index/data)
+AC_SUBST(DB_INDEX_LOC)
+
+AC_ARG_WITH(db-archive-location,
+        AC_HELP_STRING([--with-db-archive-location=/mnt/archive/data],
+                    [default index storage location (default: /mnt/archive/data)]),
+            DB_ARCHIVE_LOC=$withval,
+            DB_ARCHIVE_LOC=/mnt/archive/data)
+AC_SUBST(DB_ARCHIVE_LOC)
 
 AC_OUTPUT

@@ -18,19 +18,25 @@ install: files-install fixperms
 
 files-install: libcif-install libcif-dbi-install cif-router-install cif-smrt-install
 
+libcif-install:
+	-( cd libcif && make install )
+
+libcif-dbi-install:
+	-( cd libcif-dbi && make install )
+
+cif-router-install:
+	-( cd cif-router && make install )
+
+cif-smrt-install:
+	-( cd cif-smrt && make install )
+
 depends: fixdeps
 
 fixdeps:
-	$(PERL) ./libcif/sbin/test-dependencies --verbose --install --prefix $(prefix)
-	$(PERL) ./libcif-dbi/sbin/test-dependencies --verbose --install --prefix $(prefix)
-	$(PERL) ./cif-router/sbin/test-dependencies --verbose --install --prefix $(prefix)
-	$(PERL) ./cif-smrt/sbin/test-dependencies --verbose --install --prefix $(prefix)
+	$(PERL) ./sbin/test-dependencies --verbose --install --prefix $(prefix)
 
 testdeps:
-	$(PERL) ./libcif/sbin/test-dependencies --verbose --prefix $(prefix)
-	$(PERL) ./libcif-dbi/sbin/test-dependencies --verbose --prefix $(prefix)
-	$(PERL) ./cif-router/sbin/test-dependencies --verbose --prefix $(prefix)
-	$(PERL) ./cif-smrt/sbin/test-dependencies --verbose --prefix $(prefix)
+	$(PERL) ./sbin/test-dependencies --verbose --prefix $(prefix)
 
 clean:
 	rm Makefile
