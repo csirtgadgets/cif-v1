@@ -7,6 +7,3 @@
 [submodule "libcif-dbi"]
 	path = libcif-dbi
 	url = git@github.com:collectiveintel/libcif-dbi.git
-[submodule "cif-router"]
-	path = cif-router
-	url = git@github.com:collectiveintel/cif-router.git
