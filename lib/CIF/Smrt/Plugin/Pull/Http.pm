@@ -18,6 +18,12 @@ sub pull {
     my $ua = LWP::UserAgent->new(agent => 'CIF/'.$VERSION);
     $ua->timeout($timeout);
     
+    # load up proxy if we have it
+    $ua->env_proxy();
+    if($f->{'proxy'}){
+        $ua->proxy(['http','ftp'], $f->{'proxy'});
+    }
+    
     # work-around for what appears to be a threading / race condition
     $ua->max_redirect(0) if($f->{'feed'} =~ /^https/);
 

@@ -56,7 +56,7 @@ __PACKAGE__->mk_accessors(qw(
     entries defaults feed rules load_full goback 
     client wait_for_server name instance 
     batch_control client_config postprocess apikey
-    severity_map
+    severity_map proxy
 ));
 
 my @preprocessors = __PACKAGE__->plugins();
@@ -94,6 +94,7 @@ sub init {
     $self->set_wait_for_server( $args->{'wait_for_server'}  || $self->get_config->{'wait_for_server'}   || 0);
     $self->set_batch_control(   $args->{'batch_control'}    || $self->get_config->{'batch_control'}     || 10000); # arbitrary
     $self->set_apikey(          $args->{'apikey'}           || $self->get_config->{'apikey'}            || return('missing apikey'));
+    $self->set_proxy(           $args->{'proxy'}            || $self->get_config->{'proxy'});
    
     $self->init_postprocessors($args);
     
@@ -268,6 +269,10 @@ sub _pull_feed {
 sub parse {
     my $self = shift;
     my $f = $self->get_rules();
+    
+    if($self->get_proxy()){
+        $f->{'proxy'} = $self->get_proxy();
+    }
     
     my ($err,$content) = pull_feed($f);
     return($err) if($err);
