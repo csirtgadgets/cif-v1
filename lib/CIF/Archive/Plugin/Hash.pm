@@ -49,7 +49,7 @@ sub insert {
             # under Incident.AdditionalData
             # we can improve this in the future
             my $ad = iodef_additional_data($i);
-            return unless(@$ad);
+            return unless($ad);
             
             my @ids;
             foreach my $a (@$ad){
