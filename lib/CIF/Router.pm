@@ -385,6 +385,7 @@ sub process_submission {
         for(my $i = 0; $i <= $#{$array}; $i++){
             next unless(@{$array}[$i]);
             $state = 0;
+            debug('inserting...');
             my ($err,$id) = CIF::Archive->insert({
                 data    => @{$array}[$i],
                 guid    => $guid,

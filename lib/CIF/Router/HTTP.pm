@@ -48,7 +48,6 @@ sub handler {
     # test for legacy [v0] support first
     # this basically does a recursive lookup and translates out for us
     if($req->headers_in->{'Accept'} && $req->headers_in->{'Accept'} eq 'application/json'){
-        return unless($req->method eq 'GET');
         return Apache2::Const::FORBIDDEN if($router->get_config->{'disable_legacy'});
         $req->content_type('application/json');
         $reply = CIF::Router::HTTP::Json::handler($req);
