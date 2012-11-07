@@ -152,9 +152,9 @@ $SIG{__DIE__} = 'cleanup';
 $SIG{'INT'} = 'cleanup';
 
 if(-e $mutex){
-    print 'already running, mutex found: '.$mutex."\n" if($debug);
-    exit(-1);
+    bail('cif_crontool already running or hung...');
 }
+
 my $ret = system('touch '.$mutex);
 unless(defined($ret) && $ret == 0){
     die($!);
@@ -195,15 +195,15 @@ sub bail {
         print $msg."\n";
     } else {
         my $msg = MIME::Lite->new(
-            #From    => 'CIF',
-            To      => $opts{'a'} || 'root',
+            To      => $admin,
             Subject => 'cif_crontool failure',
             Data    => $msg || 'unknown',
         );
         $msg->send();
         system('touch /tmp/.cif_crontool.err');
     }
-    die($msg);
+    warn($msg);
+    exit(-1);
 }
 
 sub exit {
