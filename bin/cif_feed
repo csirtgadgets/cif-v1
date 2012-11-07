@@ -40,7 +40,7 @@ use CIF::Feed;
 use CIF qw/debug/;
 
 my %opts;
-getopts('dC:S:R:c:D:l:h',\%opts);
+getopts('HVdC:S:R:c:D:l:h',\%opts);
 
 our $debug          = $opts{'d'};
 my $config          = $opts{'C'} || $ENV{'HOME'}.'/.cif';
@@ -51,6 +51,8 @@ my $limit_days      = $opts{'D'} || 7;
 my $limit           = $opts{'l'} || 50000;
 my $mutex           = $opts{'L'} || '/tmp/cif_feed.lock';
 my $restriction     = $opts{'r'} || 'private';
+my $vaccum_only     = $opts{'V'};
+my $vaccum_hash     = $opts{'H'};
 
 ## TODO: pull this from the config
 my @feeds = ('infrastructure','domain','malware','email');
@@ -75,6 +77,7 @@ Advanced Usage:
     -R  --role:         run as a specific "role" (eg: group1_role_key)
     -S  --specific:     generate a specific feed (eg: infrastructure, domain, etc)
     -L  --mutex:        specify a different lockfile location, default: $mutex
+    -V  --vaccum-only:  don't generate feeds, just vaccum the archive
 
 Examples:
 
@@ -85,8 +88,8 @@ Examples:
 EOF
 }
 
-$SIG{'INT'} = 'cleanup';
-$SIG{__DIE__} = 'cleanup';
+$SIG{'INT'}     = 'cleanup';
+$SIG{__DIE__}   = 'cleanup';
 
 my $start = time();
 
@@ -126,15 +129,17 @@ my ($err,$obj) = CIF::Feed->new({
 
 die($err."\n\n") if($err);
 
-foreach my $feed (@{$obj->get_feeds()}){
-    debug('processing: '.$feed);
-    my ($err2,$ret) = $obj->process($feed);
+unless($vaccum_only){
+    foreach my $feed (@{$obj->get_feeds()}){
+        debug('processing: '.$feed);
+        my ($err2,$ret) = $obj->process($feed);
+    }
 }
 
 my $timestamp = DateTime->from_epoch(epoch => (time() - ((1 + $limit_days) * 84600)));
 $timestamp = $timestamp->ymd().'T00:00:00Z';
 
-debug('purging...');
+debug('purging from: '.$timestamp);
 $ret = $obj->purge_feeds({ 
     timestamp   => $timestamp,
 });

@@ -6,17 +6,27 @@ use warnings;
 
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 use Iodef::Pb::Simple qw(iodef_confidence iodef_additional_data iodef_guid);
+use CIF qw/debug/;
 
 # work-around for cif-v1
 use Regexp::Common qw/net/;
 use Digest::SHA1 qw(sha1_hex);
 
+my @plugins = __PACKAGE__->plugins();
+
 __PACKAGE__->table('hash');
 __PACKAGE__->columns(Primary => 'id');
 __PACKAGE__->columns(All => qw/id uuid guid hash confidence detecttime created/);
 __PACKAGE__->sequence('hash_id_seq');
+__PACKAGE__->has_a(uuid => 'CIF::Archive');
+__PACKAGE__->add_trigger(after_delete => \&trigger_after_delete);
 
-my @plugins = __PACKAGE__->plugins();
+sub trigger_after_delete {
+    my $class = shift;
+     
+    my $archive = CIF::Archive->retrieve(uuid => $class->uuid());
+    $archive->delete() if($archive);
+}
 
 sub prepare {}
 
@@ -91,6 +101,71 @@ sub query {
     }
     return;
 }
+
+sub _purge_hashes {
+    my $self    = shift;
+    my $args    = shift;
+    
+    my $timestamp = $args->{'timestamp'};
+    debug('retrieving...');
+    my @array = $self->retrieve_from_sql(qq{
+        detecttime < '$timestamp'
+    });
+   
+    return 0 unless($#array > -1);
+       
+    my $state = 0;
+    debug('entries: '.$#array+1);
+    for(my $i = 0; $i <= $#array; $i++){
+        $state = 0;
+        debug('removing: '.$_->uuid());
+        my $r = $_->delete();
+        if($i % 5000 == 0){
+            debug('commiting: '.($i+1).'/'.($#array+1));
+            #$self->dbi_commit();
+            $state = 1;
+        }
+    }
+    unless($state){
+        debug('final commit...');
+        #$self->dbi_commit();
+    }
+    debug('done...');
+    return 1;
+}
+
+sub purge_hashes {
+    my $self    = shift;
+    my $args    = shift;
+    
+    my $ts = $args->{'timestamp'};
+    
+    my $ret = 0;
+    my $count;
+    do {
+        debug('purging...');
+        $ret = $self->sql_purge_hashes->execute($ts);
+        $ret = $self->sql_purge_archive->execute($ts);
+        debug('commit...');
+        $self->dbi_commit();
+        $ret = 0 unless($ret > 0);
+        $count += $ret;
+        debug($ret);
+    } while($ret);
+    
+    debug('done...');
+    return (undef,$ret);
+}
+
+__PACKAGE__->set_sql('purge_archive'    => qq{
+    DELETE FROM archive
+    WHERE reporttime <= ?
+});
+
+__PACKAGE__->set_sql('purge_hashes' => qq{
+    DELETE FROM __TABLE__
+    WHERE reporttime <= ?
+});
 
 __PACKAGE__->set_sql('lookup' => qq{
     SELECT t.id,t.uuid,archive.data

@@ -171,6 +171,32 @@ sub init_group_map {
     $self->set_group_map($array);
 }
 
+sub normalize_restriction {
+    my $restriction     = shift;
+    
+    return unless($restriction);
+    return $restriction if($restriction =~ /^[1-4]$/);
+    for(lc($restriction)){
+        if(/^private$/){
+            $restriction = RestrictionType::restriction_type_private(),
+            last;
+        }
+        if(/^public$/){
+            $restriction = RestrictionType::restriction_type_public(),
+            last;
+        }
+        if(/^need-to-know$/){
+            $restriction = RestrictionType::restriction_type_need_to_know(),
+            last;
+        }
+        if(/^default$/){
+            $restriction = RestrictionType::restriction_type_default(),
+            last;
+        }   
+    }
+    return $restriction;
+}
+
 sub process {
     my $self = shift;
     my $feed = shift;
@@ -220,34 +246,7 @@ sub vaccum {
 
     foreach my $p (@plugins){
         $p->vaccum($args);
-           
     }
-}
-
-sub normalize_restriction {
-    my $restriction     = shift;
-    
-    return unless($restriction);
-    return $restriction if($restriction =~ /^[1-4]$/);
-    for(lc($restriction)){
-        if(/^private$/){
-            $restriction = RestrictionType::restriction_type_private(),
-            last;
-        }
-        if(/^public$/){
-            $restriction = RestrictionType::restriction_type_public(),
-            last;
-        }
-        if(/^need-to-know$/){
-            $restriction = RestrictionType::restriction_type_need_to_know(),
-            last;
-        }
-        if(/^default$/){
-            $restriction = RestrictionType::restriction_type_default(),
-            last;
-        }   
-    }
-    return $restriction;
 }
 
 sub purge_feeds {

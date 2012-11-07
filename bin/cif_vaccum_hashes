@@ -38,12 +38,12 @@ use CIF qw/debug/;
 use CIF::Archive;
 
 my %opts;
-getopts('dC:S:R:c:D:l:h',\%opts);
+getopts('dc:k:h',\%opts);
 
 our $debug          = $opts{'d'};
-my $config          = $opts{'C'} || $ENV{'HOME'}.'/.cif';
-my $limit_days      = $opts{'D'} || 270;
-my $mutex           = $opts{'L'} || '/tmp/cif_vaccum.lock';
+my $config          = $opts{'c'} || $ENV{'HOME'}.'/.cif';
+my $limit_days      = $opts{'k'} || 270;
+my $mutex           = $opts{'L'} || '/tmp/cif_vaccum_hashes.lock';
 
 die usage() if($opts{'h'});
 
@@ -60,7 +60,7 @@ Basic Usage:
 
 Examples:
 
-    $0 -D 180
+    $0 -D $limit_days
 
 EOF
 }
@@ -105,13 +105,16 @@ $timestamp = $timestamp->ymd().'T00:00:00Z';
 
 debug('using date: '.$timestamp);
 
-my $archive = CIF::Archive->new({ config => $config });
-($err,$ret) = $archive->vaccum({ timestamp => $timestamp });
+my $handle = CIF::Archive::Plugin::Hash->new({ config => $config });
+($err,$ret) = $handle->purge_hashes({ timestamp => $timestamp });
 
-die $err if($err);
-$ret = 0 unless($ret);
+die($err) if($err);
 
-debug('records removed: '.$ret);
+if($ret){
+    debug('records removed: '.$ret);
+} else {
+    debug('no records removed...');
+}
 
 debug('done...');
 

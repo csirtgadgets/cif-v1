@@ -210,6 +210,4 @@ sub log_search {
     return(undef,$id);
 }
 
-sub prune {}
-
 1;
