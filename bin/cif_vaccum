@@ -34,6 +34,7 @@ use Getopt::Std;
 use DateTime;
 use Config::Simple;
 use Data::Dumper;
+use CIF qw/debug/;
 use CIF::Archive;
 
 my %opts;
@@ -41,8 +42,8 @@ getopts('dC:S:R:c:D:l:h',\%opts);
 
 our $debug          = $opts{'d'};
 my $config          = $opts{'C'} || $ENV{'HOME'}.'/.cif';
-my $limit_days      = $opts{'D'} || 365;
-my $mutex           = $opts{'L'} || '/tmp/cif_archive_vaccum.lock';
+my $limit_days      = $opts{'D'} || 270;
+my $mutex           = $opts{'L'} || '/tmp/cif_vaccum.lock';
 
 die usage() if($opts{'h'});
 
@@ -69,14 +70,6 @@ $SIG{__DIE__} = 'cleanup';
 
 my $start = time();
 
-## TODO: move these to libcif
-sub _debug {
-    return unless($debug);
-    my $msg = shift;
-    my ($pkg,$f,$line) = caller();
-    warn "[DEBUG] $line: $msg";
-}
-
 sub _profile {
     my ($msg) = @_;
     _debug('('.(time() - $start).') '.$msg);
@@ -98,7 +91,7 @@ sub remove_lock {
 }
 
 if(-e $mutex){
-    print 'already running, mutex found: '.$mutex."\n" if($debug);
+    debug('already running, mutex found: '.$mutex);
     exit(-1);
 }
 my $ret = system('touch '.$mutex);
@@ -110,14 +103,17 @@ my $err;
 my $timestamp = DateTime->from_epoch(epoch => (time() - ((1 + $limit_days) * 84600)));
 $timestamp = $timestamp->ymd().'T00:00:00Z';
 
+debug('using date: '.$timestamp);
+
 my $archive = CIF::Archive->new({ config => $config });
 ($err,$ret) = $archive->vaccum({ timestamp => $timestamp });
 
 die $err if($err);
+$ret = 0 unless($ret);
 
-warn 'records removed: '.$ret if($ret && $ret > 0 && $debug);
+debug('records removed: '.$ret);
 
-warn 'done...' if($debug);
+debug('done...');
 
 remove_lock();
 exit(0);
