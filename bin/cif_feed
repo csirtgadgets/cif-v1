@@ -54,13 +54,22 @@ my $restriction     = $opts{'r'} || 'private';
 my $vaccum_only     = $opts{'V'};
 my $vaccum_hash     = $opts{'H'};
 
-## TODO: pull this from the config
-my @feeds = ('infrastructure','domain','malware','email');
+my ($err,$obj) = CIF::Feed->new({
+    config          => $config,
+    confidence      => $confidence,
+    limit           => $limit,
+    limit_days      => $limit_days,
+    specific_feeds  => $specific_feed,
+    roles           => $roles,
+    report_time     => time(),
+});
+
+die($err."\n\n") if($err);
 
 die usage() if($opts{'h'});
 
 sub usage {
-    my $usage_feeds = join("\n\t",@feeds);
+    my $usage_feeds = '['.join("|",@{$obj->get_feeds()}).']';
     return <<EOF;
 Usage: perl $0 -c 95
 
@@ -82,7 +91,7 @@ Advanced Usage:
 Examples:
 
     cif_feed -c 65
-    cif_feed -d -S [infrastructure|domain|email|malware|url]
+    cif_feed -d -S $usage_feeds
     cif_feed -c 40 -S domain
 
 EOF
@@ -116,18 +125,6 @@ my $ret = system('touch '.$mutex);
 unless(defined($ret) && $ret == 0){
     die($!);
 }
-
-my ($err,$obj) = CIF::Feed->new({
-    config          => $config,
-    confidence      => $confidence,
-    limit           => $limit,
-    limit_days      => $limit_days,
-    specific_feeds  => $specific_feed,
-    roles           => $roles,
-    report_time     => time(),
-});
-
-die($err."\n\n") if($err);
 
 unless($vaccum_only){
     foreach my $feed (@{$obj->get_feeds()}){
