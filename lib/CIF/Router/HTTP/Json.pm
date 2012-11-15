@@ -7,7 +7,7 @@ require Iodef::Pb::Format;
 require CIF::Client;
 require JSON::XS;
 use Data::Dumper;
-use CIF qw/debug generate_uuid_ns is_uuid/;
+use CIF qw/debug generate_uuid_ns is_uuid generate_uuid_random/;
 use Try::Tiny;
 
 sub handler {
@@ -77,11 +77,15 @@ sub handler {
             foreach (@$buffer){
                 $_->{'guid'} = $guid unless($_->{'guid'});
                 my $e;
+                unless($_->{'id'} && is_uuid($_->{'id'})){
+                    $_->{'id'} = generate_uuid_random();
+                }
                 try {
-                    $_ = Iodef::Pb::Simple->new($_)->encode();
+                    $_ = Iodef::Pb::Simple->new($_);
                 } catch {
                     $e = shift;
                 };
+ 
                 if($e){
                     return JSON::XS::encode_json({
                         data    => $e,
