@@ -22,6 +22,7 @@ sub handler {
     
     my ($err,$ret) = CIF::Client->new({
         apikey      => $apikey,
+        ## TODO -- fix this
         config      => '/home/cif/.cif', 
     });
     return($err) if($err);
@@ -87,34 +88,31 @@ sub handler {
                 };
  
                 if($e){
-                    return JSON::XS::encode_json({
-                        data    => $e,
-                        status  => '200',
-                    });
+                    debug($e);
+                    return Apache2::Const::HTTP_BAD_REQUEST();
                 }
+                $_ = $_->encode();
                 
             }
+
             $ret = $cli->new_submission({
                 guid    => $guid,
                 data    => $buffer,
             });
             ($err,$ret) = $cli->submit($ret);
-            return({
-                JSON::XS::encode_json({
-                    status  => 200,
-                    data    => $err,
-                })
-            }) if($err);
+            
+            if($err){
+                debug($err);
+                return(Apache2::Const::HTTP_BAD_REQUEST())
+            }
+            
             return JSON::XS::encode_json({
-                status  => 200,
+                status  => Apache2::Const::HTTP_OK(),
                 data    => $ret->get_data(),
             });
         }
     }
-    return JSON::XS::encode_json({
-        status  => 200,
-        data    => 'unauthorized method',
-    });
+    return Apache2::Const::METHOD_NOT_ALLOWED();
     
 }
 

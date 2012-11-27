@@ -12,6 +12,8 @@ BEGIN {
         '../libcif/lib',
         '../libcif-dbi/lib',
         '../../iodef-pb-simple-perl/lib',
+        '../libcif-dbi-asn/lib',
+        '../libcif-dbi-cc/lib',
     );
     my $bin_path;
 

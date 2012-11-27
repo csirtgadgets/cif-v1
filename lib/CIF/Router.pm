@@ -26,7 +26,8 @@ __PACKAGE__->follow_best_practice();
 __PACKAGE__->mk_accessors(qw(
     config db_config router_db_config 
     driver driver_config restriction_map 
-    group_map groups feeds feeds_config
+    group_map groups feeds feeds_config archive_config
+    datatypes
 ));
 
 our $debug = 0;
@@ -46,8 +47,7 @@ sub new {
     $self->set_db_config(       $args->{'config'}->param(-block => 'db'));
     $self->set_router_db_config($args->{'config'}->param(-block => 'router_db'));
     $self->set_restriction_map( $args->{'config'}->param(-block => 'restriction_map'));
-    $self->set_group_map(       $args->{'config'}->param(-block => 'groups'));
-    $self->set_feeds_config(    $args->{'config'}->param(-block => 'cif_feed'));
+    $self->set_archive_config(  $args->{'config'}->param(-block => 'cif_archive'));
    
     my $ret = $self->init($args);
     return unless($ret);
@@ -92,6 +92,7 @@ sub init {
     $self->init_restriction_map();
     $self->init_group_map();
     $self->init_feeds();
+    $self->init_archive();
     
     $debug = $self->get_config->{'debug'} || 0;
     
@@ -101,8 +102,14 @@ sub init {
 sub init_feeds {
     my $self = shift;
 
-    my $feeds = $self->get_feeds_config->{'enabled'};
+    my $feeds = $self->get_archive_config->{'feeds'};
     $self->set_feeds($feeds);
+}
+
+sub init_archive {
+    my $self = shift;
+    my $dt = $self->get_archive_config->{'datatypes'} || ['infrastructure','domain','url','email','malware','search'];
+    $self->set_datatypes($dt);
 }
 
 sub init_restriction_map {
@@ -123,7 +130,7 @@ sub init_restriction_map {
 
 sub init_group_map {
     my $self = shift;
-    my $g = $self->get_group_map->{'groups'};
+    my $g = $self->get_archive_config->{'groups'};
     
     # system wide groups
     push(@$g, qw(everyone root));
@@ -305,6 +312,7 @@ sub process_query {
                 source          => $m->get_apikey(),
                 description     => $m->get_description(),
                 feeds           => $self->get_feeds(),
+                datatypes       => $self->get_datatypes(),
             });
             if($err){
                 warn $err;
@@ -383,16 +391,17 @@ sub process_submission {
         
         debug('entries: '.($#{$array} + 1));
         for(my $i = 0; $i <= $#{$array}; $i++){
-            next unless(@{$array}[$i]);
+            next unless(@{$array}[$i] && @{$array}[$i] ne '');
             $state = 0;
             debug('inserting...');
             my ($err,$id) = CIF::Archive->insert({
-                data    => @{$array}[$i],
-                guid    => $guid,
-                feeds   => $self->get_feeds(),
+                data        => @{$array}[$i],
+                guid        => $guid,
+                feeds       => $self->get_feeds(),
+                datatypes   => $self->get_datatypes(),
             });
             if($err){
-                warn $err;
+                #debug($err);
                 return MessageType->new({
                     version => $CIF::VERSION,
                     type    => MessageType::MsgType::REPLY(),
@@ -400,6 +409,7 @@ sub process_submission {
                     data    => 'submission failed: contact system administrator',
                 });
             }
+            debug($id);
             push(@$ret,$id);
             ## TODO -- make the 1000 a variable
             if($i % $commit_size == 0){

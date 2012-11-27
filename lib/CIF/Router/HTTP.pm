@@ -51,21 +51,24 @@ sub handler {
         return Apache2::Const::FORBIDDEN if($router->get_config->{'disable_legacy'});
         $req->content_type('application/json');
         $reply = CIF::Router::HTTP::Json::handler($req);
+        if($reply =~ /^\d+$/){
+            $req->status($reply);
+            return $reply;
+        }
     } else {
         return unless($req->method() eq 'POST');
         my $len = $req->headers_in->{'content-length'};
         unless($len > 0){
-            return Apache2::Const::FORBIDDEN;
+            return Apache2::Const::FORBIDDEN();
         }
         my $buffer;
         $req->read($buffer,$req->headers_in->{'content-length'});
         $req->content_type('application/x-protobuf');
         $reply = $router->process($buffer);
     }
-    
-    $req->status(Apache2::Const::HTTP_OK);
     $req->headers_out()->add('Content-length',length($reply));
 
+    $req->status(Apache2::Const::HTTP_OK());
     binmode STDOUT;
     print $reply;
     return Apache2::Const::OK;
