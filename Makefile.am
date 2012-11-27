@@ -25,6 +25,12 @@ libcif-install:
 libcif-dbi-install:
 	-( cd libcif-dbi && make install )
 
+initdb:
+	-( cd libcif-dbi && make initdb && make tables)
+
+tables:
+	-( cd libcif-dbi && make tables )
+
 cif-router-install:
 	-( cd cif-router && make install )
 
