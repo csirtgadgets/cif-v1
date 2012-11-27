@@ -30,7 +30,8 @@ sub new {
     my $self = {};
     bless($self,$class);
     
-    $self->init($args);
+    my ($err,$ret) = $self->init($args);
+    return($err) if($err);
     
     my $enabled = $args->{'specific_feeds'} || $self->get_config->{'enabled'};
     return ('no feeds specified') unless($enabled);
@@ -46,7 +47,9 @@ sub init {
     my $self = shift;
     my $args = shift;
     
-    $self->init_config( $args);   
+    my ($err,$ret) = $self->init_config( $args);   
+    return($err) if($err);
+    
     $self->init_db(     $args);
     
     my $report_time = $args->{'report_time'} || time();
@@ -62,6 +65,7 @@ sub init {
     
     $self->set_restriction(normalize_restriction($args->{'restriction'} || $self->get_config->{'restriction'} || 'private'));
     $self->set_feed_retention($args->{'feed_retention'} || $self->get_config->{'feed_retention'} || 3);
+    return(undef,1);
 }
 
 sub init_config {
@@ -69,7 +73,7 @@ sub init_config {
     my $args = shift;
     
     my $cfg = $args->{'config'};
-    $args->{'config'} = Config::Simple->new($args->{'config'}) || return(undef,'missing config file');
+    $args->{'config'} = Config::Simple->new($args->{'config'}) || return('missing config file');
     
     $self->set_config(          $args->{'config'}->param(-block => 'cif_feed'));
     $self->set_db_config(       $args->{'config'}->param(-block => 'db'));
@@ -93,6 +97,7 @@ sub init_config {
         });
         foreach (@$roles){
             my @recs = $profile->user_list({ user => $_ });
+            return ('role key: '.$_.' does not exist...') if($#recs < 0);
             my $h = {
                 name    => $_,
                 uuid    => $recs[0]->{'uuid'},
@@ -102,9 +107,7 @@ sub init_config {
         }
         $self->set_roles($roles);
     }
-    
-    
-    
+
     my $confidence = $args->{'confidence'} || $self->get_config->{'confidence'} || '95,85';
     my @array2 = (ref($confidence) eq 'ARRAY') ? @$confidence : split(/,/,$confidence);
     
@@ -114,6 +117,7 @@ sub init_config {
     
     $self->init_restriction_map();
     $self->init_group_map();
+    return(undef,1);
 }
 
 sub init_db {
@@ -220,10 +224,11 @@ sub process {
 
             foreach my $f (@$ret){
                 my ($err,$id) = CIF::Archive->insert({
-                    data    => encode_base64(Compress::Snappy::compress($f->encode())),
-                    guid    => $f->get_guid(),
-                    created => $f->get_ReportTime(),
-                    format  => 'feed',
+                    data        => encode_base64(Compress::Snappy::compress($f->encode())),
+                    guid        => $f->get_guid(),
+                    created     => $f->get_ReportTime(),
+                    reporttime  => $f->get_ReportTime()
+                    format      => 'feed',
                 });
                 if($err){
                     warn $err;

@@ -12,6 +12,7 @@ sub generate_feeds { return; }
 
 # specific to domain and infrastructure
 # where we need the address to bench against the whitelist
+no warnings;
 sub generate_feeds { 
     my $class   = shift;
     my $args    = shift;
@@ -25,6 +26,7 @@ sub generate_feeds {
     debug('fetching');
     return($sth->fetchall_hashref('id'));
 }
+use warnings;
 
 # used for domains and ip's
 # because we can have /24's and blanket TLDs in the whitelist
