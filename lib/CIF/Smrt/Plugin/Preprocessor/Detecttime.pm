@@ -1,5 +1,10 @@
 package CIF::Smrt::Plugin::Preprocessor::Detecttime;
 
+use warnings;
+use strict;
+
+use CIF qw/normalize_timestamp/;
+
 sub process {
     my $class   = shift;
     my $rules   = shift;
@@ -7,7 +12,7 @@ sub process {
         
     my $dt = $rec->{'detecttime'};
     if($dt){
-        $rec->{'detecttime'} = CIF::Smrt::normalize_timestamp($rec->{'detecttime'});
+        $rec->{'detecttime'} = normalize_timestamp($rec->{'detecttime'});
         $rec->{'dt'} = DateTime::Format::DateParse->parse_datetime($rec->{'detecttime'})->epoch();
         return $rec;
     }
