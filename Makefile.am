@@ -1,4 +1,4 @@
-EXTRA_DIST = lib sbin bin
+EXTRA_DIST = lib sbin bin protocol
 
 ME=libcif
 BUILD=$(shell git describe --tags)
@@ -7,7 +7,7 @@ SNAPSHOT=$(ME)-$(BUILD)
 all: default
 
 default:
-	@echo "Please read the README before beginning your installation."
+	$(PERL) sbin/gen_protocol_bindings.pl
 
 fixperms:
 	chmod 0755 $(prefix)
