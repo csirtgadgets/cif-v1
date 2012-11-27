@@ -25,7 +25,7 @@ use CIF::Msg::Feed;
 
 __PACKAGE__->follow_best_practice();
 __PACKAGE__->mk_accessors(qw(
-    config driver_config driver apikey 
+    config driver_config global_config driver apikey 
     nolog limit guid filter_me no_maprestrictions
     table_nowarning related
 ));
@@ -37,13 +37,14 @@ sub new {
     my $class = shift;
     my $args = shift;
     
-    return(undef,'missing config file') unless($args->{'config'});
+    return('missing config file') unless($args->{'config'});
     
     $args->{'config'} = Config::Simple->new($args->{'config'}) || return(undef,'missing config file');
     
     my $self = {};
     bless($self,$class);
     
+    $self->set_global_config(   $args->{'config'});
     $self->set_config(          $args->{'config'}->param(-block => 'client'));
     $self->set_driver(          $self->get_config->{'driver'} || 'HTTP');
     $self->set_driver_config(   $args->{'config'}->param(-block => 'client_'.lc($self->get_driver())));
@@ -271,7 +272,7 @@ sub new_submission {
     my $args = shift;
     
     my $data = (ref($args->{'data'}) eq 'ARRAY') ? $args->{'data'} : [$args->{'data'}];
-    
+
     foreach (@$data){
         $_ = encode_base64(Compress::Snappy::compress($_));
     }
@@ -280,6 +281,47 @@ sub new_submission {
         guid    => $args->{'guid'},
         data    => $data,
     });
+
     return $msg->encode();
 }
+
+# confor($conf, ['infrastructure/botnet', 'client'], 'massively_cool_output', 0)
+#
+# search the given sections, in order, for the given config param. if found, 
+# return its value or the default one specified.
+
+sub confor {
+    my $conf = shift;
+    my $sections = shift;
+    my $name = shift;
+    my $def = shift;
+
+    # return unless we get called with a config (eg: via the WebAPI)
+    return unless($conf->{'config'});
+
+    # handle
+    # snort_foo = 1,2,3
+    # snort_foo = "1,2,3"
+
+    foreach my $s (@$sections) { 
+        my $sec = $conf->{'config'}->param(-block => $s);
+        next if isempty($sec);
+        next if !exists $sec->{$name};
+        if (defined($sec->{$name})) {
+            return ref($sec->{$name} eq "ARRAY") ? join(', ', @{$sec->{$name}}) : $sec->{$name};
+        } else {
+            return $def;
+        }
+    }
+    return $def;
+}
+
+sub isempty {
+    my $h = shift;
+    return 1 unless ref($h) eq "HASH";
+    my @k = keys %$h;
+    return 1 if $#k == -1;
+    return 0;
+}
+
 1;

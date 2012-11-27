@@ -195,30 +195,43 @@ unless($ret){
 my $feeds = $ret;
 
 debug('formatting as '.ucfirst($plugin).'...');
+
 my @text;
-foreach my $feed (@$feeds){
+foreach my $feed (0 ... $#{$feeds}){
+    my $x = $feed;
+    $feed = @{$feeds}[$feed];
     next unless($feed->get_data());
 
     my $r_map = ($nomap) ? undef : $feed->get_restriction_map();
     my $t = Iodef::Pb::Format->new({
+        config              => $cli->get_global_config(),
         format              => ucfirst($plugin),
+        data                => $feed->get_data(),
+        
         group_map           => $feed->get_group_map(),
         restriction_map     => $r_map,
-        data                => $feed->get_data(),
-        compress_address    => $compress_address,
+        
         confidence          => $feed->get_confidence(),
         guid                => $feed->get_guid(),
         uuid                => $feed->get_uuid(),
         description         => $feed->get_description(),
         restriction         => $feed->get_restriction(),
         reporttime          => $feed->get_ReportTime(),
+        
+        # config stuff
+        compress_address    => $compress_address,
         table_nowarning     => $cli->get_table_nowarning(),
-        config              => $cli->get_config(),
         table_uuid          => $uuid,
         table_relatedid     => $relateduuid,
         table_showmeta      => $table_showmeta,
         sortby              => $sortby,
         sortby_direction    => $sortby_direction,
+        
+        # this is bound to cause us problems if not lined up properly
+        # with the original $feeds array, or if there is a gap in $feeds
+        # compared to the $q array, we should make sure the router returns
+        # are in-sync
+        query               => $q[$x],
     });
     
     $t .= "\n";
