@@ -6,7 +6,6 @@ CREATE TABLE url (
     guid uuid,
     hash varchar(40),
     confidence REAL,
-    detecttime timestamp with time zone DEFAULT NOW(),
     reporttime timestamp with time zone DEFAULT NOW(),
     created timestamp with time zone DEFAULT NOW()
 );

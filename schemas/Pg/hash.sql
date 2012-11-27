@@ -7,7 +7,6 @@ CREATE TABLE hash (
     hash text not null,
     confidence real,
     reporttime timestamp with time zone DEFAULT NOW(),
-    detecttime timestamp with time zone DEFAULT NOW(),
     created timestamp with time zone DEFAULT NOW()
 );
 

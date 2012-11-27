@@ -17,13 +17,14 @@ my @plugins = __PACKAGE__->plugins();
 
 __PACKAGE__->table('infrastructure');
 __PACKAGE__->columns(Primary => 'id');
-__PACKAGE__->columns(All => qw/id uuid guid hash address confidence detecttime created/);
+__PACKAGE__->columns(All => qw/id uuid guid hash address confidence reporttime created/);
 __PACKAGE__->sequence('infrastructure_id_seq');
 
 sub insert {
     my $class = shift;
     my $data = shift;
     
+    return unless($class->test_datatype($data));
     return unless(ref($data->{'data'}) eq 'IODEFDocumentType');       
     my @ids;
     
@@ -45,6 +46,7 @@ sub insert {
         $confidence = @{$confidence}[0]->get_content();
 
         my $systems = iodef_systems($i);
+        my $reporttime = $i->get_ReportTime();
         
         next unless($systems);
         foreach my $system (@{$systems}){
@@ -72,8 +74,13 @@ sub insert {
                             foreach my $service (@$services){
                                 my $portlist = $service->get_Portlist();
                                 if($portlist){
-                                    $portlist = parse_range($portlist);
-                                    push(@{$ranges->{$service->get_ip_protocol()}},$portlist);
+                                    if($portlist =~ /^\d([\d,-]+)?$/){
+                                        $portlist = parse_range($portlist);
+                                        push(@{$ranges->{$service->get_ip_protocol()}},$portlist);
+                                    } else {
+                                        debug('invalid portlist format: '.$portlist);
+                                        debug('uuid: '.$data->{'uuid'});
+                                    }
                                 }
                             }
                             $hash = sha1_hex($hash.encode_json($ranges))
@@ -85,6 +92,7 @@ sub insert {
                             confidence  => $confidence,
                             hash        => $hash,
                             address     => $a->get_content(),
+                            reporttime  => $reporttime,
                         });
                         
                     }
@@ -109,8 +117,6 @@ sub insert {
                         my @array = split(/\./,$1);
                         my $mask = $2;
                         my @a1;
-                        ## TODO -- double check this..
-                        ## ref: Client.pm +188
                         for($mask){
                             if($_ >= 8){
                                 push(@index, $array[0].'.0.0.0/8');
@@ -125,9 +131,10 @@ sub insert {
                     }
                     foreach (@index){
                         $id = $class->insert_hash({ 
-                            uuid => $data->{'uuid'}, 
-                            guid => $data->{'guid'}, 
-                            confidence => $confidence 
+                            uuid        => $data->{'uuid'}, 
+                            guid        => $data->{'guid'}, 
+                            confidence  => $confidence ,
+                            reporttime  => $reporttime,
                         },$class->SUPER::generate_sha1($_));
                         push(@ids,$id);
                     }

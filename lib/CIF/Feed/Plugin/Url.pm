@@ -8,7 +8,7 @@ use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 use CIF qw/debug/;
 
 __PACKAGE__->table('url');
-__PACKAGE__->columns(All => qw/id uuid guid hash confidence detecttime created/);
+__PACKAGE__->columns(All => qw/id uuid guid hash confidence reporttime created/);
 __PACKAGE__->sequence('url_id_seq');
 
 ## TODO: database config?
@@ -110,7 +110,7 @@ __PACKAGE__->set_sql('feed_whitelist' => qq{
         SELECT t2.hash,t2.guid
         FROM url_whitelist t2
         WHERE
-            t2.detecttime >= ?
+            t2.reporttime >= ?
             AND t2.confidence >= 25
         ORDER BY id DESC
         LIMIT ?

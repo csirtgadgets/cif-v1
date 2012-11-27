@@ -8,7 +8,6 @@ CREATE TABLE infrastructure (
     hash text,
     address text,
     confidence real,
-    detecttime timestamp with time zone DEFAULT NOW(),
     reporttime timestamp with time zone DEFAULT NOW(),
     created timestamp with time zone DEFAULT NOW()
 );

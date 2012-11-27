@@ -10,7 +10,7 @@ use Iodef::Pb::Simple qw(iodef_addresses iodef_confidence iodef_guid);
 
 __PACKAGE__->table('email');
 __PACKAGE__->columns(Primary => 'id');
-__PACKAGE__->columns(Essential => qw/id uuid guid hash confidence detecttime created/);
+__PACKAGE__->columns(Essential => qw/id uuid guid hash confidence reporttime created/);
 __PACKAGE__->sequence('email_id_seq');
 
 my @plugins = __PACKAGE__->plugins();
@@ -28,6 +28,7 @@ sub insert {
     my $class = shift;
     my $data = shift;
     
+    return unless($class->test_datatype($data));
     return unless(ref($data->{'data'}) eq 'IODEFDocumentType');
 
     my $addresses = iodef_addresses($data->{'data'});
@@ -42,6 +43,7 @@ sub insert {
                 last;
             }
         }
+        my $reporttime = $i->get_ReportTime();
         my $confidence = iodef_confidence($i);
         $confidence = @{$confidence}[0]->get_content();
         
@@ -55,6 +57,7 @@ sub insert {
                     guid        => $data->{'guid'},
                     hash        => $hash,
                     confidence  => $confidence,
+                    reporttime  => $reporttime,
                 });
             }
             $addr =~ /\@([a-z0-9.-]+\.[a-z0-9.-]{2,5}$)/;
@@ -66,9 +69,10 @@ sub insert {
                 pop(@a2);
                 my $hash = $class->SUPER::generate_sha1($a);
                 my $id = $class->insert_hash({ 
-                    uuid => $data->{'uuid'}, 
-                    guid => $data->{'guid'}, 
-                    confidence => $confidence 
+                    uuid        => $data->{'uuid'}, 
+                    guid        => $data->{'guid'}, 
+                    confidence  => $confidence,
+                    reporttime  => $reporttime,
                 },$hash);
                 push(@ids,$id);
             }

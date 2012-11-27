@@ -11,6 +11,7 @@ use Try::Tiny;
 use MIME::Base64;
 require Iodef::Pb::Simple;
 require Compress::Snappy;
+use Digest::SHA1 qw/sha1_hex/;
 use Data::Dumper;
 
 use Module::Pluggable require => 1, except => qr/::Plugin::\S+::/;
@@ -32,17 +33,18 @@ sub insert {
     my $data = shift;
         
     my $msg = Compress::Snappy::decompress(decode_base64($data->{'data'}));
-    
-    my $uuid;
 
     if($data->{'format'} && $data->{'format'} eq 'feed'){
         $msg = FeedType->decode($msg);
     } else {
         $msg = IODEFDocumentType->decode($msg);
-        $uuid = @{$msg->get_Incident}[0]->get_IncidentID->get_content();
+        $data->{'uuid'}         = @{$msg->get_Incident}[0]->get_IncidentID->get_content();
+        $data->{'reporttime'}   = @{$msg->get_Incident}[0]->get_ReportTime();
     }
+    
+    $data->{'uuid'} = generate_uuid_random() unless($data->{'uuid'});
 
-    $data->{'uuid'}     = $data->{'uuid'} || $uuid || generate_uuid_random();
+    return ('id must be a uuid') unless(is_uuid($data->{'uuid'}));
     
     $data->{'guid'}     = generate_uuid_ns('root')                  unless($data->{'guid'});
     $data->{'created'}  = DateTime->from_epoch(epoch => time())     unless($data->{'created'});
@@ -55,6 +57,7 @@ sub insert {
             format      => $CIF::VERSION,
             data        => $data->{'data'},
             created     => $data->{'created'},
+            reporttime  => $data->{'reporttime'},
         });
     }
     catch {
@@ -65,6 +68,7 @@ sub insert {
     $data->{'data'} = $msg;    
     
     foreach my $p (@plugins){
+        #debug($p);
         my ($pid,$err);
         try {
             ($err,$pid) = $p->insert($data);
@@ -72,7 +76,6 @@ sub insert {
             $err = shift;
         };
         if($err){
-            warn $err;
             $class->dbi_rollback() unless($class->db_Main->{'AutoCommit'});
             return $err;
         }
@@ -103,6 +106,7 @@ sub search {
         }
         foreach my $p (@plugins){
             my $err;
+            debug('plugin: '.$p);
             try {
                 $ret = $p->query($data);
             } catch {
@@ -151,14 +155,27 @@ sub log_search {
    
     my ($q_type,$q_thing);
     for(lc($desc)){
+        # reg hashes
         if(/^search ([a-f0-9]{40}|[a-f0-9]{32})$/){
             $q_type = 'hash';
             $q_thing = $1;
-        } else {
-            m/^search (\S+)$/;
-            $q_type = 'address',
-            $q_thing = $1;
+            last;
+        } 
+        # asn
+        if(/^search as(\d+)$/){
+            $q_type = 'hash';
+            $q_thing = sha1_hex($1); 
+            last;
+        } 
+        # cc
+        if(/^search ([a-z]{2})$/){
+            $q_type = 'hash';
+            $q_thing = sha1_hex($1);
+            last;
         }
+        m/^search (\S+)$/;
+        $q_type = 'address',
+        $q_thing = $1;
     }
    
     # thread friendly to load here
@@ -199,11 +216,12 @@ sub log_search {
    
     my $err;
     ($err,$id) = $class->insert({
-        uuid    => $uuid,
-        guid    => $guid,
-        data    => encode_base64(Compress::Snappy::compress($doc->encode())),
-        created => $dt,
-        feeds   => $data->{'feeds'},
+        uuid        => $uuid,
+        guid        => $guid,
+        data        => encode_base64(Compress::Snappy::compress($doc->encode())),
+        created     => $dt,
+        feeds       => $data->{'feeds'},
+        datatypes   => $data->{'datatypes'},
     });
     return($err) if($err);
     $class->dbi_commit() unless($class->db_Main->{'AutoCommit'});

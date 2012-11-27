@@ -8,7 +8,6 @@ CREATE TABLE domain (
     hash text,
     address text,
     confidence real,
-    detecttime timestamp with time zone default NOW(),
     reporttime timestamp with time zone default NOW(),
     created timestamp with time zone DEFAULT NOW()
 );

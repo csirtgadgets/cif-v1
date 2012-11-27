@@ -13,6 +13,8 @@ __PACKAGE__->sequence('infrastructure_id_seq');
 
 ## TODO: database config?
 my @plugins = __PACKAGE__->plugins();
+
+# these are the built-in indicies
 push(@plugins, ('suspicious','botnet','malware','fastflux','phishing','scan','whitelist','passive'));
 
 ## TODO -- IPv6

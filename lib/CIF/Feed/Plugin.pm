@@ -75,7 +75,7 @@ __PACKAGE__->set_sql('feed' => qq{
         SELECT t.hash, t.id, t.uuid, t.guid
         FROM __TABLE__ t
         WHERE
-            t.detecttime >= ?
+            t.reporttime >= ?
             AND t.confidence >= ?
         ORDER by t.id DESC
         LIMIT ?
@@ -91,7 +91,7 @@ __PACKAGE__->set_sql('feed_whitelist' => qq{
         SELECT t2.hash
         FROM __TABLE__ t2
         WHERE
-            t2.detecttime >= ?
+            t2.reporttime >= ?
             AND t2.confidence >= ?
         ORDER BY id DESC
         LIMIT ?

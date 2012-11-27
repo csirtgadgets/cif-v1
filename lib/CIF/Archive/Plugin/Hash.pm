@@ -16,7 +16,7 @@ my @plugins = __PACKAGE__->plugins();
 
 __PACKAGE__->table('hash');
 __PACKAGE__->columns(Primary => 'id');
-__PACKAGE__->columns(All => qw/id uuid guid hash confidence detecttime created/);
+__PACKAGE__->columns(All => qw/id uuid guid hash confidence reporttime created/);
 __PACKAGE__->sequence('hash_id_seq');
 __PACKAGE__->has_a(uuid => 'CIF::Archive');
 __PACKAGE__->add_trigger(after_delete => \&trigger_after_delete);
@@ -37,6 +37,7 @@ sub insert {
     my @ids;
     my $tbl = $class->table();
 
+    # we're explicitly placing a hash
     if($data->{'hash'}){
         $confidence = $data->{'confidence'};
         
@@ -48,6 +49,7 @@ sub insert {
             uuid        => $data->{'uuid'},
             guid        => $data->{'guid'},
             confidence  => $confidence,
+            reporttime  => $data->{'reporttime'},
         });
         push(@ids,$id);
     } elsif(ref($data->{'data'}) eq 'IODEFDocumentType') {
@@ -74,6 +76,7 @@ sub insert {
                     uuid        => $data->{'uuid'},
                     guid        => $data->{'guid'},
                     confidence  => $confidence,
+                    reporttime  => $data->{'reporttime'},
                 });
                 push(@ids,$id);
             }
@@ -100,38 +103,6 @@ sub query {
         return ($r) if($r && $r->count());
     }
     return;
-}
-
-sub _purge_hashes {
-    my $self    = shift;
-    my $args    = shift;
-    
-    my $timestamp = $args->{'timestamp'};
-    debug('retrieving...');
-    my @array = $self->retrieve_from_sql(qq{
-        detecttime < '$timestamp'
-    });
-   
-    return 0 unless($#array > -1);
-       
-    my $state = 0;
-    debug('entries: '.$#array+1);
-    for(my $i = 0; $i <= $#array; $i++){
-        $state = 0;
-        debug('removing: '.$_->uuid());
-        my $r = $_->delete();
-        if($i % 5000 == 0){
-            debug('commiting: '.($i+1).'/'.($#array+1));
-            #$self->dbi_commit();
-            $state = 1;
-        }
-    }
-    unless($state){
-        debug('final commit...');
-        #$self->dbi_commit();
-    }
-    debug('done...');
-    return 1;
 }
 
 sub purge_hashes {
@@ -177,36 +148,7 @@ __PACKAGE__->set_sql('lookup' => qq{
         AND confidence >= ?
         AND apikeys_groups.uuid = ?
         AND archive.uuid IS NOT NULL
-    ORDER BY t.detecttime DESC, t.created DESC, t.id DESC
-    LIMIT ?
-});
-
-## TODO - is this really needed?
-# we want the lowest confidence feed given any confidence value
-__PACKAGE__->set_sql('lookup_feed' => qq{
-    SELECT t.id,t.uuid,archive.data
-    FROM __TABLE__ t
-    LEFT JOIN apikeys_groups on t.guid = apikeys_groups.guid
-    LEFT JOIN archive ON archive.uuid = t.uuid
-    WHERE 
-        hash = ?
-        AND confidence >= ?
-        AND apikeys_groups.uuid = ?
-        AND archive.uuid IS NOT NULL
-    ORDER BY t.confidence ASC, t.detecttime DESC, t.created DESC, t.id DESC
-    LIMIT 1
-});
-
-__PACKAGE__->set_sql('lookup_guid' => qq{
-    SELECT t.id,t.uuid,archive.data
-    FROM __TABLE__ t
-    LEFT JOIN archive ON archive.uuid = t.uuid
-    WHERE 
-        hash = ?
-        AND confidence >= ?
-        AND t.guid = ?
-        AND archive.uuid IS NOT NULL
-    ORDER BY t.detecttime DESC, t.created DESC, t.id DESC
+    ORDER BY t.reporttime DESC, t.created DESC, t.id DESC
     LIMIT ?
 });
 

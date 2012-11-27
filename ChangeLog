@@ -1,4 +1,4 @@
-Revision history for cif-dbi
+Revision history for libcif-dbi
 
 0.99.05 2012-10
     - bugfix to feed retention policy (defaults to 3)

@@ -42,6 +42,7 @@ sub insert {
         uuid        => $data->{'uuid'},
         hash        => $hash,
         confidence  => $data->{'confidence'},
+        reporttime  => $data->{'reporttime'},
     });
     my $id = $class->insert_hash($data,$hash);
     

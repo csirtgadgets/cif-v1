@@ -5,13 +5,12 @@ use strict;
 use warnings;
 
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
-use Try::Tiny;
 use Iodef::Pb::Simple qw(iodef_addresses iodef_confidence iodef_guid);
 use Digest::SHA1 qw/sha1_hex/;
 
 __PACKAGE__->table('domain');
 __PACKAGE__->columns(Primary => 'id');
-__PACKAGE__->columns(All => qw/id uuid guid hash address confidence detecttime created/);
+__PACKAGE__->columns(All => qw/id uuid guid hash address confidence reporttime created/);
 __PACKAGE__->sequence('domain_id_seq');
 
 my @plugins = __PACKAGE__->plugins();
@@ -22,6 +21,7 @@ sub insert {
     my $class = shift;
     my $data = shift;
     
+    return unless($class->test_datatype($data));
     return unless(ref($data->{'data'}) eq 'IODEFDocumentType');
 
     my $tbl = $class->table();
@@ -34,6 +34,7 @@ sub insert {
                 last;
             }
         }
+        my $reporttime = $i->get_ReportTime();
         my $uuid = $i->get_IncidentID->get_content();
              
         my $addresses = iodef_addresses($i);
@@ -55,6 +56,7 @@ sub insert {
                     hash        => sha1_hex($addr),
                     address     => $addr,
                     confidence  => $confidence,
+                    reporttime  => $reporttime,
                 });
             }
             
@@ -65,9 +67,10 @@ sub insert {
                 pop(@a2);
                 my $hash = $class->SUPER::generate_sha1($a);
                 my $id = $class->insert_hash({ 
-                    uuid => $data->{'uuid'}, 
-                    guid => $data->{'guid'}, 
-                    confidence => $confidence 
+                    uuid        => $data->{'uuid'}, 
+                    guid        => $data->{'guid'}, 
+                    confidence  => $confidence,
+                    reporttime  => $reporttime,
                 },$hash);
                 push(@ids,$id);
             }

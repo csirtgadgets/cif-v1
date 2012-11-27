@@ -7,7 +7,6 @@ CREATE TABLE email (
     guid uuid,
     hash varchar(40),
     confidence real,
-    detecttime timestamp with time zone default NOW(),
     reporttime timestamp with time zone default NOW(),
     created timestamp with time zone DEFAULT NOW()
 );

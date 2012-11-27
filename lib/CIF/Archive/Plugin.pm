@@ -42,6 +42,20 @@ sub test_feed {
         return 1 if(lc($class) =~ /$f$/);
     }
 }
+
+sub test_datatype {
+    my $class   = shift;
+    my $data    = shift;
+    
+    return unless($data);
+    $data = $data->{'datatypes'};
+    return unless($data);
+    $data = [$data] unless(ref($data) eq 'ARRAY');
+    
+    foreach (@$data){
+        return 1 if(lc($class) =~ /$_$/);
+    }    
+}
     
 sub insert_hash {
     my $class = shift;
@@ -55,6 +69,7 @@ sub insert_hash {
         guid        => $data->{'guid'},
         confidence  => $data->{'confidence'},
         hash        => $hash,
+        reporttime  => $data->{'reporttime'},
     });
     return ($id);
 }

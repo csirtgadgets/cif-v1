@@ -1,10 +1,10 @@
-package CIF::Archive::Plugin::Malware::Uuid;
-use base 'CIF::Archive::Plugin::Malware';
+package CIF::Archive::Plugin::Hash::Uuid;
+use base 'CIF::Archive::Plugin::Hash';
 
 use strict;
 use warnings;
 
-__PACKAGE__->table('malware_uuid');
+__PACKAGE__->table('hash_uuid');
 
 sub prepare {
     my $class = shift;
