@@ -1,26 +1,29 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Google::ProtocolBuffers;
 
-my $f = './protocol/src/msg.proto';
+use Google::ProtocolBuffers;
+use FindBin qw/$Bin/;
+
+my $f = $Bin.'/../protocol/src/msg.proto';
+
 Google::ProtocolBuffers->parsefile($f,
     {
-        generate_code => './lib/CIF/Msg.pm',
+        generate_code => $Bin.'/../lib/CIF/Msg.pm',
         create_accessors    => 1,
         follow_best_practice => 1,
     }
 );
 
-$f = './protocol/src/feed.proto';
+$f = $Bin.'/../protocol/src/feed.proto';
 
-unless(-e './lib/CIF/Msg'){
-    system('mkdir lib/CIF/Msg');
+unless(-e $Bin.'/../lib/CIF/Msg'){
+    system("mkdir $Bin/../lib/CIF/Msg");
 }
 
 Google::ProtocolBuffers->parsefile($f,
     {
-        generate_code => './lib/CIF/Msg/Feed.pm',
+        generate_code => $Bin.'/../lib/CIF/Msg/Feed.pm',
         create_accessors    => 1,
         follow_best_practice => 1,
     }
@@ -29,10 +32,10 @@ Google::ProtocolBuffers->parsefile($f,
 # work-around till we fix:
 # https://rt.cpan.org/Ticket/Display.html?id=76641
 
-open(F,'./lib/CIF/Msg.pm') || die($!);;
+open(F,$Bin.'/../lib/CIF/Msg.pm') || die($!);;
 my @lines = <F>;
 close(F);
-open(F,'>','./lib/CIF/Msg.pm');
+open(F,'>',$Bin.'/../lib/CIF/Msg.pm');
 no warnings;
 print F "package CIF::Msg;\n";
 foreach (@lines){
@@ -40,10 +43,10 @@ foreach (@lines){
 }
 close(F);
 
-open(F,'./lib/CIF/Msg/Feed.pm');
+open(F,$Bin.'/../lib/CIF/Msg/Feed.pm');
 my @lines = <F>;
 close(F);
-open(F,'>','./lib/CIF/Msg/Feed.pm');
+open(F,'>',$Bin.'/../lib/CIF/Msg/Feed.pm');
 no warnings;
 print F "package CIF::Msg::Feed;\n";
 foreach (@lines){
