@@ -1,5 +1,8 @@
 package CIF::Smrt::Plugin::Pull::File;
 
+use strict;
+use warnings;
+
 sub pull {
     my $class = shift;
     my $f = shift;
