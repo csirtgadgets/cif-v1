@@ -15,7 +15,7 @@ use CIF::Profile;
 
 __PACKAGE__->follow_best_practice;
 __PACKAGE__->mk_accessors(qw(
-    config db_config feeds confidence 
+    config archive_config db_config feeds confidence 
     roles limit limit_days start_time 
     report_time group_map restriction_map
     restriction feed_retention
@@ -33,7 +33,7 @@ sub new {
     my ($err,$ret) = $self->init($args);
     return($err) if($err);
     
-    my $enabled = $args->{'specific_feeds'} || $self->get_config->{'enabled'};
+    my $enabled = $args->{'specific_feeds'} || $self->get_archive_config->{'feeds'};
     return ('no feeds specified') unless($enabled);
     
     my @array = (ref($enabled) eq 'ARRAY') ? @$enabled : split(/,/,$enabled);
@@ -79,6 +79,7 @@ sub init_config {
     $self->set_db_config(       $args->{'config'}->param(-block => 'db'));
     $self->set_restriction_map( $args->{'config'}->param(-block => 'restriction_map')); 
     $self->set_group_map(       $args->{'config'}->param(-block => 'groups'));
+    $self->set_archive_config(  $args->{'config'}->param(-block => 'cif_archive'));
     
     ## TODO: add groups here 
     
