@@ -10,9 +10,9 @@
 [submodule "libcif-dbi"]
 	path = libcif-dbi
 	url = git@github.com:collectiveintel/libcif-dbi.git
-[submodule "libcif-dbi-asn"]
-	path = libcif-dbi-asn
-	url = git@github.com:collectiveintel/libcif-dbi-asn.git
 [submodule "libcif-dbi-cc"]
 	path = libcif-dbi-cc
 	url = git@github.com:collectiveintel/libcif-dbi-cc.git
+[submodule "libcif-dbi-asn"]
+	path = libcif-dbi-asn
+	url = git@github.com:collectiveintel/libcif-dbi-asn.git
