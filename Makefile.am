@@ -1,4 +1,4 @@
-SUBDIRS = libcif libcif-dbi cif-router cif-smrt
+SUBDIRS = libcif libcif-dbi cif-router cif-smrt libcif-dbi-asn libcif-dbi-cc
 EXTRA_DIST = sbin
 
 ME=cif-v1
@@ -8,7 +8,7 @@ SNAPSHOT=$(ME)-$(BUILD)
 all: default
 
 default:
-	@echo "Please read the README before beginning your installation."
+	$(PERL) libcif/sbin/gen_protocol_bindings.pl
 
 fixperms:
 	chmod 0755 $(prefix)
@@ -24,6 +24,11 @@ libcif-install:
 
 libcif-dbi-install:
 	-( cd libcif-dbi && make install )
+	if [ $(PLUGIN_DBI_ASN) ]; then cd libcif-dbi-asn && make install; fi
+	if [ $(PLUGIN_DBI_CC) ]; then cd libcif-dbi-cc && make install; fi
+
+purgedb:
+	-( cd libcif-dbi && make purgedb )
 
 initdb:
 	-( cd libcif-dbi && make initdb && make tables)
