@@ -24,7 +24,7 @@ my @drivers = __PACKAGE__->plugins();
 
 __PACKAGE__->follow_best_practice();
 __PACKAGE__->mk_accessors(qw(
-    config db_config router_db_config 
+    config db_config
     driver driver_config restriction_map 
     group_map groups feeds feeds_config archive_config
     datatypes
@@ -45,7 +45,6 @@ sub new {
     $self->set_config($args->{'config'}->param(-block => 'router'));
     
     $self->set_db_config(       $args->{'config'}->param(-block => 'db'));
-    $self->set_router_db_config($args->{'config'}->param(-block => 'router_db'));
     $self->set_restriction_map( $args->{'config'}->param(-block => 'restriction_map'));
     $self->set_archive_config(  $args->{'config'}->param(-block => 'cif_archive'));
    
