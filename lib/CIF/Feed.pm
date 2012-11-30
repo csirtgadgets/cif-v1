@@ -227,7 +227,7 @@ sub process {
                     data        => encode_base64(Compress::Snappy::compress($f->encode())),
                     guid        => $f->get_guid(),
                     created     => $f->get_ReportTime(),
-                    reporttime  => $f->get_ReportTime()
+                    reporttime  => $f->get_ReportTime(),
                     format      => 'feed',
                 });
                 if($err){
