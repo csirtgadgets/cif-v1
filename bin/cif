@@ -27,7 +27,7 @@ BEGIN {
 }
 
 use lib '../libcif/lib';
-use lib '../../iodef-pb-simple-perl/lib';
+use lib '../../../iodef-pb-simple-perl/lib';
 
 use CIF::Client;
 use Getopt::Std;
@@ -166,7 +166,7 @@ EOF
 }
 
 my ($err,$cli) = CIF::Client->new({
-    config          => $ENV{'HOME'}.'/.cif',
+    config          => $config,
 });
 
 die 'ERROR: '.$err if($err);
@@ -226,6 +226,7 @@ foreach my $feed (0 ... $#{$feeds}){
         table_showmeta      => $table_showmeta,
         sortby              => $sortby,
         sortby_direction    => $sortby_direction,
+        limit               => $limit,
         
         # this is bound to cause us problems if not lined up properly
         # with the original $feeds array, or if there is a gap in $feeds
