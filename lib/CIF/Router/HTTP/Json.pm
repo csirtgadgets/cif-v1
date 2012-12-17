@@ -31,11 +31,24 @@ sub handler {
  
     for($req->method()){
         if(/^GET$/){
+            my $query = $r->param('q') || $r->param('query') || return ('missing query');
+            my $format = $r->param('fmt') || 'json';
+            return Apache2::Const::Forbidden() unless($format =~ /^[a-zA-Z]+$/);
+            
+            $query = lc($query);
+            
+            my $limit       = $r->param('limit') || $cli->get_limit() || 500;
+            my $confidence  = $r->param('confidence');
+            
+            # if it's a feed query, protect the consumer appropriately
+            $confidence = 95 if($query =~ /^[a-z]+\/[a-z]$/ && !defined($confidence));
+        
+            debug('query: '.$query);
             ($err,$ret) = $cli->search({
-                query       => $r->param('query'),
-                limit       => $r->param('limit'),
-                confidence  => $r->param('confidence'),
-                nolog       => $r->param('nolog'),
+                query       => $query,
+                limit       => $limit,
+                confidence  => $confidence          || 0,
+                nolog       => $r->param('nolog')   || 0,
             });
             
             my $nomap = 0;
@@ -46,7 +59,7 @@ sub handler {
             
                 my $r_map = ($nomap) ? undef : $feed->get_restriction_map();
                 my $t = Iodef::Pb::Format->new({
-                    format              => 'Json',
+                    format              => ucfirst($format),
                     group_map           => $feed->get_group_map(),
                     restriction_map     => $r_map,
                     data                => $feed->get_data(),
@@ -65,9 +78,10 @@ sub handler {
             return(join('',@text));
         }
         if(/^POST$/){
+            debug('posting...');
             my $len = $req->headers_in->{'content-length'};
             unless($len > 0){
-                return Apache2::Const::FORBIDDEN;
+                return Apache2::Const::FORBIDDEN();
             }
             my $buffer;
             $req->read($buffer,$req->headers_in->{'content-length'});
@@ -76,7 +90,15 @@ sub handler {
             $buffer = [ $buffer ] unless(ref($buffer) eq 'ARRAY');
 
             foreach (@$buffer){
+                # set the guid
                 $_->{'guid'} = $guid unless($_->{'guid'});
+                $_->{'guid'} = generate_uuid_ns($_->{'guid'}) unless(is_uuid($_->{'guid'}));
+                
+                # reset the confidence if it's too high
+                my $confidence = 85;
+                $confidence = $_->{'confidence'} if($_->{'confidence'} =~ /^\d+$/ && $_->{'confidence'} < 85);
+                $_->{'confidence'} = $confidence;
+                
                 my $e;
                 unless($_->{'id'} && is_uuid($_->{'id'})){
                     $_->{'id'} = generate_uuid_random();
@@ -112,7 +134,7 @@ sub handler {
             });
         }
     }
-    return Apache2::Const::METHOD_NOT_ALLOWED();
+    return Apache2::Const::FORBIDDEN();
     
 }
 

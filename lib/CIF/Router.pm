@@ -19,6 +19,7 @@ require CIF::APIKeyRestrictions;
 use CIF qw/is_uuid generate_uuid_ns generate_uuid_random debug/;
 use CIF::Msg;
 use CIF::Msg::Feed;
+use Data::Dumper;
 
 my @drivers = __PACKAGE__->plugins();
 
@@ -77,16 +78,7 @@ sub init {
     my $self = shift;
     my $args = shift;
     
-    my $config = $self->get_db_config();
-    
-    my $db          = $config->{'database'} || 'cif';
-    my $user        = $config->{'user'}     || 'postgres';
-    my $password    = $config->{'password'} || '';
-    my $host        = $config->{'host'}     || '127.0.0.1';
-    
-    my $dbi = 'DBI:Pg:database='.$db.';host='.$host;
-    
-    my $ret = CIF::DBI->connection($dbi,$user,$password,{ AutoCommit => 0});
+    my $ret = $self->init_db($args);
     
     $self->init_restriction_map();
     $self->init_group_map();
@@ -96,6 +88,22 @@ sub init {
     $debug = $self->get_config->{'debug'} || 0;
     
     return ($ret);
+}
+
+sub init_db {
+    my $self = shift;
+    my $args = shift;
+    
+    my $config = $self->get_db_config();
+    
+    my $db          = $config->{'database'} || 'cif';
+    my $user        = $config->{'user'}     || 'postgres';
+    my $password    = $config->{'password'} || '';
+    my $host        = $config->{'host'}     || '127.0.0.1';
+    
+    my $dbi = 'DBI:Pg:database='.$db.';host='.$host;
+    my $ret = CIF::DBI->connection($dbi,$user,$password,{ AutoCommit => 0});
+    return $ret;
 }
 
 sub init_feeds {
@@ -144,14 +152,48 @@ sub init_group_map {
     $self->set_group_map($array);
 }
 
+# we abstract this out for the try/catch 
+# in case the db restarts on us
+sub key_retrieve {
+    my $self = shift;
+    my $key = shift;
+    
+    return unless($key);
+    $key = lc($key);
+    
+    my ($rec,$err);
+    
+    try {
+        $rec = CIF::APIKey->retrieve(uuid => $key);
+    } catch {
+        $err = shift;
+    };
+    if($err && $err =~ /connect/){
+        my $ret = $self->connect_retry();
+        $err = undef;
+        if($ret){
+            try {
+               $rec = CIF::APIKey->retrieve(uuid => $key);
+            } catch {
+                $err = shift;
+            };
+            debug($err) if($err);
+        }
+    }
+    
+    return(0) if($err);
+    return($rec);
+}
+
 sub authorized_read {
     my $self = shift;
     my $key = shift;
     
     # test1
     return('invaild apikey',0) unless(is_uuid($key));
-
-    my $rec = CIF::APIKey->retrieve(uuid => $key);
+    
+    my $rec = $self->key_retrieve($key);
+    
     return('invaild apikey',0) unless($rec);
     return('apikey revokved',0) if($rec->revoked()); # revoked keys
     return('key expired',0) if($rec->expired());
@@ -195,6 +237,7 @@ sub authorized_read_query {
     my $args = shift;
     
     my @recs = CIF::APIKeyRestrictions->search(uuid => $args->{'apikey'});
+    
     # if there are no restrictions, return 1
     return 1 unless($#recs > -1);
     foreach (@recs){
@@ -210,10 +253,14 @@ sub authorized_write {
     my $self = shift;
     my $key = shift;
     
-    $key = lc($key);
-    my $rec = CIF::APIKey->retrieve(uuid => $key);
-    return(0) unless($rec && $rec->write());
-    return(1);
+    my $rec = $self->key_retrieve($key);
+    
+    return(0) unless($rec);
+    return(0) if($rec->revoked() || $rec->restricted_access());
+    return(0) if($rec->expired());
+    return({
+        default_guid    => $rec->default_guid(),
+    });
 }
 
 sub process {
@@ -233,7 +280,6 @@ sub process {
         $reply->set_data('invalid protocol version: '.$pversion.', should be: '.$CIF::VERSION);
         return $reply->encode();
     }
-   
     my $err;
     for($msg->get_type()){
         if($_  == MessageType::MsgType::QUERY()){
@@ -246,7 +292,27 @@ sub process {
         }
     }
 
+    debug($err) if($err);
+    
     return $reply->encode();
+}
+
+sub connect_retry {
+    my $self = shift;
+    
+    my ($x,$state) = (0,0);
+    do {
+        debug('retrying connection...');
+        $state = $self->init_db();
+        unless($state){   
+            debug('retry failed... waiting...');
+            sleep(3);
+        } else {
+            debug('success: '.$state);
+        }
+    } while($x < 3 && !$state);
+    return 1 if($state);
+    return 0;
 }
 
 sub process_query {
@@ -379,20 +445,22 @@ sub process_submission {
     my $err;
     my $state = 0;
     my $commit_size = $self->get_config->{'dbi_commit_size'} || 10000;
+    my $default_guid = $ret->{'default_guid'} || 'everyone';
     
-    $ret = undef;
+    $ret = [];
     foreach (@{$msg->get_data()}){
         my $m = MessageType::SubmissionType->decode($_);
      
-        my $array = $m->get_data();
-        my $guid = $m->get_guid() || $ret->{'default_guid'};
+        my $array   = $m->get_data();
+        my $guid    = $m->get_guid() || $default_guid;
+        $guid = generate_uuid_ns($guid) unless(is_uuid($guid));
         ## TODO -- copy foreach loop from SMRT; commit every X objects
         
         debug('entries: '.($#{$array} + 1));
         for(my $i = 0; $i <= $#{$array}; $i++){
             next unless(@{$array}[$i] && @{$array}[$i] ne '');
             $state = 0;
-            debug('inserting...');
+            debug('inserting...') if($debug > 4);
             my ($err,$id) = CIF::Archive->insert({
                 data        => @{$array}[$i],
                 guid        => $guid,
@@ -408,7 +476,7 @@ sub process_submission {
                     data    => 'submission failed: contact system administrator',
                 });
             }
-            debug($id);
+            debug($id) if($debug > 4);
             push(@$ret,$id);
             ## TODO -- make the 1000 a variable
             if($i % $commit_size == 0){
