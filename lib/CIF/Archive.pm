@@ -106,7 +106,6 @@ sub search {
         }
         foreach my $p (@plugins){
             my $err;
-            debug('plugin: '.$p);
             try {
                 $ret = $p->query($data);
             } catch {

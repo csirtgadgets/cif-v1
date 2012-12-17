@@ -9,6 +9,7 @@ use CIF::APIKeyGroups;
 use CIF::APIKeyRestrictions;
 use CIF qw/is_uuid generate_uuid_random generate_uuid_ns/;
 use Digest::SHA1 qw/sha1_hex/;
+use Config::Simple;
 
 __PACKAGE__->follow_best_practice();
 __PACKAGE__->mk_accessors(qw(config db_config));
@@ -20,27 +21,31 @@ sub new {
     my $self = {};
     bless($self,$class);
     
-    $self->init($args);
-    return($self);
+    my ($err,$ret) = $self->init($args);
+    return($err) if($err);
+    return (undef,$self);
 }
 
 sub init {
     my $self = shift;
     my $args = shift;
     
-    $self->init_config($args);   
-    $self->init_db($args);
-    
+    my ($err,$ret) = $self->init_config($args);   
+    return $err if($err);
+    ($err,$ret) = $self->init_db($args);
+    return($err) if($err);
+    return(undef,$ret);
 }
 
 sub init_config {
     my $self = shift;
     my $args = shift;
     
-    $args->{'config'} = Config::Simple->new($args->{'config'}) || return(undef,'missing config file');
+    $args->{'config'} = Config::Simple->new($args->{'config'}) || return('missing config file');
     
     $self->set_config(      $args->{'config'}->param(-block => 'cif_profile'));
     $self->set_db_config(   $args->{'config'}->param(-block => 'db'));
+    return(undef,1);
     
 }
 
@@ -59,7 +64,7 @@ sub init_db {
     
     require CIF::DBI;
     my $ret = CIF::DBI->connection($dbi,$user,$password,{ AutoCommit => 1});
-    return $ret;   
+    return (undef,$ret);  
 }
 
 sub key_add {
@@ -89,6 +94,7 @@ sub key_remove {
     
     my @recs = CIF::APIKey->search(uuid => $args->{'key'});
     $_->delete() foreach(@recs);
+    return 1;
 }
 
 sub key_toggle_write {
