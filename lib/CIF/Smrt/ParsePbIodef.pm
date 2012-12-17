@@ -1,36 +1,36 @@
 package CIF::Smrt::ParsePbIodef;
 
 use Iodef::Pb::Simple;
+use Iodef::Pb::Format;
+use MIME::Base64;
+use Compress::Snappy;
 
 sub parse {
     my $f = shift;
     my $content = shift;
     
-    return;
+    # as internally defined by rt-cifminimal for now
+    return unless($content =~ /^application\/base64\+snappy\+pb\+iodef\n([\S\n]+)\n$/);
     
-    my $ret = IODEFDocumentType->decode($content);
+    # this whole thing is stupid, it'll suck-less, later... maybe.
+    # when i'm a millionaire, i'll fix it.
+    my @blobs = split(/\n\n/,$1);
+    @blobs = map { IODEFDocumentType->decode(decompress(decode_base64($_))) } @blobs;
     
-    return unless($ret);
+    @blobs = @{Iodef::Pb::Format->new({
+        data    => \@blobs,
+        format  => 'Raw',
+    })};
     
-    my $t = Iodef::Pb::Format->new({
-        data                => $ret,
-    });
-    
-    my @array;
-    foreach my $r (@$ret){
-        my @a;
-        my $h = $t->to_keypair($r);
+    foreach my $r (@blobs){
         foreach $rr (@$h){
             if($f->{'detection'}){
                 delete($rr->{'detecttime'});
                 $rr->{'detection'} = $f->{'detection'};
             }
-            push(@a,$rr);
         }
-        push(@array,@a);
     }
-    die ::Dumper(@array);
-    return(\@array);
+    return(\@blobs);
 }
 
 1;

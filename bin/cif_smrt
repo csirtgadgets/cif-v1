@@ -28,7 +28,7 @@ BEGIN {
 
 use lib '../libcif-dbi/lib';
 use lib '../libcif/lib';
-use lib '../../iodef-pb-simple-perl/lib';
+use lib '../../../iodef-pb-simple-perl/lib';
 
 use Getopt::Std;
 use CIF::Smrt;
@@ -82,8 +82,7 @@ Usage: perl $0 -c $rules_dir/misc.cfg -f malwaredomainlist -T low
     -f  --feed:     feed name (eg: section header in the configuration file)
     -c  --config:   specify the cif config file (default: $config)
     -r  --rules:    specify the rules file to work with (eg: etc/malwaredomains.cfg)
-    -F  --full:     "full load", meaning don't do NS resolution on domains
-    -d --debug:     debug
+    -d  --debug:     debug
     
 Advanced:
     -T  --throttle: throttle (how man threads to use, default: $throttle)

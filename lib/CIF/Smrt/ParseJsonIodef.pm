@@ -1,6 +1,7 @@
 package CIF::Smrt::ParseJsonIodef;
 
-use Data::Dumper;
+use strict;
+use warnings;
 
 sub parse {
     my $f = shift;
@@ -13,7 +14,7 @@ sub parse {
     foreach my $r (@$ret){
         my @a;
         my $h = CIF::Client::Plugin::Iodef->hash_simple($r);
-        foreach $rr (@$h){
+        foreach my $rr (@$h){
             if($f->{'detection'}){
                 delete($rr->{'detecttime'});
                 $rr->{'detection'} = $f->{'detection'};

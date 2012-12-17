@@ -87,7 +87,7 @@ sub init {
       
     ($err,$ret) = $self->init_rules($args);
     return($err) if($err);
-    
+        
     $self->set_threads(         $args->{'threads'}          || $self->get_config->{'threads'}           || 1);
     $self->set_goback(          $args->{'goback'}           || $self->get_config->{'goback'}            || 3);
     $self->set_load_full(       $args->{'load_full'}        || $self->get_config->{'load_full'}         || 0);
@@ -145,7 +145,7 @@ sub init_config {
     # do this here, we'll do the setup within the sender_routine (thread)
     $self->set_client_config($args->{'config'});
     
-    $args->{'config'} = Config::Simple->new($args->{'config'}) || return(undef,'missing config file');
+    $args->{'config'} = Config::Simple->new($args->{'config'}) || return('missing config file');
     
     $self->set_config(          $args->{'config'}->param(-block => 'cif_smrt'));
     $self->set_db_config(       $args->{'config'}->param(-block => 'db'));
@@ -288,9 +288,9 @@ sub parse {
             debug('testing...');
             ## todo -- very hard to detect iodef-pb strings
             # might have to rely on base64 encoding decode first?
-            if($content =~ /0.01EN"/){
-                #require CIF::Smrt::ParsePbIodef;
-                #$return = CIF::Smrt::ParsePbIodef::parse($f,$content);
+            if($content =~ /^application\/base64\+snappy\+pb\+iodef\n([\S\n]+)\n$/){
+                require CIF::Smrt::ParsePbIodef;
+                $return = CIF::Smrt::ParsePbIodef::parse($f,$content);
             } elsif($content =~ /<\?xml version=/){
                 if($content =~ /<rss version=/ && !$f->{'nodes'}){
                     require CIF::Smrt::ParseRss;
@@ -345,7 +345,7 @@ sub _decode {
 
 sub preprocess_routine {
     my $self = shift;
-    
+
     debug('parsing...') if($::debug);
     my ($err,$recs) = $self->parse();
     return($err) if($err);
@@ -354,7 +354,7 @@ sub preprocess_routine {
     
     return unless($#{$recs} > -1);
     
-    if($self->get_goback()){    
+    if($self->get_goback()){
         debug('sorting '.($#{$recs}+1).' recs...') if($::debug);
         $recs = _sort_detecttime($recs);
     }
@@ -384,7 +384,7 @@ sub preprocess_routine {
         }
             
         ## TODO -- if we do this, we need to degrade the count somehow...
-        last if($r->{'dt'} < $self->get_goback());
+        last if($r->{'reporttime_epoch'} < $self->get_goback());
         push(@array,$r);
     }
     debug('done mapping...') if($::debug);
@@ -771,7 +771,7 @@ sub _sort_detecttime {
 
     foreach (@{$recs}){
         delete($_->{'regex'}) if($_->{'regex'});
-        my $dt = $_->{'detecttime'};
+        my $dt = $_->{'reporttime'} || $_->{'detecttime'};
         if($dt){
             $dt = normalize_timestamp($dt);
         }
@@ -787,11 +787,11 @@ sub _sort_detecttime {
                 $dt = $dt->ymd().'T'.$dt->hms();
             }
         }
-        $_->{'detecttime'} = $dt;
+        $_->{'reporttime'} = $dt;
         $_->{'description'} = '' unless($_->{'description'});
     }
     ## TODO -- can we get around having to create a new array?
-    my @new = sort { $b->{'detecttime'} cmp $a->{'detecttime'} } @$recs;
+    my @new = sort { $b->{'reporttime'} cmp $a->{'reporttime'} } @$recs;
     return(\@new);
 }
 
