@@ -70,6 +70,8 @@ sub send {
             }
         }
     } while(!$ret && ($x++ < 5));
+    ## TODO -- do we turn this into a re-submit?
+    return('ERROR: unknown server failure....') unless($ret);
     return($ret->status_line()) unless($ret->is_success());
     return(undef,$ret->decoded_content());
 }
