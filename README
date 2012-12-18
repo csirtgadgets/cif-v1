@@ -1,7 +1,7 @@
 Welcome
 -------
 
-This is the Country Code (CC) plugin for libcif-dbi
+This is the regression testing framework for CIF. Used to test the basics of an installation.
 
 Building and installation
 -------------------------
@@ -13,7 +13,7 @@ Resources
 ---------
 
 Website: collectiveintel.net
-Git repository: github.com/collectiveintel/libcif-dbi-cc
+Git repository: github.com/collectiveintel/cif-test-framework
 
 
 COPYRIGHT AND LICENCE
