@@ -3,7 +3,7 @@ package CIF::Client::Query::Feed;
 use strict;
 use warnings;
 
-my $regex = qr/^([a-z\/]+([0-9])?)$/;
+my $regex = qr/^([a-z]+\/[a-z]+([0-9])?)$/;
 
 sub process {
     my $class   = shift;
