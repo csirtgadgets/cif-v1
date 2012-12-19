@@ -7,6 +7,9 @@ $VERSION = eval $VERSION;
 use strict;
 use warnings;
 
+use CIF qw/debug/;
+use Config::Simple;
+
 sub new {
     my $class = shift;
     my $args = shift;
@@ -14,16 +17,18 @@ sub new {
     my $self = {};
     bless($self,$class);
     
-    $self->init_db($args);
-
-    return (undef,$self);
+    my ($err,$ret) = $self->init_db($args);
+    return $err if($err);
+    return(undef,$self);
 }
 
 sub init_db {
     my $self = shift;
     my $args = shift;
     
-    my $config = Config::Simple->new($args->{'config'}) || return(undef,'missing config file');
+    debug('initdb...');
+    my $config = Config::Simple->new($args->{'config'}) || return('missing config file');
+    
     $config = $config->param(-block => 'db');
     
     my $db          = $config->{'database'} || 'cif';
@@ -34,7 +39,7 @@ sub init_db {
     my $dbi = 'DBI:Pg:database='.$db.';host='.$host;
 
     my $ret = $self->connection($dbi,$user,$password,{ AutoCommit => 0});
-    return $self if($ret);
+    return(undef,$ret);
 }
 
 # because UUID's are really primary keys too in our schema

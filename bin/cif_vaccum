@@ -38,29 +38,29 @@ use CIF qw/debug/;
 use CIF::Archive;
 
 my %opts;
-getopts('dc:k:h',\%opts);
+getopts('dC:k:h',\%opts);
 
 our $debug          = $opts{'d'};
-my $config          = $opts{'c'} || $ENV{'HOME'}.'/.cif';
-my $limit_days      = $opts{'k'} || 270;
-my $mutex           = $opts{'L'} || '/tmp/cif_vaccum_hashes.lock';
+my $config          = $opts{'C'} || $ENV{'HOME'}.'/.cif';
+my $keep_days       = $opts{'k'} || 365;
+my $mutex           = $opts{'L'} || '/tmp/cif_vaccum.lock';
 
 die usage() if($opts{'h'});
 
 sub usage {
     return <<EOF;
-Usage: perl $0 -c 95
+Usage: perl $0 -k 270
 
     -h  --help:         this meessage
 
 Basic Usage:
     -C  --config:       specify an alternate config location, default $config
     -d  --debug
-    -D  --limit_days:   max days to go back in feed search, default: $limit_days
+    -k  --keep-days:    max days of data to keep, default: $keep_days
 
 Examples:
 
-    $0 -D $limit_days
+    $0 -k $keep_days
 
 EOF
 }
@@ -100,13 +100,15 @@ unless(defined($ret) && $ret == 0){
 }
 
 my $err;
-my $timestamp = DateTime->from_epoch(epoch => (time() - ((1 + $limit_days) * 84600)));
+my $timestamp = DateTime->from_epoch(epoch => (time() - ((1 + $keep_days) * 84600)));
 $timestamp = $timestamp->ymd().'T00:00:00Z';
 
 debug('using date: '.$timestamp);
 
-my $handle = CIF::Archive::Plugin::Hash->new({ config => $config });
-($err,$ret) = $handle->purge_hashes({ timestamp => $timestamp });
+($err,$ret) = CIF::Archive::Plugin::Hash->new({ config => $config });
+die($err) if($err);
+
+($err,$ret) = $ret->purge_hashes({ timestamp => $timestamp });
 
 die($err) if($err);
 

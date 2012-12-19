@@ -111,18 +111,16 @@ sub purge_hashes {
     
     my $ts = $args->{'timestamp'};
     
-    my $ret = 0;
-    my $count;
-    do {
-        debug('purging...');
-        $ret = $self->sql_purge_hashes->execute($ts);
-        $ret = $self->sql_purge_archive->execute($ts);
-        debug('commit...');
-        $self->dbi_commit();
-        $ret = 0 unless($ret > 0);
-        $count += $ret;
-        debug($ret);
-    } while($ret);
+    debug('purging...');
+    my $ret = $self->sql_purge_hashes->execute($ts);
+    unless($ret){
+        debug('error, rolling back...');
+        $self->dbi_rollback();
+        return;
+    }
+    $ret = $self->sql_purge_archive->execute($ts);
+    debug('commit...');
+    $self->dbi_commit();
     
     debug('done...');
     return (undef,$ret);
