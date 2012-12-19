@@ -1,7 +1,9 @@
 Revision history for libcif-dbi
 
-0.99.05 2012-10
+0.99.05 2012-12
+    - bugfixes to cif_vaccum code
     - bugfix to feed retention policy (defaults to 3)
+    - split out CC, ASN and RIR support
 
 0.99.04 2012-10-01
     - added spamvertising plugin
