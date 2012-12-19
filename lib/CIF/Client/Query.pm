@@ -35,7 +35,7 @@ sub new {
       
     foreach my $qq (@{$ret}){
         $qq->{'query'} = lc($qq->{'query'});
-        $qq->{'query'} = sha1_hex($qq->{'query'}) unless($qq->{'query'} =~ /^[a-f0-9]{32,40}$/ || is_uuid($qq->{'query'}) );
+        $qq->{'query'} = sha1_hex($qq->{'query'}) unless($qq->{'query'} =~ /^[a-f0-9]{40}$/ || is_uuid($qq->{'query'}) );
         
         ## don't ask, its' all crap.
         $args->{'limit'}        = $qq->{'limit'} if($qq->{'limit'});

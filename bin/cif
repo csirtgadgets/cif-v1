@@ -5,7 +5,10 @@ use strict;
 # fix lib paths, some may be relative
 BEGIN {
     require File::Spec;
-    my @libs = ("lib", "local/lib");
+    my @libs = (
+        "lib", 
+        "local/lib",
+    );
     my $bin_path;
 
     for my $lib (@libs) {
@@ -85,7 +88,6 @@ Standard Options:
     
 Query Options:
     -q  --query:            query string
-
     -n  --nolog:            perform a "silent" query (no log query), default: $nolog
     -l  --limit:            set the default result limit (queries only), default is set on server, usually around 500.
     -c  --confidence:       lowest tolerated confidence (0.00 -- 100.00), default $confidence
@@ -100,7 +102,7 @@ Format Options:
     
 Nonstandard Options:
     -z                      compact address field to 32 chars, applies only to defalt table output, default: 1 (0 turns it off)
-    -I  --round_confidence: round (down) confidence to the nearest integer
+    -I  --round-confidence: round (down) confidence to the nearest integer, default 0.
 
 Example Queries:
 
@@ -123,7 +125,7 @@ Configuration:
 
     [client]
     apikey = xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    driver = 'REST'
+    driver = 'HTTP'
     # driver = 'ZeroMQ'
     
     # table_nowarning = 1
@@ -227,6 +229,7 @@ foreach my $feed (0 ... $#{$feeds}){
         sortby              => $sortby,
         sortby_direction    => $sortby_direction,
         limit               => $limit,
+        round_confidence    => $round_confidence,
         
         # this is bound to cause us problems if not lined up properly
         # with the original $feeds array, or if there is a gap in $feeds

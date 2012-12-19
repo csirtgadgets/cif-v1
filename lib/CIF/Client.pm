@@ -113,6 +113,7 @@ sub search {
     
     debug('generating query') if($::debug);
     foreach my $q (@{$args->{'query'}}){
+        debug('query: '.$q);
         my ($err,$ret) = CIF::Client::Query->new({
             query       => $q,
             apikey      => $args->{'apikey'},
@@ -178,7 +179,7 @@ sub search {
         }
         next unless($feed->get_data());
         my %uuids;
-        debug('processing: '.$#{$feed->get_data}.' items') if($::debug);
+        debug('processing: '.($#{$feed->get_data}+1).' items') if($::debug);
         foreach my $e (@{$feed->get_data()}){
             $e = Compress::Snappy::decompress(decode_base64($e));
             $e = IODEFDocumentType->decode($e);
@@ -222,7 +223,7 @@ sub search {
             }
         }
         if($#array > -1){
-            debug('final results: '.$#array) if($::debug);
+            debug('final results: '.($#array+1)) if($::debug);
             $feed->set_data(\@array);
         } else {
             $feed->set_data(undef);
