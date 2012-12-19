@@ -99,9 +99,11 @@ if($expires){
     die 'invalid `expires` timestamp'."\n\n".usage() unless($expires);
 }
 
-my $profile = CIF::Profile->new({
+my ($err,$ret) = CIF::Profile->new({
     config  => $config,
 });
+die($err) if($err);
+my $profile = $ret;
 
 if($add){
     die(usage()) unless($user);

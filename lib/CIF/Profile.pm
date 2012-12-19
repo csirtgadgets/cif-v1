@@ -94,6 +94,7 @@ sub key_remove {
     
     my @recs = CIF::APIKey->search(uuid => $args->{'key'});
     $_->delete() foreach(@recs);
+    
     return 1;
 }
 
@@ -179,6 +180,7 @@ sub restriction_add {
         });
         push(@ids,$id);
     }
+    CIF::APIKey->dbi_commit() unless(CIF::APIKey->db_Main->{'AutoCommit'});
     return(\@ids);
 }
 
@@ -209,7 +211,7 @@ sub user_from_key {
 sub remove {
     my $self = shift;
     my $arg = shift;
-    
+
     return $self->user_remove({ user => $arg }) unless(is_uuid($arg));
     return $self->key_remove({ key => $arg });
 }
@@ -235,6 +237,7 @@ sub group_remove {
             $ret = $_->delete();
         }
     }
+    CIF::APIKey->dbi_commit() unless(CIF::APIKey->db_Main->{'AutoCommit'});
     return $ret;
 }
 
@@ -256,6 +259,7 @@ sub group_add {
         });
         push(@ids,$id);
     }
+    CIF::APIKey->dbi_commit() unless(CIF::APIKey->db_Main->{'AutoCommit'});
     return(\@ids);
 }
 
@@ -277,6 +281,7 @@ sub group_set_default {
         $_->default_guid('true');
         $_->update();
     }
+    CIF::APIKey->dbi_commit() unless(CIF::APIKey->db_Main->{'AutoCommit'});
 }
 
 sub group_default {
