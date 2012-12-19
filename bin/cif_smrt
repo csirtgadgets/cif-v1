@@ -39,11 +39,11 @@ use CIF qw/debug/;
 use Sys::MemInfo qw(totalmem);
 
 my %opts;
-getopts('hNA:s:T:t:dFc:f:r:v:Pp:',\%opts);
+getopts('hNA:s:T:t:dFC:f:r:v:Pp:',\%opts);
 our $debug = $opts{'d'} || 0;
 $debug = $opts{'v'} if($opts{'v'});
 
-my $config      = $opts{'c'} || $ENV{'HOME'}.'/.cif';
+my $config      = $opts{'C'} || $ENV{'HOME'}.'/.cif';
 my $rules       = $opts{'r'};
 my $feed        = $opts{'f'};
 my $load_full   = $opts{'F'};
@@ -80,7 +80,7 @@ sub usage {
 Usage: perl $0 -c $rules_dir/misc.cfg -f malwaredomainlist -T low
     -h  --help:     this message
     -f  --feed:     feed name (eg: section header in the configuration file)
-    -c  --config:   specify the cif config file (default: $config)
+    -C  --config:   specify the cif config file (default: $config)
     -r  --rules:    specify the rules file to work with (eg: etc/malwaredomains.cfg)
     -d  --debug:     debug
     

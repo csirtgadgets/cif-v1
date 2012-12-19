@@ -489,7 +489,9 @@ sub process {
                     last;
                 }
             }
-        }      
+        }
+        
+        ## TODO -- should this be after the return check?
         debug('master count: '.$master_count);  
         if($master_count == 0){
             debug('sending total: '.$total_recs);
@@ -581,7 +583,7 @@ sub worker_routine {
             
             if($::debug > 1){
                 my $thing = $msg->{'address'} || $msg->{'malware_md5'} || $msg->{'malware_sha1'};
-                debug('uuid: '.$msg->{'id'}.' - '.$msg->{'detecttime'}.' - '.$thing.' - '.$msg->{'assessment'}.' - '.$msg->{'description'});
+                debug('uuid: '.$msg->{'id'}.' - '.$msg->{'reporttime'}.' - '.$thing.' - '.$msg->{'assessment'}.' - '.$msg->{'description'});
             }
     
             debug('generating iodef...') if($::debug > 3);

@@ -120,9 +120,6 @@ sub usage {
 Usage: $0 -p hourly
 Common:
     -h  --help:     this message
-    -f  --first:    "first load", run through the configs where first_run = true
-                    don't do NS resolution on domains
-    
     -p  --period:   which period to run (hourly, daily, monthly, default: $period)
     -d  --debug:    debug
     -L  --lock:     path for the mutex to go (default: $mutex);
