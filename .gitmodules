@@ -16,3 +16,6 @@
 [submodule "libcif-dbi-asn"]
 	path = libcif-dbi-asn
 	url = git@github.com:collectiveintel/libcif-dbi-asn.git
+[submodule "libcif-dbi-rir"]
+	path = libcif-dbi-rir
+	url = git@github.com:collectiveintel/libcif-dbi-rir.git
