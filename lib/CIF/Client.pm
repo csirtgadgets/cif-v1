@@ -7,7 +7,7 @@ use warnings;
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 use Try::Tiny;
 use Config::Simple;
-use Digest::SHA1 qw/sha1_hex/;
+use Digest::SHA qw/sha1_hex/;
 use Compress::Snappy;
 use MIME::Base64;
 use Iodef::Pb::Simple qw/iodef_addresses iodef_confidence iodef_impacts/;
@@ -15,7 +15,6 @@ use Regexp::Common qw/net/;
 use Regexp::Common::net::CIDR;
 use Net::Patricia;
 use URI::Escape;
-use Digest::SHA1 qw/sha1_hex/;
 use Digest::MD5 qw/md5_hex/;
 use Encode qw(encode_utf8);
 
