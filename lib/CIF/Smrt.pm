@@ -33,7 +33,7 @@ use Encode qw/encode_utf8/;
 use Data::Dumper;
 use File::Type;
 use Module::Pluggable require => 1;
-use Digest::SHA1 qw/sha1_hex/;
+use Digest::SHA qw/sha1_hex/;
 use URI::Escape;
 use Try::Tiny;
 
