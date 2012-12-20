@@ -8,7 +8,7 @@ use warnings;
 use CIF qw/generate_uuid_ns generate_uuid_random is_uuid debug/;
 use Module::Pluggable require => 1, except => qr/CIF::Feed::Plugin::\S+::/;
 use Data::Dumper;
-use Digest::SHA1 qw(sha1_hex);
+use Digest::SHA qw(sha1_hex);
 use MIME::Base64;
 require Compress::Snappy;
 use CIF::Profile;

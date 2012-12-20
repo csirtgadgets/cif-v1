@@ -4,7 +4,7 @@ use base 'CIF::DBI';
 use warnings;
 use strict;
 
-use Digest::SHA1 qw/sha1_hex/;
+use Digest::SHA qw/sha1_hex/;
 use Iodef::Pb::Simple qw/iodef_guid iodef_confidence/;
 
 sub query {}

@@ -8,7 +8,7 @@ use CIF::APIKey;
 use CIF::APIKeyGroups;
 use CIF::APIKeyRestrictions;
 use CIF qw/is_uuid generate_uuid_random generate_uuid_ns/;
-use Digest::SHA1 qw/sha1_hex/;
+use Digest::SHA qw/sha1_hex/;
 use Config::Simple;
 
 __PACKAGE__->follow_best_practice();

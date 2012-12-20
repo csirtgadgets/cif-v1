@@ -10,7 +10,7 @@ use CIF qw/debug/;
 
 # work-around for cif-v1
 use Regexp::Common qw/net/;
-use Digest::SHA1 qw(sha1_hex);
+use Digest::SHA qw(sha1_hex);
 
 my @plugins = __PACKAGE__->plugins();
 

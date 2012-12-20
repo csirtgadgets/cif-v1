@@ -7,7 +7,7 @@ use strict;
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 use Regexp::Common qw/net/;
 use Regexp::Common::net::CIDR;
-use Digest::SHA1 qw/sha1_hex/;
+use Digest::SHA qw/sha1_hex/;
 use Parse::Range qw(parse_range);
 use JSON::XS;
 

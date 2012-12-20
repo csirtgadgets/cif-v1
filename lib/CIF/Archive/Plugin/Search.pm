@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
-use Digest::SHA1 qw/sha1_hex/;
+use Digest::SHA qw/sha1_hex/;
 use Try::Tiny;
 use Iodef::Pb::Simple qw(iodef_confidence iodef_impacts iodef_additional_data iodef_guid);
 

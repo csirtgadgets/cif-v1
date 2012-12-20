@@ -11,7 +11,7 @@ use Try::Tiny;
 use MIME::Base64;
 require Iodef::Pb::Simple;
 require Compress::Snappy;
-use Digest::SHA1 qw/sha1_hex/;
+use Digest::SHA qw/sha1_hex/;
 use Data::Dumper;
 
 use Module::Pluggable require => 1, except => qr/::Plugin::\S+::/;
