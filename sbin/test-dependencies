@@ -171,6 +171,7 @@ Iodef::Pb::Simple 0.11
 URI::Escape 1.56
 Net::SSLeay 1.43
 Apache2::RequestRec 2.0.4
+Sys::MemInfo 0.91
 .
 
 if ($args{'download'}) {
