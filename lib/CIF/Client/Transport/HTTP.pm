@@ -25,6 +25,7 @@ sub new {
     $self->{'max_redirect'}    = $args->{'max_redirect'} || 5;
 
     if(defined($self->get_config->{'verify_tls'}) && $self->get_config->{'verify_tls'} == 0){
+        $self->ssl_opts(SSL_verify_mode => 'SSL_VERIFY_NONE');
         $self->ssl_opts(verify_hostname => 0);
     }
 
