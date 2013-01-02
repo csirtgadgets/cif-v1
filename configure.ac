@@ -7,7 +7,7 @@ AM_INIT_AUTOMAKE
 
 # setup
 
-AC_CONFIG_SUBDIRS([libcif libcif-dbi cif-router cif-smrt libcif-dbi-asn libcif-dbi-cc])
+AC_CONFIG_SUBDIRS([libcif libcif-dbi cif-router cif-smrt libcif-dbi-asn libcif-dbi-cc libcif-dbi-rir])
 AC_CONFIG_FILES([
     Makefile
 ])
@@ -113,5 +113,9 @@ AC_SUBST(PLUGIN_DBI_ASN)
 AC_ARG_ENABLE([dbi_cc], [AS_HELP_STRING([--enable-dbi-cc], [enable country code query tracking [requires more storage, default=no]])])
 AS_IF([test "x$enable_dbi_cc" = "xyes"],[ PLUGIN_DBI_CC=1 ])
 AC_SUBST(PLUGIN_DBI_CC)
+
+AC_ARG_ENABLE([dbi_rir], [AS_HELP_STRING([--enable-dbi-rir], [enable rir query tracking [requires more storage, default=no]])])
+AS_IF([test "x$enable_dbi_rir" = "xyes"],[ PLUGIN_DBI_RIR=1 ])
+AC_SUBST(PLUGIN_DBI_RIR)
 
 AC_OUTPUT

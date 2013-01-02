@@ -1,4 +1,4 @@
-SUBDIRS = libcif libcif-dbi cif-router cif-smrt libcif-dbi-asn libcif-dbi-cc
+SUBDIRS = libcif libcif-dbi cif-router cif-smrt libcif-dbi-asn libcif-dbi-cc libcif-dbi-rir
 EXTRA_DIST = sbin
 
 ME=cif-v1
@@ -26,6 +26,7 @@ libcif-dbi-install:
 	-( cd libcif-dbi && make install )
 	if [ $(PLUGIN_DBI_ASN) ]; then cd libcif-dbi-asn && make install; fi
 	if [ $(PLUGIN_DBI_CC) ]; then cd libcif-dbi-cc && make install; fi
+	if [ $(PLUGIN_DBI_RIR) ]; then cd libcif-dbi-rir && make install; fi
 
 purgedb:
 	-( cd libcif-dbi && make purgedb )
