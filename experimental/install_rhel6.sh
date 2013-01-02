@@ -14,14 +14,14 @@ sudo PERL_MM_USE_DEFAULT=1 perl -MCPAN -e 'install Net::Abuse::Utils,Linux::Cpui
 wget http://search.cpan.org/CPAN/authors/id/M/MI/MIKEM/Net-SSLeay-1.49.tar.gz
 tar -zxvf Net-SSLeay-1.49.tar.gz
 cd Net-SSLeay-1.49
-perl Makefile.PL
+PERL_MM_USE_DEFAULT=1 perl Makefile.PL
 sudo make install
 cd ../
 
 wget http://search.cpan.org/CPAN/authors/id/S/SH/SHLOMIF/IO-Socket-INET6-2.69.tar.gz
 tar -zxvf IO-Socket-INET6-2.69.tar.gz
 cd IO-Socket-INET6-2.69
-perl Makefile.PL && sudo make install
+PERL_MM_USE_DEFAULT=1 perl Makefile.PL && sudo make install
 cd ../
 
 echo "DNS1=127.0.01" >> /etc/sysconfig/network-scripts/ifcfg-eth0
