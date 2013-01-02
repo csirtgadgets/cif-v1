@@ -7,6 +7,7 @@ use warnings;
 use Module::Pluggable require => 1;
 use Config::Simple;
 use CIF qw/debug/;
+require CIF::Client;
 
 __PACKAGE__->follow_best_practice;
 __PACKAGE__->mk_accessors(qw(
@@ -120,8 +121,12 @@ sub process {
     
     foreach my $p (@{$self->get_plugins()}){
         debug('running: '.$p);
-        $p->run($args);
+        my $ret = $p->run($args);
+        unless($ret){
+            return('plugin: '.$p.' failed...');
+        }
     }
+    return (undef,1);
 }
 
 1;

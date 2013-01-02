@@ -4,7 +4,6 @@ use base 'CIF::TESTFRAMEWORK::Plugin';
 use strict;
 use warnings;
 
-use CIF::Client;
 use Iodef::Pb::Simple;
 use CIF qw/debug generate_uuid_ns/;
 use Try::Tiny;    
@@ -13,12 +12,11 @@ sub run {
     my $self = shift;
     my $args = shift;
     
-    my $tests = $args->{'tests'};
-    
+    my @tests = @{$args->{'tests'}};
     my $cli = $args->{'client'};
     
     my $err;
-    foreach my $t (@$tests){
+    foreach my $t (@tests){
         try {
             $t = Iodef::Pb::Simple->new($t);
         } catch {
@@ -32,7 +30,7 @@ sub run {
     
     my $ret = $cli->new_submission({
         guid    => generate_uuid_ns('everyone'),
-        data    => $tests,
+        data    => \@tests,
     });
     
     ($err,$ret) = $cli->submit($ret);

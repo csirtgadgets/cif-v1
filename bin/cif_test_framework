@@ -82,14 +82,26 @@ my $apikey = $obj->init_apikey();
 # set the apikey to the client
 $obj->get_client->set_apikey($apikey);
 
-warn $obj->get_client->get_apikey();
 # run tests
 
 ($err,$ret) = $obj->process({
     client  => $obj->get_client(),
 });
 
+debug('all tests successful...') if($ret);
+
 # cleanup
 
 debug('removing key: '.$apikey);
 $obj->purge_apikey($apikey);
+
+# clean out the archive
+#DELETE FROM archive;
+#DELETE FROM hash;
+#DELETE FROM domain;
+#DELETE FROM infrastructure;
+#DELETE FROM url;
+#DELETE FROM email;
+#DELETE FROM malware;
+#DELETE FROM search;
+#DELETE FROM feed;
