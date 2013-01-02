@@ -27,7 +27,12 @@ AC_CONFIG_FILES([
 #PKG_CHECK_MODULES([protobuf],[protobuf >= 2.4.1])
 
 ## uuid
-PKG_CHECK_MODULES([uuid],[uuid >= 2.17.0])
+#PKG_CHECK_MODULES([uuid],[uuid >= 2.17.0])
+#this check breaks in CentOS 6.3
+# need to do some sort of conditional
+# http://www.flameeyes.eu/autotools-mythbuster/pkgconfig/pkg_check_modules.html
+# pkg-config --list-all | grep uuid
+# ossp-uuid  OSSP uuid - Universally Unique Identifier (UUID) Library
 
 # Checks for header files.
 
