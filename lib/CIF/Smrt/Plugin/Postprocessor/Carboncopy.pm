@@ -14,7 +14,7 @@ sub process {
     ## TODO -- check this
     return unless($data && $data->get_Incident());
    
-    my @new_ids;
+    my $new_ids;
     foreach my $i (@{$data->get_Incident()}){
         next unless($i->get_Contact());
         my $restriction = $i->get_restriction();
@@ -47,7 +47,7 @@ sub process {
                 detecttime      => $i->get_DetectTime(),
                 Assessment      => @{$i->get_Assessment()},
             });
-            push(@new_ids,@{$new->get_Incident()}[0]);
+            push(@$new_ids,@{$new->get_Incident()}[0]);
             
             push(@$altids, AlternativeIDType->new({
                 restriction => $restriction,
@@ -57,6 +57,6 @@ sub process {
         ## TODO -- check this
         push(@{$i->get_AlternativeID()},@$altids) if($altids);
     }
-    return(\@new_ids);
+    return($new_ids);
 }
 1;

@@ -52,7 +52,7 @@ sub process {
                                 });
                                 my $asn = $class->resolve_bgp($addr);
                                 my $new = Iodef::Pb::Simple->new({
-                                    address         => $addr,
+                                    address         => $addr->get_content(),
                                     prefix          => $asn->{'prefix'},
                                     cc              => $asn->{'cc'},
                                     rir             => $asn->{'rir'},
@@ -66,7 +66,7 @@ sub process {
                                     RelatedActivity => [
                                         RelatedActivityType->new({
                                             IncidentID  => IncidentIDType->new({
-                                                content     => 'http://www.spamhaus.org/query/bl?ip='.$addr,
+                                                content     => 'http://www.spamhaus.org/query/bl?ip='.$addr->get_content(),
                                                 instance    => 'zen.spamhaus.org',
                                                 name        => 'spamhaus.org',
                                                 restriction => RestrictionType::restriction_type_public(),

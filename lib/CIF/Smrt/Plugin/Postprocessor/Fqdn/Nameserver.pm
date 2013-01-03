@@ -59,7 +59,7 @@ sub process {
                                     dtype       => ExtensionType::DtypeType::dtype_type_string(),
                                     meaning     => 'rdata',
                                     formatid    => 'NS',
-                                    content     => $rr->{'nsdname'},
+                                    content     => $rr->nsdname(),
                                 }));
                                 my $id = IncidentIDType->new({
                                     content     => generate_uuid_random(),
@@ -68,7 +68,7 @@ sub process {
                                     restriction => $restriction,
                                 });
                                 my $new = Iodef::Pb::Simple->new({
-                                    address         => $rr->{'nsdname'},
+                                    address         => $rr->nsdname(),
                                     IncidentID      => $id,
                                     assessment      => $description,
                                     description     => 'nameserver',

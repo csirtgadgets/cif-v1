@@ -47,6 +47,7 @@ sub process {
                         foreach my $addr (@$addresses){
                             next unless($class->is_fqdn($addr));
                             my $ret = check_fqdn($addr->get_content(),2);
+                            next unless($ret);
                             foreach my $r (@$ret){
                                 my $id = IncidentIDType->new({
                                     content     => generate_uuid_random(),
@@ -73,6 +74,8 @@ sub process {
                                     guid        => $guid,
                                     
                                 });
+                                use Data::Dumper;
+                                warn Dumper($new);
                                 push(@new_ids,@{$new->get_Incident()}[0]);
                                 push(@$altids, RelatedActivityType->new({IncidentID => $id, restriction => $restriction }));
                                 

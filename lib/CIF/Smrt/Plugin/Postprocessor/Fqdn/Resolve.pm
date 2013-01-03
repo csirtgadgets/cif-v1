@@ -61,13 +61,13 @@ sub process {
                             next unless($class->is_fqdn($addr));
                             my $ret = $class->resolve($addr->get_content());
                             foreach my $rr (@$ret){
-                                next unless($rr->{'type'} =~ /^(A|CNAME)$/);
-                                my $thing = ($rr->{'type'} eq 'A') ? 'address' : 'cname';
+                                next unless($rr->type() =~ /^(A|CNAME)$/);
+                                my $thing = ($rr->type() eq 'A') ? $rr->address() : $rr->cname();
                                 push(@additional_data,ExtensionType->new({
                                         dtype       => ExtensionType::DtypeType::dtype_type_string(),
-                                        formatid    => $rr->{'type'},
+                                        formatid    => $rr->type(),
                                         meaning     => 'rdata',
-                                        content     => $rr->{$thing},
+                                        content     => $thing,
                                 }));                     
                                 my $id = IncidentIDType->new({
                                     content     => generate_uuid_random(),
@@ -77,7 +77,7 @@ sub process {
                                 });
                                 my $new = Iodef::Pb::Simple->new({
                                     description     => $description,
-                                    address         => $rr->{$thing},
+                                    address         => $thing,
                                     IncidentID      => $id,
                                     assessment      => $impact->get_content()->get_content(),
                                     confidence      => $confidence,
@@ -90,7 +90,6 @@ sub process {
                                     portlist        => $portlist,
                                     ip_protocol     => $protocol,
                                 });
-                               
                                 # block against CDN's that might thrash us into a for-loop of darkness
                                 if($confidence > 15){
                                     foreach (@postprocessors){
