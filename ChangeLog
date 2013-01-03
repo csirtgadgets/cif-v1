@@ -1,6 +1,7 @@
 Revision history for cif-v1
 
 1.0-RC2 2012-12
+    - bugfixes to dns resolver api
     - merged everything under the cif-v1 tree in github (cif-router, etc are all submodules)
     - cleaned up the installer as one automake "meta installer"
     - [libcif-dbi] split out asn, cc and rir support as non-default options (save space)
