@@ -39,7 +39,7 @@ use CIF qw/debug generate_uuid_random generate_uuid_ns/;
 my %opts;
 
 getopts('hdv:C:',\%opts);
-our $debug = $opts{'d'} || 0;
+our $debug = $opts{'d'} || 1;
 $debug = $opts{'v'} if($opts{'v'});
 
 my $config      = $opts{'C'} || $ENV{'HOME'}.'/.cif';
