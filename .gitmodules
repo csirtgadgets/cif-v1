@@ -19,3 +19,6 @@
 [submodule "libcif-dbi-rir"]
 	path = libcif-dbi-rir
 	url = git@github.com:collectiveintel/libcif-dbi-rir.git
+[submodule "cif-test-framework"]
+	path = cif-test-framework
+	url = https://github.com/collectiveintel/cif-test-framework.git
