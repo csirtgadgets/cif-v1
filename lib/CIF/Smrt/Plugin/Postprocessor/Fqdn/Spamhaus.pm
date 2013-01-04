@@ -74,8 +74,6 @@ sub process {
                                     guid        => $guid,
                                     
                                 });
-                                use Data::Dumper;
-                                warn Dumper($new);
                                 push(@new_ids,@{$new->get_Incident()}[0]);
                                 push(@$altids, RelatedActivityType->new({IncidentID => $id, restriction => $restriction }));
                                 
