@@ -162,16 +162,16 @@ Net::DNS::Match 0.04
 Regexp::Common 2.122
 Regexp::Common::net::CIDR 0.02
 Net::Patricia 1.16
-Net::Abuse::Utils 0.12
-Net::Abuse::Utils::Spamhaus 0.04
 LWP::Protocol::https 6.03
 URI::Escape 1.56
 LWP::UserAgent 6.02
-Iodef::Pb::Simple 0.14
 URI::Escape 1.56
 Net::SSLeay 1.43
 Apache2::RequestRec 2.0.4
 Sys::MemInfo 0.91
+Iodef::Pb::Simple 0.15
+Net::Abuse::Utils 0.13
+Net::Abuse::Utils::Spamhaus 0.04
 .
 
 if ($args{'download'}) {
