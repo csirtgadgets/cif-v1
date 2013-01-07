@@ -10,6 +10,7 @@ use Regexp::Common::net::CIDR;
 use Digest::SHA qw/sha1_hex/;
 use Parse::Range qw(parse_range);
 use JSON::XS;
+use CIF qw/debug/;
 
 use Iodef::Pb::Simple qw(iodef_confidence iodef_systems iodef_guid);
 
@@ -75,6 +76,7 @@ sub insert {
                                 my $portlist = $service->get_Portlist();
                                 if($portlist){
                                     if($portlist =~ /^\d([\d,-]+)?$/){
+                                        debug('portlist: '.$portlist) if($::debug > 3);
                                         $portlist = parse_range($portlist);
                                         push(@{$ranges->{$service->get_ip_protocol()}},$portlist);
                                     } else {
@@ -83,7 +85,11 @@ sub insert {
                                     }
                                 }
                             }
-                            $hash = sha1_hex($hash.encode_json($ranges))
+                            if($ranges){
+                                $ranges = encode_json($ranges);
+                                debug('ranges: '.$ranges) if($::debug > 3);
+                                $hash = sha1_hex($hash.$ranges);
+                            }
                         }
       
                         $class->SUPER::insert({
