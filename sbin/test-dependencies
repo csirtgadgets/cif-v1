@@ -169,6 +169,8 @@ URI::Escape 1.56
 Net::SSLeay 1.43
 Apache2::RequestRec 2.0.4
 Sys::MemInfo 0.91
+IO::Uncompress::Unzip 2.02
+XML::RSS 1.48
 Iodef::Pb::Simple 0.15
 Net::Abuse::Utils 0.13
 Net::Abuse::Utils::Spamhaus 0.04
