@@ -174,6 +174,7 @@ XML::RSS 1.48
 Iodef::Pb::Simple 0.15
 Net::Abuse::Utils 0.13
 Net::Abuse::Utils::Spamhaus 0.04
+Text::CSV 1.18
 .
 
 if ($args{'download'}) {

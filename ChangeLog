@@ -1,6 +1,7 @@
 Revision history for cif-v1
 
 1.0-RC2 2013-01
+    - added Text-CSV dep check
     - bugfix to arcinve/plug../infra
     - updates to sbin/test-dep...
     - bugfixes to dns resolver api
