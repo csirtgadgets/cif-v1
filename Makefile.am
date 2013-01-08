@@ -29,6 +29,7 @@ testdeps:
 local-whitelist:
 	[ -e $(prefix)/etc/whitelist_domains ] || touch "$(prefix)/etc/whitelist_domains"
 	[ -e $(prefix)/etc/whitelist_infrastructure ] || touch "$(prefix)/etc/whitelist_infrastructure"
+	[ -e $(prefix)/etc/whitelist_url ] || touch "$(prefix)/etc/whitelist_url"
 
 etc-link:
 	[ -d /etc/cif ] || ln -sf $(prefix)/etc /etc/cif
