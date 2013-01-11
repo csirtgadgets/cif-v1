@@ -43,7 +43,7 @@ sub insert {
     }
     
     $data->{'uuid'} = generate_uuid_random() unless($data->{'uuid'});
-
+   
     return ('id must be a uuid') unless(is_uuid($data->{'uuid'}));
     
     $data->{'guid'}     = generate_uuid_ns('root')                  unless($data->{'guid'});
@@ -86,19 +86,16 @@ sub insert {
 sub search {
     my $class = shift;
     my $data = shift;
-      
-    # just in case someone gets stupid
-    ## TODO -- move to config??
-    $data->{'limit'}        = 5000 unless($data->{'limit'});
+
     $data->{'confidence'}   = 0 unless(defined($data->{'confidence'}));
     $data->{'query'}        = lc($data->{'query'});
  
     my $ret;
+    debug('running query: '.$data->{'query'});
     if(is_uuid($data->{'query'})){
         $ret = $class->SUPER::retrieve(uuid => $data->{'query'});
     } else {
         # log the query first
-        debug('running query');
         unless($data->{'nolog'}){
             debug('logging search');
             my ($err,$ret) = $class->log_search($data);

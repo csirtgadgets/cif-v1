@@ -137,17 +137,22 @@ __PACKAGE__->set_sql('purge_hashes' => qq{
 });
 
 __PACKAGE__->set_sql('lookup' => qq{
-    SELECT t.id,t.uuid,archive.data
-    FROM __TABLE__ t
-    LEFT JOIN apikeys_groups on t.guid = apikeys_groups.guid
-    LEFT JOIN archive ON archive.uuid = t.uuid
+    SELECT t1.id,t1.uuid,archive.data
+    FROM (
+        SELECT t2.id, t2.hash, t2.uuid, t2.guid
+        FROM hash_sha1 t2
+        LEFT JOIN apikeys_groups on t2.guid = apikeys_groups.guid
+        WHERE
+            hash = ?
+            AND confidence >= ?
+            AND apikeys_groups.uuid = ?
+        ORDER BY t2.id DESC
+        LIMIT ?
+    ) t1
+    LEFT JOIN archive ON archive.uuid = t1.uuid
     WHERE 
-        hash = ?
-        AND confidence >= ?
-        AND apikeys_groups.uuid = ?
-        AND archive.uuid IS NOT NULL
-    ORDER BY t.reporttime DESC, t.created DESC, t.id DESC
-    LIMIT ?
+        archive.uuid IS NOT NULL
 });
+
 
 1;
