@@ -18,7 +18,7 @@ use URI::Escape;
 use Digest::MD5 qw/md5_hex/;
 use Encode qw(encode_utf8);
 
-use CIF qw(generate_uuid_ns debug);
+use CIF qw(generate_uuid_ns is_uuid debug);
 use CIF::Msg;
 use CIF::Msg::Feed;
 
@@ -271,6 +271,9 @@ sub new_submission {
     my $self = shift;
     my $args = shift;
     
+    my $guid = $args->{'guid'};
+    $guid = generate_uuid_ns($guid) unless(is_uuid($guid));
+    
     my $data = (ref($args->{'data'}) eq 'ARRAY') ? $args->{'data'} : [$args->{'data'}];
 
     foreach (@$data){
@@ -278,7 +281,7 @@ sub new_submission {
     }
     
     my $msg = MessageType::SubmissionType->new({
-        guid    => $args->{'guid'},
+        guid    => $guid,
         data    => $data,
     });
 
