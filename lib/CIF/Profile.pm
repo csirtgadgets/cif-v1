@@ -71,7 +71,7 @@ sub key_add {
     my $self    = shift;
     my $args    = shift;
     
-    my $uuid = generate_uuid_random();
+    my $uuid = $args->{'uuid'} || generate_uuid_random();
 
     my $r = CIF::APIKey->insert({
         uuid                => $uuid,
@@ -144,6 +144,7 @@ sub user_add {
     my $isRestricted    = ($args->{'restricted_access'}) ? 1 : 0;
     
     my $r = $self->key_add({
+        uuid                => $args->{'uuid'},
         uuid_alias          => $args->{'uuid_alias'}    || $args->{'userid'},
         description         => $args->{'description'},
         write               => $args->{'write'},
@@ -253,8 +254,8 @@ sub group_add {
         my $isDefault = 1 if($default_group && ($_ eq $default_group));
         $_ = generate_uuid_ns($_) unless(is_uuid($_));
         my $id = CIF::APIKeyGroups->insert({
-            uuid    => $args->{'key'},
-            guid    => $_,
+            uuid            => $args->{'key'},
+            guid            => $_,
             default_guid    => $isDefault,
         });
         push(@ids,$id);

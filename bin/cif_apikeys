@@ -36,9 +36,11 @@ use Text::Table;
 use Config::Simple;
 use DateTime::Format::DateParse;
 use Data::Dumper;
+use Try::Tiny;
+use CIF qw/debug/;
 
 my %opts;
-getopt('E:G:g:k:u:c:R:', \%opts);
+getopt('E:G:g:k:u:C:R:L:d', \%opts);
 die(usage()) if($opts{'h'});
 
 my $user            = $opts{'u'};
@@ -53,9 +55,13 @@ my $delete          = $opts{'d'};
 my $add             = $opts{'a'};
 my $parentid        = $opts{'p'};
 my $expires         = $opts{'E'};
-my $config          = $opts{'c'} || $ENV{'HOME'}.'/.cif';
+my $config          = $opts{'C'} || $ENV{'HOME'}.'/.cif';
 my $restricted      = $opts{'R'};
 my $quiet           = $opts{'q'};
+my $import          = $opts{'I'} || 0;
+my $import_ver      = $opts{'Z'} || 'v0';
+my $import_location = $opts{'L'};
+our $debug           = $opts{'d'} || 0;
 
 if($user){
     die(usage()) unless($key || $opts{'l'} || $opts{'a'} || $opts{'d'});
@@ -68,6 +74,7 @@ Usage: perl $0 -u joe\@example.com
 Basic:
     -h  --help:             this meessage
 
+    -C  --config:           configuration file, default: $config
     -a  --add:              add key
     -d  --delete:           delete key
     -k  --key:              apikey
@@ -81,6 +88,7 @@ Advanced:
     -g  --groups:           add user to list of groups (eg: everyone,group1,group2)
     -G  --default group:    set the default group (defaults to: everyone)
     -D  --desc:             give the key an optional description
+    -I  --import:           import apikeys from a v0 instance
 
 Examples:
     \$> perl $0 -u joe\@example.com
@@ -104,6 +112,46 @@ my ($err,$ret) = CIF::Profile->new({
 });
 die($err) if($err);
 my $profile = $ret;
+
+if($import){
+    my $input;
+    if($import_location){
+        open(F,$import_location) || die($!);
+        $input = <F>;
+        close(F);
+    } else {
+        $input = <STDIN>;
+    }
+    die "no data" unless($input);
+    require JSON::XS;
+    my $array = JSON::XS::decode_json($input);
+    foreach my $a (@$array){
+        my ($ret,$err);
+        try {
+            $ret = $profile->user_add({
+                uuid            => $a->{'uuid'},
+                userid          => $a->{'uuid_alias'},
+                description     => $a->{'description'},
+                write           => $a->{'write'},
+                revoked         => $a->{'revoked'},
+                parentid        => $a->{'parentid'},
+                groups          => join(',',@{$a->{'groups'}}),
+                default_group   => $a->{'default_guid'},
+            });
+        } catch {
+            $err = shift;
+        };
+        if($err){
+            if($err =~ 'duplicate key'){
+                warn 'skipping, duplicate key: '.$a->{'uuid_alias'}.' - '.$a->{'uuid'};
+            } else {
+                die($err);
+            }
+        }
+    }
+    exit(0);
+    
+}
 
 if($add){
     die(usage()) unless($user);
