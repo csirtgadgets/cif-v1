@@ -30,8 +30,8 @@ AC_CONFIG_FILES([
 
 ## apache stuff
 ## to be split out in v2?
-PKG_CHECK_MODULES([apr],[apr-1 >= 1.4.2])
-PKG_CHECK_MODULES([apr_util],[apr-util-1 >= 1.3.9]) 
+#PKG_CHECK_MODULES([apr],[apr-1 >= 1.4.2])
+#PKG_CHECK_MODULES([apr_util],[apr-util-1 >= 1.3.9]) 
 
 # Checks for header files.
 
