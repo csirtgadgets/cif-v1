@@ -1,6 +1,7 @@
 Revision history for cif-v1
 
 1.0-RC2 2013-01
+    - bugfix to whitelist_urls
     - bugfixes to the way cif-router and libcif handle default limits
     - added Text-CSV dep check
     - bugfix to arcinve/plug../infra
