@@ -21,6 +21,12 @@ use CIF::Msg;
 use CIF::Msg::Feed;
 use Data::Dumper;
 
+# this is artificially low, ipv4/ipv6 queries can grow the result set rather large (exponentially)
+# most people just want a quick answer, if they override this (via the client), they'll expect the
+# potentially longer query as the database grows
+# later on we'll do some partitioning to clean this up a bit
+use constant QUERY_DEFAULT_LIMIT => 50;
+
 my @drivers = __PACKAGE__->plugins();
 
 __PACKAGE__->follow_best_practice();
@@ -28,7 +34,7 @@ __PACKAGE__->mk_accessors(qw(
     config db_config
     driver driver_config restriction_map 
     group_map groups feeds feeds_config archive_config
-    datatypes
+    datatypes query_default_limit
 ));
 
 our $debug = 0;
@@ -86,6 +92,7 @@ sub init {
     $self->init_archive();
     
     $debug = $self->get_config->{'debug'} || 0;
+    $self->set_query_default_limit($self->get_config->{'query_default_limit'} || QUERY_DEFAULT_LIMIT());
     
     return ($ret);
 }
@@ -353,6 +360,9 @@ sub process_query {
         $authorized = 1;
         debug('authorized stage1') if($debug > 3);
         my @res;
+        
+        # so we can tell the client how we limited the query
+        my $limit = $m->get_limit() || $self->get_query_default_limit();
         foreach my $q (@{$m->get_query()}){
             debug('query: '.$q->get_query()) if($debug > 3);
             ## TODO -- there has got to be a better way to do this...
@@ -369,7 +379,7 @@ sub process_query {
             debug('authorized to make this query') if($debug > 3);
             my ($err,$s) = CIF::Archive->search({
                 query           => $q->get_query(),
-                limit           => $m->get_limit(),
+                limit           => $limit,
                 confidence      => $m->get_confidence(),
                 guid            => $m->get_guid(),
                 guid_default    => $apikey_info->{'default_guid'},
@@ -410,6 +420,7 @@ sub process_query {
                     data            => \@res,
                     uuid            => generate_uuid_random(),
                     guid            => $apikey_info->{'default_guid'},
+                    query_limit     => $limit,
                 });  
                 push(@$results,$f->encode());
             } else {
@@ -468,7 +479,7 @@ sub process_submission {
                 datatypes   => $self->get_datatypes(),
             });
             if($err){
-                #debug($err);
+                debug($err);
                 return MessageType->new({
                     version => $CIF::VERSION,
                     type    => MessageType::MsgType::REPLY(),
