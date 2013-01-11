@@ -54,7 +54,7 @@ my $query       = $opts{'q'} || shift;
 my $nolog       = $opts{'n'} || 0;
 my $confidence  = $opts{'c'} || 0;
 my $guid        = $opts{'g'};
-my $limit       = $opts{'l'} || 500;
+my $limit       = $opts{'l'} || 50;
 
 # plugin opts
 my $plugin      = $opts{'p'} || 'Table';
