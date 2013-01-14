@@ -54,7 +54,7 @@ my $query       = $opts{'q'} || shift;
 my $nolog       = $opts{'n'} || 0;
 my $confidence  = $opts{'c'} || 0;
 my $guid        = $opts{'g'};
-my $limit       = $opts{'l'} || 50;
+my $limit       = $opts{'l'};
 
 # plugin opts
 my $plugin      = $opts{'p'} || 'Table';
@@ -203,6 +203,7 @@ foreach my $feed (0 ... $#{$feeds}){
     my $x = $feed;
     $feed = @{$feeds}[$feed];
     next unless($feed->get_data());
+    my $query_limit = $limit || $feed->get_query_limit();
 
     my $r_map = ($nomap) ? undef : $feed->get_restriction_map();
     my $t = Iodef::Pb::Format->new({
@@ -228,7 +229,7 @@ foreach my $feed (0 ... $#{$feeds}){
         table_showmeta      => $table_showmeta,
         sortby              => $sortby,
         sortby_direction    => $sortby_direction,
-        limit               => $limit,
+        limit               => $query_limit,
         round_confidence    => $round_confidence,
         
         # this is bound to cause us problems if not lined up properly
