@@ -76,7 +76,7 @@ sub insert {
                                 my $portlist = $service->get_Portlist();
                                 if($portlist){
                                     if($portlist =~ /^\d([\d,-]+)?$/){
-                                        debug('portlist: '.$portlist) if($::debug > 3);
+                                        debug('portlist: '.$portlist) if($::debug && $::debug > 3);
                                         $portlist = parse_range($portlist);
                                         push(@{$ranges->{$service->get_ip_protocol()}},$portlist);
                                     } else {
@@ -87,7 +87,7 @@ sub insert {
                             }
                             if($ranges){
                                 $ranges = encode_json($ranges);
-                                debug('ranges: '.$ranges) if($::debug > 3);
+                                debug('ranges: '.$ranges) if($::debug && $::debug > 3);
                                 $hash = sha1_hex($hash.$ranges);
                             }
                         }
