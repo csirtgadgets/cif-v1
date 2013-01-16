@@ -1,24 +1,24 @@
 [submodule "cif-router"]
 	path = cif-router
-	url = git@github.com:collectiveintel/cif-router.git
+	url = https://github.com/collectiveintel/cif-router.git
 [submodule "cif-smrt"]
 	path = cif-smrt
-	url = git@github.com:collectiveintel/cif-smrt.git
+	url = https://github.com/collectiveintel/cif-smrt.git
 [submodule "libcif"]
 	path = libcif
-	url = git@github.com:collectiveintel/libcif.git
+	url = https://github.com/collectiveintel/libcif.git
 [submodule "libcif-dbi"]
 	path = libcif-dbi
-	url = git@github.com:collectiveintel/libcif-dbi.git
+	url = https://github.com/collectiveintel/libcif-dbi.git
 [submodule "libcif-dbi-cc"]
 	path = libcif-dbi-cc
-	url = git@github.com:collectiveintel/libcif-dbi-cc.git
+	url = https://github.com/collectiveintel/libcif-dbi-cc.git
 [submodule "libcif-dbi-asn"]
 	path = libcif-dbi-asn
-	url = git@github.com:collectiveintel/libcif-dbi-asn.git
+	url = https://github.com/collectiveintel/libcif-dbi-asn.git
 [submodule "libcif-dbi-rir"]
 	path = libcif-dbi-rir
-	url = git@github.com:collectiveintel/libcif-dbi-rir.git
+	url = https://github.com/collectiveintel/libcif-dbi-rir.git
 [submodule "cif-test-framework"]
 	path = cif-test-framework
 	url = https://github.com/collectiveintel/cif-test-framework.git
