@@ -5,7 +5,11 @@ use strict;
 # fix lib paths, some may be relative
 BEGIN {
     require File::Spec;
-    my @libs = ("lib", "local/lib");
+    my @libs = (
+        "lib",
+        "local/lib",
+        "../libcif/lib", # in case we're in -dev mode
+    );
     my $bin_path;
 
     for my $lib (@libs) {
@@ -26,8 +30,6 @@ BEGIN {
     }
 
 }
-
-use lib '../libcif/lib';
 
 use Getopt::Std;
 use CIF qw/generate_uuid_ns is_uuid/;
