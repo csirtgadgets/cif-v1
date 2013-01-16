@@ -8,12 +8,16 @@ use warnings;
 # fix lib paths, some may be relative
 BEGIN {
     require File::Spec;
-    my @libs = ("lib", "local/lib",
+    my @libs = (
+        "lib", 
+        "local/lib",
+        
+        # dev mode stuff
         '../libcif/lib',
         '../libcif-dbi/lib',
-        '../../iodef-pb-simple-perl/lib',
         '../libcif-dbi-asn/lib',
         '../libcif-dbi-cc/lib',
+        '../libcif-dbi-rir/lib',
     );
     my $bin_path;
 
