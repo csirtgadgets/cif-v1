@@ -1,6 +1,6 @@
 [submodule "cif-router"]
 	path = cif-router
-	url = https://github.com/collectiveintel/cif-router.git
+	url = git@github.com:collectiveintel/cif-v1.git/cif-router.git
 [submodule "cif-smrt"]
 	path = cif-smrt
 	url = https://github.com/collectiveintel/cif-smrt.git
