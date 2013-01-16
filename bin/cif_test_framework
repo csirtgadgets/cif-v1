@@ -8,8 +8,8 @@ BEGIN {
     require File::Spec;
     my @libs = (
         "./lib",
-        "../libcif/lib",
-        "../libcif-dbi/lib",
+        "../libcif/lib", # dev mode
+        "../libcif-dbi/lib", # dev mode
     );
     my $bin_path;
 
