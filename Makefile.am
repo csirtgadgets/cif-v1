@@ -9,11 +9,6 @@ all: default
 default:
 	@echo "Please read the README before beginning your installation."
 
-fixperms:
-	chmod 0755 $(prefix)
-	chown -R $(CIF_USER) $(prefix)
-	chgrp -R $(CIF_GROUP) $(prefix)
-
 install: files-install
 
 files-install: libs-install bin-install

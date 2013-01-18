@@ -13,7 +13,7 @@ if test "$PERL" = 'not found'; then
 fi
 
 dnl Defaults paths for installation
-#AC_PREFIX_DEFAULT([/opt/cif])
+AC_PREFIX_DEFAULT([/opt/cif])
 
 AC_CONFIG_FILES([
 	Makefile
