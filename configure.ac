@@ -13,10 +13,10 @@ if test "$PERL" = 'not found'; then
 fi
 
 dnl Defaults paths for installation
-AC_PREFIX_DEFAULT([/opt/cif])
+#AC_PREFIX_DEFAULT([/opt/cif])
 
 AC_CONFIG_FILES([
-                 Makefile
+	Makefile
 ])
 
 
@@ -39,22 +39,5 @@ AC_CONFIG_FILES([
 # Checks for typedefs, structures, and compiler characteristics.
 
 # Checks for library functions.
-
-#dnl CIF_USER
-AC_ARG_WITH(user,
-    AC_HELP_STRING([--with-user=USER],
-        [user the cif scripts will run as (default: cif)]),
-    CIF_USER=$withval,
-    CIF_USER=cif)
-AC_SUBST(CIF_USER)
-
-#dnl CIF_GROUP
-AC_ARG_WITH(group,
-    AC_HELP_STRING([--with-group=GROUP],
-        [group the cif scripts will run as (default: cif)]),
-    CIF_GROUP=$withval,
-    CIF_GROUP=$CIF_USER
-)
-AC_SUBST(CIF_GROUP)
 
 AC_OUTPUT
