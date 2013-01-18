@@ -14,7 +14,7 @@ fixperms:
 	chown -R $(CIF_USER) $(prefix)
 	chgrp -R $(CIF_GROUP) $(prefix)
 
-install: files-install fixperms
+install: files-install
 
 files-install: libs-install bin-install
 
