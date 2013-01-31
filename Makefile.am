@@ -9,14 +9,7 @@ all: default
 default:
 	@echo "Please read the README before beginning your installation."
 
-fixperms:
-	chmod 0755 $(prefix)
-	chown -R $(CIF_USER) $(prefix)
-	chgrp -R $(CIF_GROUP) $(prefix)
-
-install: files-install fixperms
-
-files-install: libs-install bin-install
+install: libs-install bin-install
 
 depends: fixdeps
 
@@ -36,9 +29,9 @@ libs-install:
     done
     
 bin-install:    
-	[ -d $(bindir) ] || $(INSTALL) -m 0770 -d $(bindir)
+	[ -d $(bindir) ] || $(INSTALL) -m 0755 -d $(bindir)
 	-( cd bin && find . -type f -print ) | while read file ; do \
-        $(INSTALL) -m 0750 "bin/$$file" "$(bindir)/$$file" ; \
+        $(INSTALL) -m 0755 "bin/$$file" "$(bindir)/$$file" ; \
     done
     
 initdb: create_db create_archive create_index
