@@ -91,7 +91,7 @@ Query Options:
     -c  --confidence:       lowest tolerated confidence (0.00 -- 100.00), default $confidence
     
 Format Options:
-    -p  --plugin:           output plugin ('Table','Snort','Csv'), default: Table
+    -p  --plugin:           output plugin ('Table','Snort','Csv','Json','Html'), default: Table
     -f  --fields:           set default output fields for default table display
     -S  --summary:          consolidated Text::Table output (default: True)
     -N  --nomap:            don't map restrictions
@@ -161,6 +161,11 @@ Plugin Specific Configurations:
         snort_startsid = 10000000
 
 EOF
+}
+
+if(lc($plugin) eq 'raw'){
+    print 'Raw plugin has been re-purposed, please use \'-p json\' instead'."\n";
+    exit(0);
 }
 
 my ($err,$cli) = CIF::Client->new({
