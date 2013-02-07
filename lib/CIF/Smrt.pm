@@ -52,7 +52,7 @@ use constant NSECS_PER_MSEC     => 1_000_000;
 
 __PACKAGE__->follow_best_practice;
 __PACKAGE__->mk_accessors(qw(
-    config db_config feeds_config feeds threads 
+    config feeds_config feeds threads 
     entries defaults feed rules load_full goback 
     client wait_for_server name instance 
     batch_control client_config postprocess apikey
@@ -62,7 +62,7 @@ __PACKAGE__->mk_accessors(qw(
 my @preprocessors = __PACKAGE__->plugins();
 @preprocessors = grep(/Preprocessor::[0-9a-zA-Z_]+$/,@preprocessors);
 
-my @postprocessors = __PACKAGE__->plugins();
+our @postprocessors = __PACKAGE__->plugins();
 @postprocessors = grep(/Postprocessor::[0-9a-zA-Z_]+$/,@postprocessors);
 
 sub new {
@@ -112,7 +112,6 @@ sub init {
     $self->set_name(        $args->{'name'}     || $self->get_config->{'name'}      || 'localhost');
     $self->set_instance(    $args->{'instance'} || $self->get_config->{'instance'}  || 'localhost');
     
-    $self->init_db($args);
     $self->init_feeds($args);
     return($err,$ret) if($err);
     return(undef,1);
@@ -148,7 +147,6 @@ sub init_config {
     $args->{'config'} = Config::Simple->new($args->{'config'}) || return('missing config file');
     
     $self->set_config(          $args->{'config'}->param(-block => 'cif_smrt'));
-    $self->set_db_config(       $args->{'config'}->param(-block => 'db'));
     $self->set_feeds_config(    $args->{'config'}->param(-block => 'cif_feeds'));
     
     $self->init_config_severity($args);
@@ -201,24 +199,6 @@ sub init_feeds {
     
     my $feeds = $self->get_feeds_config->{'enabled'} || return;
     $self->set_feeds($feeds);
-}
-
-sub init_db {
-    my $self = shift;
-    my $args = shift;
-    
-    my $config = $self->get_db_config();
-    
-    my $db          = $config->{'database'} || 'cif';
-    my $user        = $config->{'user'}     || 'postgres';
-    my $password    = $config->{'password'} || '';
-    my $host        = $config->{'host'}     || '127.0.0.1';
-    
-    my $dbi = 'DBI:Pg:database='.$db.';host='.$host;
-    
-    require CIF::DBI;
-    my $ret = CIF::DBI->connection($dbi,$user,$password,{ AutoCommit => 0});
-    return $ret;   
 }
 
 sub pull_feed { 
