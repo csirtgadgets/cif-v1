@@ -74,13 +74,14 @@ sub usage {
 Usage: perl $0 -u joe\@example.com
 
 Basic:
-    -h  --help:             this meessage
+    -h  --help:             this message
 
     -C  --config:           configuration file, default: $config
     -a  --add:              add key
     -d  --delete:           delete key
     -k  --key:              apikey
     -l  --list:             list users
+    -u  --user:             email address (e.g. user\@domain.tld)
     
 Advanced:
     -e  --enable:           enable access to specific section (infrastructure,domains,malware,etc... default: all)
@@ -97,7 +98,7 @@ Examples:
 Basic:
     \$ $0 -l
     \$ $0 -l -u joe\@example.com
-    \$ $0 -u joe\@example.com -a everyone,group2 -G everyone
+    \$ $0 -u joe\@example.com -a -g everyone,group2 -G everyone
     \$ $0 -d -k 96818121-f1b6-482e-8851-8fb49cb2f6c0
     
 Advanced:
