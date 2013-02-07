@@ -33,8 +33,8 @@ __PACKAGE__->follow_best_practice();
 __PACKAGE__->mk_accessors(qw(
     config db_config
     driver driver_config restriction_map 
-    group_map groups feeds feeds_config archive_config
-    datatypes query_default_limit
+    group_map groups feeds feeds_map feeds_config 
+    archive_config datatypes query_default_limit
 ));
 
 our $debug = 0;
@@ -118,6 +118,16 @@ sub init_feeds {
 
     my $feeds = $self->get_archive_config->{'feeds'};
     $self->set_feeds($feeds);
+    
+    my $array;
+    foreach (@$feeds){
+        my $m = FeedType::MapType->new({
+            key     => generate_uuid_ns($_),
+            value   => $_,
+        });
+        push(@$array,$m);
+    }
+    $self->set_feeds_map($array);
 }
 
 sub init_archive {
@@ -157,7 +167,7 @@ sub init_group_map {
         push(@$array,$m);
     }
     $self->set_group_map($array);
-}
+}  
 
 # we abstract this out for the try/catch 
 # in case the db restarts on us
@@ -421,6 +431,9 @@ sub process_query {
                     uuid            => generate_uuid_random(),
                     guid            => $apikey_info->{'default_guid'},
                     query_limit     => $limit,
+                    # todo -- make this avail to to libcif
+                    # https://github.com/collectiveintel/cif-router/issues/5
+                    #feeds_map       => $self->get_feeds_map(),
                 });  
                 push(@$results,$f->encode());
             } else {
