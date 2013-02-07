@@ -48,10 +48,6 @@ DROP TABLE IF EXISTS infrastructure_phishing;
 CREATE TABLE infrastructure_phishing () INHERITS (infrastructure);
 ALTER TABLE infrastructure_phishing ADD PRIMARY KEY (id);
 
-DROP TABLE IF EXISTS infrastructure_nameserver;
-CREATE TABLE infrastructure_nameserver () INHERITS (infrastructure);
-ALTER TABLE infrastructure_nameserver ADD PRIMARY KEY (id);
-
 DROP TABLE IF EXISTS infrastructure_warez;
 CREATE TABLE infrastructure_warez () INHERITS (infrastructure);
 ALTER TABLE infrastructure_warez ADD PRIMARY KEY (id);
