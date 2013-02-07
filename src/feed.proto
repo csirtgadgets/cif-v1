@@ -35,4 +35,6 @@ message FeedType {
     
     optional string uuid                    = 10;
     optional int32 query_limit              = 11;
+    
+    repeated MapType feeds_map              = 12;
 }
