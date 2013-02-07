@@ -93,14 +93,28 @@ Advanced:
     -I  --import:           import apikeys from a v0 instance
 
 Examples:
-    \$> perl $0 -u joe\@example.com
-    \$> perl $0 -u joe\@example.com -a everyone,group2 -G everyone
-    \$> perl $0 -d -k 96818121-f1b6-482e-8851-8fb49cb2f6c0
-    \$> perl $0 -u joe\@example.com -e infrastructure -a -a everyone -G everyone
-    \$> perl $0 -k 96818121-f1b6-482e-8851-8fb49cb2f6c0 -w
-    \$> perl $0 -k 96818121-f1b6-482e-8851-8fb49cb2f6c0 -r
-    \$> perl $0 -u joe\@example.com -E 2020-12-30T23:59:59Z
-    \$> perl $0 -l
+
+Basic:
+    \$ $0 -l
+    \$ $0 -l -u joe\@example.com
+    \$ $0 -u joe\@example.com -a everyone,group2 -G everyone
+    \$ $0 -d -k 96818121-f1b6-482e-8851-8fb49cb2f6c0
+    
+Advanced:
+
+Adding a user's key to another group:
+    \$ $0 -k 96818121-f1b6-482e-8851-8fb49cb2f6c0 -g group2,group3
+
+Setting Read/Write access to a key:
+    \$ $0 -k 96818121-f1b6-482e-8851-8fb49cb2f6c0 -w
+    \$ $0 -k 96818121-f1b6-482e-8851-8fb49cb2f6c0 -r
+    
+Enabling specific queries for a user:
+    \$ $0 -u joe\@example.com -e infrastructure -a -a everyone -G everyone
+    
+Setting an expiration date for a user:
+    \$ $0 -u joe\@example.com -E 2020-12-30T23:59:59Z
+    
 EOF
 }
 
