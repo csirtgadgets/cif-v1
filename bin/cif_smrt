@@ -47,7 +47,7 @@ my $config      = $opts{'C'} || $ENV{'HOME'}.'/.cif';
 my $rules       = $opts{'r'};
 my $feed        = $opts{'f'};
 my $load_full   = $opts{'F'};
-my $postprocess = $opts{'P'} || $opts{'p'};
+my $postprocess = $opts{'P'} || $opts{'p'} || 0;
 
 my $rules_dir    = '/opt/cif/etc';
 my $throttle    = $opts{'T'} || 'medium';
@@ -70,34 +70,48 @@ if(!$threads){
 if($postprocess && $postprocess ne '1'){
     my @stuff = split(/,/,$postprocess);
     $postprocess = \@stuff;
-    
 }
+
+# this is for the doc
+foreach (@CIF::Smrt::postprocessors){
+    $_ =~ s/CIF::Smrt::Plugin::Postprocessor:://;
+    $_ = lc($_);
+}
+my $pp = join(',',@CIF::Smrt::postprocessors);
 
 die usage() if($opts{'h'} || !$rules);
 
 sub usage {
     return <<EOF;
-Usage: perl $0 -c $rules_dir/misc.cfg -f malwaredomainlist -T low
+Usage: perl $0 -C /home/cif/.cif -r $rules_dir/misc.cfg -f malwaredomainlist -T low
+
     -h  --help:     this message
     -f  --feed:     feed name (eg: section header in the configuration file)
     -C  --config:   specify the cif config file (default: $config)
     -r  --rules:    specify the rules file to work with (eg: etc/malwaredomains.cfg)
-    -d  --debug:     debug
+    -d  --debug:    debug 
     
 Advanced:
-    -T  --throttle: throttle (how man threads to use, default: $throttle)
-                    low:    threads = number of cores * 0.5
-                    medium: threads = number of cores
-                    high:   threads = number of cores * 2
+    -P  --post-processors:  resolve domains, resolve bgp, resolve urls, etc
+                            (default: $postprocess)
+                            
+    -p  --post-processors:  only run specific postprocessors ($pp)
+                            (default: $postprocess)
+                            
+    -T  --throttle:         throttle (how man threads to use, default: $throttle)
+                            low:    threads = number of cores * 0.5
+                            medium: threads = number of cores
+                            high:   threads = number of cores * 2
 
-    -N  --fail-open:    don't error out if one of the jobs fail, mail the -A admin
-                        (default: $fail_open)
-    -A  --admin:        designate an admin email address where errors should go if we fail open
-                        (default: $admin)
+    -N  --fail-open:        don't error out if one of the jobs fail, mail the -A admin
+                            (default: $fail_open)
+    -A  --admin:            designate an admin email address where errors should go if we fail open
+                            (default: $admin)
                         
 Examples:
-    \$ $0 -c $rules_dir/spyeyetracker.cfg -f binaries -T medium
-    \$ $0 -c $rules_dir/malwaredomains.cfg -f domains -T high -d
+    \$ $0 -C /home/cif/.cif -r $rules_dir/spyeyetracker.cfg -f binaries -T medium -P
+    \$ $0 -C /home/cif/.cif -r $rules_dir/malwaredomains.cfg -f domains -T high -d -P
+    \$ $0 -C /home/cif/.cif -r $rules_dir/misc.cfg -f spamhaus_drop -d -p ip,malware
 EOF
 }
 
