@@ -124,7 +124,6 @@ Configuration:
     [client]
     apikey = xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     driver = 'http'
-    # driver = 'zeromq'
     
     # table_nowarning = 1
     # csv_noseperator = 1
@@ -132,13 +131,12 @@ Configuration:
     [client_http]
     host = https://example.com:443/api
     timeout = 60
+    
     # add this if you have a self signed cert
     verify_tls = 0
     
+    # proxy settings
     # proxy = https://localhost:5555
-    
-    [client_zeromq]
-    host = tcp://127.0.0.1:5555
 
 Plugin Specific Configurations:
 
