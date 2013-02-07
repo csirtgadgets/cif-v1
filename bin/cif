@@ -9,6 +9,7 @@ BEGIN {
         "lib", 
         "local/lib",
         "../libcif/lib", # in case we're in -dev mode
+        "../../../iodef-pb-simple-perl/lib",
     );
     my $bin_path;
 
@@ -39,7 +40,7 @@ use CIF qw/debug/;
 use Iodef::Pb::Format;
 
 my %opts;
-getopt('D:S:O:G:l:g:THL:p:f:q:c:s:r:C:zP:F', \%opts);
+getopt('D:S:O:G:l:g:THL:p:f:q:c:s:r:C:zP:Fe:', \%opts);
 
 our $debug       = ($opts{'d'}) ? 1 : 0;
 
@@ -72,6 +73,7 @@ my $table_showmeta      = $opts{'M'} || 0;
 my $filter_me           = $opts{'F'};
 my $sortby              = $opts{'S'} || 'detecttime';
 my $sortby_direction    = $opts{'D'} || 'DESC';
+my $exclude_assessment   = $opts{'e'};
 
 die usage() unless($query);
 die usage() if($opts{'h'});
@@ -97,6 +99,7 @@ Format Options:
     -N  --nomap:            don't map restrictions
     -g  --guid:             filter by a specific group id (guid), ex: group1.example.com
     -G  --groupmap:         turn group mapping (guid to 'group name') on/off, default: $group_map
+    -e  --exclude:          exclude a specific assessment (search,botnet,malware, etc).
     
 Nonstandard Options:
     -z                      compact address field to 32 chars, applies only to defalt table output, default: 1 (0 turns it off)
@@ -116,6 +119,8 @@ Example Queries:
     \$> perl $0 -q infrastructure/network -p Snort
     \$> perl $0 -q domain/malware -p bindzone -c 95
     \$> perl $0 -q domain -c 40
+    
+    \$ $0 -d -q example.com -e search
 
 Configuration:
 
@@ -164,7 +169,14 @@ EOF
 }
 
 if(lc($plugin) eq 'raw'){
+    print usage();
     print 'Raw plugin has been re-purposed, please use \'-p json\' instead'."\n";
+    exit(0);
+}
+
+if($exclude_assessment && $exclude_assessment =~ /\,/){
+    print usage();
+    print '-e only accepts a single assessment at this time'."\n";
     exit(0);
 }
 
@@ -232,6 +244,8 @@ foreach my $feed (0 ... $#{$feeds}){
         sortby_direction    => $sortby_direction,
         limit               => $query_limit,
         round_confidence    => $round_confidence,
+        
+        exclude_assessment  => $exclude_assessment,
         
         # this is bound to cause us problems if not lined up properly
         # with the original $feeds array, or if there is a gap in $feeds

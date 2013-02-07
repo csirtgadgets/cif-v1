@@ -151,7 +151,7 @@ Compress::Snappy 0.18
 Try::Tiny 0.04
 Net::SSLeay 1.43
 Log::Dispatch 2.32
-Iodef::Pb::Simple 0.17
+Iodef::Pb::Simple 0.18
 .
 
 if ($args{'download'}) {
