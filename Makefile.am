@@ -53,9 +53,9 @@ libs-install:
     done
     
 bin-install:    
-	[ -d $(bindir) ] || $(INSTALL) -m 0770 -d $(bindir)
+	[ -d $(bindir) ] || $(INSTALL) -m 0755 -d $(bindir)
 	-( cd bin && find . -type f -print ) | while read file ; do \
-        $(INSTALL) -m 0750 "bin/$$file" "$(bindir)/$$file" ; \
+        $(INSTALL) -m 0755 "bin/$$file" "$(bindir)/$$file" ; \
     done
 
 clean:
