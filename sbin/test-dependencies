@@ -134,29 +134,15 @@ my %AVOID = (
 
 $deps{'CORE'} = [ text_to_hash( << '.') ];
 CIF 0.99_05
-Try::Tiny 0.04
-Config::Simple 4.59
-Module::Pluggable 3.9
 Class::Accessor 0.34
-Regexp::Common 2.122
-Regexp::Common::net::CIDR 0.02
 Digest::MD5 2.27
-Digest::SHA 2.10
 File::Type 0.22
-LWP::Protocol::https 6.02
 Linux::Cpuinfo 1.7
-LWP::UserAgent 6.02
-MIME::Base64 3.06
 MIME::Lite 3.027
 Date::Manip 6.11
-DateTime 0.42
-DateTime::Format::DateParse 0.04
-Digest::MD5 2.27
-Digest::SHA 2.10
 File::Spec 0.8
 URI::Escape 1.56
 Encode 2.23
-Iodef::Pb::Simple 0.10
 ZeroMQ 0.21
 Time::HiRes 1.9719
 Net::Abuse::Utils 0.12
