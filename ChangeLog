@@ -1,6 +1,6 @@
 Revision history for cif-smrt
 
-0.99.04 2012-12-XX
+0.99.04 2013
     - added whitelist_url creation to makefile.am
     - minor doc fixes
     - added proxy support http://code.google.com/p/collective-intelligence-framework/issues/detail?id=159
