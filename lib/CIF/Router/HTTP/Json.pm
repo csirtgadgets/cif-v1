@@ -94,10 +94,17 @@ sub handler {
                 $_->{'guid'} = $guid unless($_->{'guid'});
                 $_->{'guid'} = generate_uuid_ns($_->{'guid'}) unless(is_uuid($_->{'guid'}));
                 
+                $_->{'source'} = $r->param('apikey');
+                $_->{'source'} = generate_uuid_ns($_->{'source'});
+                
                 # reset the confidence if it's too high
                 my $confidence = 85;
                 $confidence = $_->{'confidence'} if($_->{'confidence'} =~ /^\d+$/ && $_->{'confidence'} < 85);
                 $_->{'confidence'} = $confidence;
+                
+                # crudely overwritte, assume the cli is braindead
+                my $reporttime = DateTime->from_epoch(epoch => time());
+                $_->{'reporttime'} = $reporttime->ymd().'T'.$reporttime->hms().'Z';
                 
                 my $e;
                 unless($_->{'id'} && is_uuid($_->{'id'})){
@@ -110,6 +117,7 @@ sub handler {
                 };
  
                 if($e){
+                    warn $e;
                     debug($e);
                     return Apache2::Const::HTTP_BAD_REQUEST();
                 }
