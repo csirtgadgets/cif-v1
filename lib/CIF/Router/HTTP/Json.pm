@@ -31,8 +31,19 @@ sub handler {
  
     for($req->method()){
         if(/^GET$/){
-            my $query = $r->param('q') || $r->param('query') || return ('missing query');
+            my $query = $r->param('q') || $r->param('query');
             my $format = $r->param('fmt') || 'json';
+            
+            unless($query){
+                if($format eq 'json'){    
+                    return JSON::XS::encode_json({
+                        status  => Apache2::Const::HTTP_OK(),
+                        data    => 'missing query',
+                    });
+                }
+                return 'missing query';
+            }
+                
             return Apache2::Const::Forbidden() unless($format =~ /^[a-zA-Z]+$/);
             
             $query = lc($query);
