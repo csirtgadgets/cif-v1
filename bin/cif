@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
+use warnings;
 
 # fix lib paths, some may be relative
 BEGIN {
@@ -38,6 +39,7 @@ use CIF qw/debug/;
 
 ## TODO -- generate CIF::Format to wrap this
 use Iodef::Pb::Format;
+use Iodef::Pb::Simple;
 
 my %opts;
 getopt('D:S:O:G:l:g:THL:p:f:q:c:s:r:C:zP:Fe:', \%opts);
@@ -48,6 +50,8 @@ our $debug       = ($opts{'d'}) ? 1 : 0;
 my $config      = $opts{'C'} || $ENV{'HOME'}.'/.cif';
 my $outfile     = $opts{'O'};
 my $query       = $opts{'q'} || shift;
+
+my $input       = $opts{'i'};
 
 # query options
 my $nolog       = $opts{'n'} || 0;
@@ -75,7 +79,7 @@ my $sortby              = $opts{'S'} || 'detecttime';
 my $sortby_direction    = $opts{'D'} || 'DESC';
 my $exclude_assessment   = $opts{'e'};
 
-die usage() unless($query);
+die usage() unless($query || $input);
 die usage() if($opts{'h'});
 
 sub usage {
@@ -186,12 +190,31 @@ my ($err,$cli) = CIF::Client->new({
 
 die 'ERROR: '.$err if($err);
 
+my $ret;
+
+# if we're doing input via STDIN
+# assuming we're getting JSON keypairs here, so we'll use the legacy interface for now
+# it already takes care of some of the heavy lifting
+# TODO -- migrate that code to libcif so we can do it here too
+if($input) {
+    my @input = <STDIN>;
+    my $json = $input[0];
+    if($#input > 0){
+        # if we get \n delimited json
+        $json = '['.join(',',@input).']';   
+    }
+    $ret = $cli->send_json($json);
+    print $ret."\n";
+    exit(0);
+}
+
+# else we're doing query
 if($outfile){
     open(F,">",$outfile) || die($!);
 }
 
 my @q = split(/,/,$query);
-my $ret;
+
 ($err,$ret) = $cli->search({
     query               => \@q,
     filter_me           => $filter_me,

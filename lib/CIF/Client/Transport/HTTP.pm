@@ -8,6 +8,7 @@ use warnings;
 use CIF qw/debug/;
 require LWP::UserAgent;
 use Try::Tiny;
+use JSON::XS;
 
 __PACKAGE__->follow_best_practice();
 __PACKAGE__->mk_accessors(qw(config));
@@ -30,7 +31,7 @@ sub new {
     }
 
     if($self->get_config->{'proxy'}){
-        warn 'setting proxy' if($::debug);
+        debug('setting proxy') if($::debug);
         $self->proxy(['http','https'],$self->get_config->{'proxy'});
     }
     
@@ -42,6 +43,25 @@ sub new {
 sub send {
     my $self = shift;
     my $data = shift;
+    
+    return $self->_send($data);
+}
+
+sub send_json {
+    my $self = shift;
+    my $args = shift;
+    
+    my $apikey  = $args->{'apikey'} || return 'missing apikey';
+    my $data    = $args->{'data'}   || return 'missing data';
+    
+    $self->default_header('Accept' => 'application/json');
+    $self->get_config->{'host'} .= '?apikey='.$apikey;
+    return $self->_send($data);
+}
+
+sub _send {
+    my $self = shift;
+    my $data = shift;
     return unless($data);
     
     my ($err,$ret);
@@ -49,7 +69,7 @@ sub send {
     
     do {
         try {
-            $ret = $self->post($self->get_config->{'host'}.'/',Content => $data);
+            $ret = $self->post($self->get_config->{'host'},Content => $data);
         } catch {
             $err = shift;
         };

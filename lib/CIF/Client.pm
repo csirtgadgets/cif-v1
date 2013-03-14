@@ -240,6 +240,16 @@ sub send {
     return $self->get_driver->send($msg);
 }
 
+sub send_json {
+    my $self = shift;
+    my $msg = shift;
+ 
+    return $self->get_driver->send_json({
+        data    => $msg,
+        apikey  => $self->get_apikey(),
+    });   
+}
+
 sub submit {
     my $self = shift;
     my $data = shift;
