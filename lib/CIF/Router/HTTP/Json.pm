@@ -31,8 +31,8 @@ sub handler {
  
     for($req->method()){
         if(/^GET$/){
-            my $query = $r->param('q') || $r->param('query');
-            my $format = $r->param('fmt') || 'json';
+            my $query       = $r->param('q')    || $r->param('query');
+            my $format      = $r->param('fmt')  || 'json';
             
             unless($query){
                 if($format eq 'json'){    
@@ -99,6 +99,13 @@ sub handler {
             $buffer = JSON::XS::decode_json($buffer);
             return Apache2::Const::FORBIDDEN() unless($buffer);
             $buffer = [ $buffer ] unless(ref($buffer) eq 'ARRAY');
+            
+            if($#{$buffer} > 5000){
+                return JSON::XS::encode_json({
+                    status  => Apache2::Const::FORBIDDEN(),
+                    data    => 'legacy JSON API should only be used for smaller data-sets (less than 5,000), use the normal API or cif_smrt for larger data-sets',
+                });
+            }
 
             foreach (@$buffer){
                 # set the guid
@@ -128,7 +135,6 @@ sub handler {
                 };
  
                 if($e){
-                    warn $e;
                     debug($e);
                     return Apache2::Const::HTTP_BAD_REQUEST();
                 }
