@@ -120,7 +120,7 @@ Example Queries:
     
     \$> perl $0 -q malware
     \$> perl $0 -q malware
-    \$> perl $0 -q infrastructure/network -p Snort
+    \$> perl $0 -q infrastructure/botnet -p Snort
     \$> perl $0 -q domain/malware -p bindzone -c 95
     \$> perl $0 -q domain -c 40
     
