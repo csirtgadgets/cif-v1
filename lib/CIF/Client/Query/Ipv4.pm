@@ -13,6 +13,7 @@ sub process {
     my $args    = shift;
 
     return unless($args->{'query'} =~ /^$RE{'net'}{'IPv4'}/);
+    $args->{'query'} = normalize_address($args->{'query'});
     
     my $pt = $args->{'pt'};
     $pt->add_string($args->{'query'});
@@ -48,7 +49,17 @@ sub process {
         }
     }
     return(undef,$queries);
- 
+}
+
+sub normalize_address {
+    my $addr = shift;
+
+    my @bits = split(/\./,$addr);
+    foreach(@bits){
+        next unless(/^0{1,2}/);
+        $_ =~ s/^0{1,2}//;
+    }
+    return join('.',@bits);
 }
 
 1;
