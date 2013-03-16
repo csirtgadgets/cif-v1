@@ -71,7 +71,7 @@ if($user){
 
 sub usage {
     return <<EOF;
-Usage: perl $0 -l
+Usage: perl $0 -l {options...}
 
 Basic:
     -h  --help:             this message
@@ -82,7 +82,6 @@ Basic:
     -d  --delete:           delete key
     -k  --key:              apikey
     -l  --list:             list users
-    -u  --user:             email address (e.g. user\@domain.tld)
     
 Advanced:
     -e  --enable:           enable access to specific section (infrastructure,domain,malware,etc... default: all)
