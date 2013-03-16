@@ -71,19 +71,20 @@ if($user){
 
 sub usage {
     return <<EOF;
-Usage: perl $0 -u joe\@example.com
+Usage: perl $0 -l
 
 Basic:
     -h  --help:             this meessage
 
     -C  --config:           configuration file, default: $config
+    -u  --user:             specify user alias (root@localhost)
     -a  --add:              add key
     -d  --delete:           delete key
     -k  --key:              apikey
     -l  --list:             list users
     
 Advanced:
-    -e  --enable:           enable access to specific section (infrastructure,domains,malware,etc... default: all)
+    -e  --enable:           enable access to specific section (infrastructure,domain,malware,etc... default: all)
     -r  --revoke:           revoke a key
     -w  --write:            enable write access
     -E  --expires:          set an expiration date
