@@ -62,6 +62,15 @@ sub handler {
                 nolog       => $r->param('nolog')   || 0,
             });
             
+            if($err){
+                for(lc($err)){
+                    if(/^unauthorized$/){
+                        return Apache2::Const::FORBIDDEN();
+                        last;
+                    }
+                }
+            }
+            
             my $nomap = 0;
             
             my @text;
