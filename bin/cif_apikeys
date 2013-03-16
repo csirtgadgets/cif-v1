@@ -42,7 +42,7 @@ use Try::Tiny;
 use CIF qw/debug/;
 
 my %opts;
-getopt('E:G:g:k:u:C:R:L:d', \%opts);
+getopt('t:E:G:g:k:u:C:R:L:d', \%opts);
 die(usage()) if($opts{'h'});
 
 my $user            = $opts{'u'};
@@ -63,21 +63,22 @@ my $quiet           = $opts{'q'};
 my $import          = $opts{'I'} || 0;
 my $import_ver      = $opts{'Z'} || 'v0';
 my $import_location = $opts{'L'};
+my $rename          = $opts{'t'};
 our $debug           = $opts{'d'} || 0;
 
 if($user){
-    die(usage()) unless($key || $opts{'l'} || $opts{'a'} || $opts{'d'});
+    die(usage()) unless($key || $opts{'u'} || $opts{'l'} || $opts{'a'} || $opts{'d'});
 }
 
 sub usage {
     return <<EOF;
-Usage: perl $0 -l {options...}
+Usage: perl $0 {options...}
 
 Basic:
     -h  --help:             this message
 
     -C  --config:           configuration file, default: $config
-    -u  --user:             specify user alias (root@localhost)
+    -u  --user:             specify user alias (root\@localhost)
     -a  --add:              add key
     -d  --delete:           delete key
     -k  --key:              apikey
@@ -92,6 +93,7 @@ Advanced:
     -G  --default group:    set the default group (defaults to: everyone)
     -D  --desc:             give the key an optional description
     -I  --import:           import apikeys from a v0 instance
+    -t  --rename:           rename a user alias
 
 Examples:
 
@@ -115,6 +117,9 @@ Enabling specific queries for a user:
     
 Setting an expiration date for a user:
     \$ $0 -u joe\@example.com -E 2020-12-30T23:59:59Z
+    
+Rename a user alias:
+    \$ $0 -u joe\@example.com -t bob\@example.com
     
 EOF
 }
@@ -213,6 +218,13 @@ if($add){
         key     => $key,
         group   => $opts{'G'},
     });
+} elsif($rename){
+    my $ret = $profile->user_rename({
+        user    => $user,
+        rename  => $rename,
+    });
+    print $ret.' users renamed...'."\n";
+    $user = $rename;
 } else {
     if($expires){
         die(usage()) unless($key);

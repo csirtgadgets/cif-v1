@@ -226,6 +226,19 @@ sub user_remove {
     $_->delete() foreach(@recs);
 }
 
+sub user_rename {
+    my $self = shift;
+    my $args = shift;
+    
+    my @recs = CIF::APIKey->search(uuid_alias => $args->{'user'});
+    foreach (@recs){
+        $_->uuid_alias($args->{'rename'});
+        $_->update();
+    }
+    CIF::APIKey->dbi_commit() unless(CIF::APIKey->db_Main->{'AutoCommit'});
+    return ($#recs + 1);
+}
+
 sub group_remove {
     my $self = shift;
     my $args = shift;
