@@ -16,8 +16,12 @@ sub pull {
 
     # we use this instead of ::UserAgent, it does better
     # overall timeout checking
-    require LWPx::ParanoidAgent;
-    my $ua = LWPx::ParanoidAgent->new(agent => 'CIF/'.$VERSION);
+    #require LWPx::ParanoidAgent;
+    # we can't use this yet:
+    # https://rt.cpan.org/Public/Bug/Display.html?id=44569
+    # it doesn't respect mirroring
+    require LWP::UserAgent;
+    my $ua = LWP::UserAgent->new(agent => 'CIF/'.$VERSION);
     $ua->timeout($timeout);
     
     # load up proxy if we have it

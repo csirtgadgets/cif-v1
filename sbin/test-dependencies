@@ -148,7 +148,6 @@ Time::HiRes 1.9719
 Net::Abuse::Utils 0.12
 Net::Abuse::Utils::Spamhaus 0.03
 Sys::MemInfo 0.91
-LWPx::ParanoidAgent 1.07
 .
 
 if ($args{'download'}) {
