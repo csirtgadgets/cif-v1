@@ -38,11 +38,12 @@ use MIME::Lite;
 use Try::Tiny;
 
 my %opts;
-getopts('A:Nafdt:T:C:c:p:c:hLS:PF:v:',\%opts);
+getopts('b:A:Nafdt:T:C:c:p:c:hLS:PF:v:',\%opts);
 my $period      = $opts{'p'} || 'daily';
 my $throttle    = $opts{'T'} || 'medium';
 my $threads     = $opts{'t'};
-my $cron_tool   = $opts{'C'} || 'cif_smrt';
+my $cron_tool   = $opts{'b'} || 'cif_smrt';
+my $config      = $opts{'C'} || $ENV{'HOME'}.'/.cif';
 my $first_run   = $opts{'f'};
 my $debug       = $opts{'d'};
 my $debug_level = $opts{'v'};
@@ -147,6 +148,7 @@ Common:
                     high:   threads = number of cores * 8
 
 Advanced:
+    -P  --post-process: enable the post-processor
     -F  --FeedDir:      what directory $0 should look at for feed configs (eg: /opt/cif/)
                         if you've installed to a non-standard directory
     -N  --fail-open:    don't error out if one of the jobs fail, mail the -A admin
@@ -156,7 +158,8 @@ Advanced:
 
 Examples:
     $0 -T high -f -d
-    $0 -T medium -p daily 
+    $0 -T medium -p daily
+    $0 -p daily -P -A root -N 1
 
 Current Feeds:
 $f
@@ -176,7 +179,7 @@ unless(defined($ret) && $ret == 0){
 }
 foreach(@crons){
     my $c_tool = $_->{'tool'} || $cron_tool;
-    my $cmd = $c_tool.' -r '.$_->{'config'}.' -f '.$_->{'feed'};
+    my $cmd = $c_tool.' -C '.$config.' -r '.$_->{'config'}.' -f '.$_->{'feed'};
     if($debug){
         $cmd .= ' -d';
     }
