@@ -12,10 +12,12 @@ sub pull {
     return unless($f->{'feed'} =~ /^http/);
     return if($f->{'cif'});
     
-    my $timeout = $f->{'timeout'} || 30;
+    my $timeout = $f->{'timeout'} || 300;
 
-    require LWP::UserAgent;
-    my $ua = LWP::UserAgent->new(agent => 'CIF/'.$VERSION);
+    # we use this instead of ::UserAgent, it does better
+    # overall timeout checking
+    require LWPx::ParanoidAgent;
+    my $ua = LWPx::ParanoidAgent->new(agent => 'CIF/'.$VERSION);
     $ua->timeout($timeout);
     
     # load up proxy if we have it
