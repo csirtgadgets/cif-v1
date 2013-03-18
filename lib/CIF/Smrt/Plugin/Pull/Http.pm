@@ -38,6 +38,7 @@ sub pull {
        $content = $ress->decoded_content();
     } else {
         if(defined($f->{'verify_tls'}) && $f->{'verify_tls'} == 0){
+            $ua->ssl_opts(SSL_verify_mode => 'SSL_VERIFY_NONE');
             $ua->ssl_opts(verify_hostname => 0);
         }
         my $r;
