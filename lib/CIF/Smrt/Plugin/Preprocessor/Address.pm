@@ -8,7 +8,7 @@ sub process {
     my $rules = shift;
     my $rec = shift;
     
-    return unless($rec->{'address'});
+    return $rec unless($rec->{'address'});
     $rec->{'address'} = lc($rec->{'address'});
     return $rec;
 }
