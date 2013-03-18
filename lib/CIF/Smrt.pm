@@ -146,17 +146,21 @@ sub init_config {
     
     my $err;
     try {
-        $args->{'config'} = Config::Simple->new($args->{'config'}) || return('missing config file');
+        $args->{'config'} = Config::Simple->new($args->{'config'});
     } catch {
         $err = shift;
     };
     
+    unless($args->{'config'}){
+        return('unknown or missing config: '.$self->get_client_config());
+    }
     if($err){
         my @errmsg;
         push(@errmsg,'something is broken in your local config: '.$args->{'config'});
         push(@errmsg,'this is usually a syntax error problem, double check '.$args->{'config'}.' and try again');
         return(join("\n",@errmsg));
     }
+
     $self->set_config(          $args->{'config'}->param(-block => 'cif_smrt'));
     $self->set_feeds_config(    $args->{'config'}->param(-block => 'cif_feeds'));
     
