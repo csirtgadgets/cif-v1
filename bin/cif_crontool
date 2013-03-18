@@ -35,6 +35,7 @@ use Config::Simple;
 use Getopt::Std;
 use Data::Dumper;
 use MIME::Lite;
+use Try::Tiny;
 
 my %opts;
 getopts('A:Nafdt:T:C:c:p:c:hLS:PF:v:',\%opts);
@@ -88,7 +89,21 @@ unless($opts{'c'}){
 my @crons;
 foreach(@files){
     my $cc_name = $feedsdir.'/'.$_;
-    my $cc = Config::Simple->new($cc_name) || die('failed to open: '.$cc_name.': '.$!);
+    my $err;
+    my $cc;
+    try {
+        $cc = Config::Simple->new($cc_name);
+    } catch {
+        $err = shift;
+    };
+    if($err){
+        my @errmsg;
+        push(@errmsg,'there is something broken with: '.$cc_name);
+        push(@errmsg,'this is usually a syntax problem, double check '.$cc_name.' and try again');
+        print("\n!!!ERROR!!!\n".join("\n",@errmsg)."\n\n");
+        exit(-1);
+    }
+    
     my @sections = keys %{$cc->{'_DATA'}};
     foreach my $sec (@sections){
         next if($sec =~ /^default/);
