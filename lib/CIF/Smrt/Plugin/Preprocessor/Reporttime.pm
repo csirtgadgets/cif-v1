@@ -14,17 +14,21 @@ sub process {
     # detecttime is for legacy config support from v0
     # we just re-write it and drop it here
     my $dt = $rec->{'reporttime'} || $rec->{'detecttime'} || DateTime->from_epoch(epoch => time());
+    
+    # override the reporttime for "active lists" we might be tracking
+    $dt = DateTime->from_epoch(epoch => time()) if($rules->{'refresh'});
+    
     $dt = normalize_timestamp($dt);
     $dt = DateTime::Format::DateParse->parse_datetime($dt);
-    
-    if($rec->{'detection'}){
-        if(lc($rec->{'detection'}) eq 'hourly'){
+  
+    if(my $detection = $rules->{'detection'}){
+        if(lc($detection) eq 'hourly'){
             $dt = $dt->ymd().'T'.$dt->hour.':00:00Z';
-        } elsif(lc($rec->{'detection'}) eq 'daily') {
+        } elsif(lc($detection) eq 'daily') {
             $dt = $dt->ymd().'T00:00:00Z';
-        } elsif(lc($rec->{'detection'}) eq 'monthly') {
+        } elsif(lc($detection) eq 'monthly') {
             $dt = $dt->year().'-'.$dt->month().'-01T00:00:00Z';
-        } elsif(lc($rec->{'detection'} ne 'now')){
+        } elsif(lc($detection ne 'now')){
             $dt = $dt->ymd().'T00:00:00Z';
         }
     } else {
