@@ -81,13 +81,13 @@ sub new {
 sub init {
     my $self = shift;
     my $args = shift;
-    
+
     my ($err,$ret) = $self->init_config($args);
     return($err) if($err);
       
     ($err,$ret) = $self->init_rules($args);
     return($err) if($err);
-        
+
     $self->set_threads(         $args->{'threads'}          || $self->get_config->{'threads'}           || 1);
     $self->set_goback(          $args->{'goback'}           || $self->get_config->{'goback'}            || 3);
     $self->set_load_full(       $args->{'load_full'}        || $self->get_config->{'load_full'}         || 0);
@@ -187,9 +187,12 @@ sub init_rules {
    
     map { $defaults->{$_} = $rules->{$_} } keys (%$rules);
     
-    unless(is_uuid($defaults->{'guid'})){
-        $defaults->{'guid'} = generate_uuid_url($defaults->{'guid'});
+    if($defaults->{'guid'}){
+        unless(is_uuid($defaults->{'guid'})){
+            $defaults->{'guid'} = generate_uuid_url($defaults->{'guid'});
+        }
     }
+
     $self->set_rules($defaults);
     return(undef,1);
 }
@@ -254,6 +257,7 @@ sub parse {
         $f->{'proxy'} = $self->get_proxy();
     }
     
+    debug('pulling feed...') if($::debug);
     my ($err,$content) = pull_feed($f);
     return($err) if($err);
     
@@ -338,6 +342,7 @@ sub preprocess_routine {
         debug('sorting '.($#{$recs}+1).' recs...') if($::debug);
         $recs = _sort_detecttime($recs);
     }
+    
     ## TODO -- move this to the threads?
     ## test with alienvault scan's feed
     debug('mapping...') if($::debug);
@@ -367,6 +372,7 @@ sub preprocess_routine {
         last if($r->{'reporttime_epoch'} < $self->get_goback());
         push(@array,$r);
     }
+
     debug('done mapping...') if($::debug);
     debug('records to be processed: '.($#array+1)) if($::debug);
     if($#array == -1){
