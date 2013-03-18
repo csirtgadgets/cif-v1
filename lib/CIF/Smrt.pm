@@ -144,8 +144,19 @@ sub init_config {
     # do this here, we'll do the setup within the sender_routine (thread)
     $self->set_client_config($args->{'config'});
     
-    $args->{'config'} = Config::Simple->new($args->{'config'}) || return('missing config file');
+    my $err;
+    try {
+        $args->{'config'} = Config::Simple->new($args->{'config'}) || return('missing config file');
+    } catch {
+        $err = shift;
+    };
     
+    if($err){
+        my @errmsg;
+        push(@errmsg,'something is broken in your local config: '.$args->{'config'});
+        push(@errmsg,'this is usually a syntax error problem, double check '.$args->{'config'}.' and try again');
+        return(join("\n",@errmsg));
+    }
     $self->set_config(          $args->{'config'}->param(-block => 'cif_smrt'));
     $self->set_feeds_config(    $args->{'config'}->param(-block => 'cif_feeds'));
     
@@ -169,7 +180,22 @@ sub init_rules {
     my $self = shift;
     my $args = shift;
     
-    $args->{'rules'} = Config::Simple->new($args->{'rules'}) || return(undef,'missing rules file');
+    my $rulesfile = $args->{'rules'};
+    my ($err,@errmsg);
+    try {
+        $args->{'rules'} = Config::Simple->new($args->{'rules'});
+    } catch {
+        $err = shift;
+    };
+    
+    return('missing or unknown rules configuration: '.$rulesfile) unless($args->{'rules'});
+    
+    if($err){
+        my @errmsg;
+        push(@errmsg,'there is something broken with: '.$rulesfile);
+        push(@errmsg,'this is usually a syntax problem, double check '.$rulesfile.' and try again');
+        return(join("\n",@errmsg));
+    }
     
     unless($args->{'feed'}){
         my @sections = keys %{$args->{'rules'}->{'_DATA'}};

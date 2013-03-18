@@ -126,7 +126,12 @@ my ($err,$smrt) = CIF::Smrt->new({
     postprocess     => $postprocess,
 });
 
-die(usage()."\n\n".$err) if($err);
+if($err){
+    print(usage()."\n\n");
+    print('!!!ERROR!!!'."\n");
+    print($err."\n\n");
+    exit(-1);
+}
 
 ($err,$ret) = $smrt->process();
 unless($err){
