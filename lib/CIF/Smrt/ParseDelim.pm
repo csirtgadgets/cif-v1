@@ -8,7 +8,7 @@ sub parse {
     my $content = shift;
     my $split = shift;
 
-    my @lines = split(/\n/,$content);
+    my @lines = split(/[\r\n]/,$content);
     my @cols = split(',',$f->{'values'});
     my @array;
     

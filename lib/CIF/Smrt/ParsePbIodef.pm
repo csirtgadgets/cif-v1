@@ -12,8 +12,6 @@ sub parse {
     # as internally defined by rt-cifminimal for now
     return unless($content =~ /^application\/base64\+snappy\+pb\+iodef\n([\S\n]+)\n$/);
     
-    # this whole thing is stupid, it'll suck-less, later... maybe.
-    # when i'm a millionaire, i'll fix it.
     my @blobs = split(/\n\n/,$1);
     @blobs = map { IODEFDocumentType->decode(decompress(decode_base64($_))) } @blobs;
     
@@ -21,15 +19,17 @@ sub parse {
         data    => \@blobs,
         format  => 'Raw',
     })};
-    
+      
     foreach my $r (@blobs){
         foreach $rr (@$h){
-            if($f->{'detection'}){
-                delete($rr->{'detecttime'});
-                $rr->{'detection'} = $f->{'detection'};
+            # work-around for 'active lists'
+            if($f->{'refresh'}){
+                # this will get reset in the sort
+               delete($rr->{'reporttime'});
             }
         }
     }
+
     return(\@blobs);
 }
 

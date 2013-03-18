@@ -8,7 +8,7 @@ sub parse {
     my $f = shift;
     my $content = shift;
     
-    my @lines = split(/\n/,$content);
+    my @lines = split(/[\r\n]/,$content);
     my @array;
     
     if(my $l = $f->{'feed_limit'}){

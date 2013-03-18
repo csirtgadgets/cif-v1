@@ -9,7 +9,7 @@ sub parse {
     my $content = shift;
     
     my $rss = XML::RSS->new();
-    my @lines = split("\n",$content);
+    my @lines = split(/[\r\n]/,$content);
     # work-around for any < > & that is in the feed as part of a url
     # http://stackoverflow.com/questions/5199463/escaping-in-perl-generated-xml/5899049#5899049
     # needs some work, the parser still pukes.
