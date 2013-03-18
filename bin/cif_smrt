@@ -73,11 +73,12 @@ if($postprocess && $postprocess ne '1'){
 }
 
 # this is for the doc
-foreach (@CIF::Smrt::postprocessors){
+my @p1 = @CIF::Smrt::postprocessors;
+foreach (@p1){
     $_ =~ s/CIF::Smrt::Plugin::Postprocessor:://;
     $_ = lc($_);
 }
-my $pp = join(',',@CIF::Smrt::postprocessors);
+my $pp = join(',',@p1);
 
 die usage() if($opts{'h'} || !$rules);
 
