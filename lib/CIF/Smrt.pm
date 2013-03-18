@@ -282,8 +282,7 @@ sub parse {
     if($self->get_proxy()){
         $f->{'proxy'} = $self->get_proxy();
     }
-    
-    debug('pulling feed...') if($::debug);
+    debug('pulling feed: '.$f->{'feed'}) if($::debug);
     my ($err,$content) = pull_feed($f);
     return($err) if($err);
     
@@ -333,7 +332,20 @@ sub parse {
     } catch {
         $err = shift;
     };
-    return($err) if($err);
+    if($err){
+        my @errmsg;
+        if($err =~ /parser error/){
+            push(@errmsg,'it appears that the format of this feed is broken and might need fixing on the authors end');
+            if($::debug > 1){
+                push(@errmsg,"\n\n".$err);
+            } else {
+                push(@errmsg,'a debug level > 1 will print the error if you wish to investigate');
+            }
+        } else {
+            push(@errmsg,"\n\n".$err);
+        }
+        return(join("\n",@errmsg));
+    }
     return(undef,$return);
 }
 
