@@ -78,6 +78,7 @@ my $filter_me           = $opts{'F'};
 my $sortby              = $opts{'S'} || 'detecttime';
 my $sortby_direction    = $opts{'D'} || 'DESC';
 my $exclude_assessment   = $opts{'e'};
+my $csv_noheader        = $opts{'x'};
 
 die usage() unless($query || $input);
 die usage() if($opts{'h'});
@@ -104,6 +105,7 @@ Format Options:
     -g  --guid:             filter by a specific group id (guid), ex: group1.example.com
     -G  --groupmap:         turn group mapping (guid to 'group name') on/off, default: $group_map
     -e  --exclude:          exclude a specific assessment (search,botnet,malware, etc).
+    -x  --csv-noheader:     don't display the header when using the csv plugin
     
 Nonstandard Options:
     -z                      compact address field to 32 chars, applies only to defalt table output, default: 1 (0 turns it off)
@@ -234,6 +236,8 @@ my $feeds = $ret;
 
 debug('formatting as '.ucfirst($plugin).'...');
 
+$fields = [ split(/,/,$fields) ] if($fields);
+
 my @text;
 foreach my $feed (0 ... $#{$feeds}){
     my $x = $feed;
@@ -245,6 +249,7 @@ foreach my $feed (0 ... $#{$feeds}){
     my $t = Iodef::Pb::Format->new({
         config              => $cli->get_global_config(),
         format              => ucfirst($plugin),
+        fields              => $fields,
         data                => $feed->get_data(),
         
         group_map           => $feed->get_group_map(),
@@ -267,6 +272,7 @@ foreach my $feed (0 ... $#{$feeds}){
         sortby_direction    => $sortby_direction,
         limit               => $query_limit,
         round_confidence    => $round_confidence,
+        csv_noheader        => $csv_noheader,
         
         exclude_assessment  => $exclude_assessment,
         
@@ -277,7 +283,7 @@ foreach my $feed (0 ... $#{$feeds}){
         query               => $q[$x],
     });
     
-    $t .= "\n";
+    #$t .= "\n";
     
     ## TODO -- add feed meta data to this.
     push(@text,$t);
