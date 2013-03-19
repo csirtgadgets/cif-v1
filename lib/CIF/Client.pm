@@ -173,6 +173,7 @@ sub search {
         } catch {
             $err = shift;
         };
+
         if($err){
             return($err);
         }
@@ -181,7 +182,18 @@ sub search {
         debug('processing: '.($#{$feed->get_data}+1).' items') if($::debug);
         foreach my $e (@{$feed->get_data()}){
             $e = Compress::Snappy::decompress(decode_base64($e));
-            $e = IODEFDocumentType->decode($e);
+            try {
+                $e = IODEFDocumentType->decode($e);
+            } catch {
+                $err = shift;
+            };
+            # we've got a feed
+            if($err =~ /Unexpected end of group/){
+                if(is_uuid(@{$args->{'query'}}[0])){
+                    return('querying feeds by uuid is not yet supported');   
+                }
+                return('unknown error: '.$err);
+            }
             if($filter_me){
                 my $id = @{$e->get_Incident()}[0]->get_IncidentID->get_name();
                 # filter out my searches

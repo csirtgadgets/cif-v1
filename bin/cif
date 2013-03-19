@@ -190,7 +190,10 @@ my ($err,$cli) = CIF::Client->new({
     config          => $config,
 });
 
-die 'ERROR: '.$err if($err);
+if($err){
+    print 'ERROR: '.$err."\n";
+    exit(-1);
+}
 
 my $ret;
 
@@ -226,7 +229,10 @@ my @q = split(/,/,$query);
     limit               => $limit,
 });
 
-die 'ERROR: '.$err if($err);
+if($err){
+    print 'ERROR: '.$err."\n";
+    exit(-1);
+}
 unless($ret){
     debug('no results...') if($debug);
     exit(0);
