@@ -38,7 +38,7 @@ use MIME::Lite;
 use Try::Tiny;
 
 my %opts;
-getopts('b:A:Nafdt:T:C:c:p:c:hLS:PF:v:',\%opts);
+getopts('z:b:A:Nafdt:T:C:c:p:c:hLS:PF:v:',\%opts);
 my $period      = $opts{'p'} || 'daily';
 my $throttle    = $opts{'T'} || 'medium';
 my $threads     = $opts{'t'};
@@ -53,6 +53,7 @@ my $postprocess = $opts{'P'};
 my $dir         = $opts{'F'} || '/opt/cif';
 my $admin       = $opts{'A'} || 'root';
 my $fail_open   = $opts{'N'} || 1;
+my $d_postprocess = $opts{'z'};
 
 if(! -e $cron_tool){
     if(-e './bin/'.$cron_tool){
@@ -192,10 +193,13 @@ foreach(@crons){
         $cmd .= ' -T '.$throttle;
     }
     $cmd .= ' -F' if($first_run);
-    $cmd .= ' -P' if($postprocess);
     if($fail_open){
         $cmd .= ' -A '.$admin if($admin);
         $cmd .= ' -N 1' if($fail_open);
+    }
+    $cmd .= ' -P' if($postprocess);
+    if($d_postprocessor){
+        $cmd .= ' -z '.$d_postprocessor;
     }
     
     warn $cmd if($debug);
