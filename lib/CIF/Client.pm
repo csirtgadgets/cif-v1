@@ -188,7 +188,7 @@ sub search {
                 $err = shift;
             };
             # we've got a feed
-            if($err =~ /Unexpected end of group/){
+            if($err && $err =~ /Unexpected end of group/){
                 if(is_uuid(@{$args->{'query'}}[0])){
                     return('querying feeds by uuid is not yet supported');   
                 }
