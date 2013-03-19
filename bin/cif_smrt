@@ -39,7 +39,7 @@ use CIF qw/debug/;
 use Sys::MemInfo qw(totalmem);
 
 my %opts;
-getopts('hNA:s:T:t:dFC:f:r:v:Pp:',\%opts);
+getopts('z:hNA:s:T:t:dFC:f:r:v:Pp:',\%opts);
 our $debug = $opts{'d'} || 0;
 $debug = $opts{'v'} if($opts{'v'});
 
@@ -54,6 +54,7 @@ my $throttle    = $opts{'T'} || 'medium';
 my $threads     = $opts{'t'};
 my $admin       = $opts{'A'} || 'root';
 my $fail_open   = $opts{'N'} || 0;
+my $disable_p   = $opts{'z'};
 
 if((&totalmem / (1024*1024*1024)) < 1){
     #print "total memory: ".(&totalmem / (1024*1024*1024))."\n";
@@ -67,11 +68,6 @@ if(!$threads){
     $threads = CIF::Smrt::throttle($throttle);
 }
 
-if($postprocess && $postprocess ne '1'){
-    my @stuff = split(/,/,$postprocess);
-    $postprocess = \@stuff;
-}
-
 # this is for the doc
 my @p1 = @CIF::Smrt::postprocessors;
 foreach (@p1){
@@ -79,7 +75,40 @@ foreach (@p1){
     $_ = lc($_);
 }
 my $pp = join(',',@p1);
+# end doc
 
+if($postprocess){
+    if($postprocess eq 1){
+        $postprocess = join(',',@p1);
+    }
+    my @stuff = split(/,/,$postprocess);
+    # check validity of the pp's
+    foreach (@stuff){
+        my $found = 0;
+        foreach my $p (@p1){
+            next unless(lc($_) eq $p);
+            $found = 1;
+        }
+        unless($found){
+            print 'unknown postprocessor: '.$_."\n";
+            exit(-1);   
+        }
+    }
+    # if we want to disable certain postprocessors
+    if($disable_p){
+        my @tmp;
+        foreach my $d (split(/,/,$disable_p)){
+            foreach my $s (@stuff){
+                next if(lc($s) eq lc($d));
+                push(@tmp,$s);
+            }
+        }
+        @stuff = @tmp;
+    }
+    $postprocess = \@stuff;
+}
+
+# this needs to go after the postprocessor code to fill in the blanks
 die usage() if($opts{'h'} || !$rules);
 
 sub usage {
@@ -106,6 +135,7 @@ Advanced:
 
     -N  --fail-open:        don't error out if one of the jobs fail, mail the -A admin
                             (default: $fail_open)
+                            
     -A  --admin:            designate an admin email address where errors should go if we fail open
                             (default: $admin)
                         

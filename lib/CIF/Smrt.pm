@@ -96,10 +96,12 @@ sub init {
     $self->set_apikey(          $args->{'apikey'}           || $self->get_config->{'apikey'}            || return('missing apikey'));
     $self->set_proxy(           $args->{'proxy'}            || $self->get_config->{'proxy'});
    
-    $self->init_postprocessors($args);
+    ($err,$ret) = $self->init_postprocessors($args);
+    return($err) if($err);
     
     if($self->get_postprocess()){
         debug('postprocessing enabled...') if($::debug);
+        debug('processors: '.join(',',@{$self->get_postprocess()})) if($::debug > 1);
     } else {
         debug('postprocessing disabled...') if($::debug);
     }
@@ -130,11 +132,14 @@ sub init_postprocessors {
         my $enabled;
         foreach (@$things){
             foreach my $p (@postprocessors){
-                push(@$enabled,$p) if(lc($p) =~ /::$_$/);
+                if(lc($p) =~ /::$_$/){
+                    push(@$enabled,$p);
+                }               
             }
         }
         $self->set_postprocess($enabled);
     }
+    return(undef,1);
 }
 
 sub init_config {
