@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 # used for LWP user-agent version
+# we should pull from higher up
 our $VERSION = '1.0';
 
 sub pull {
@@ -16,12 +17,15 @@ sub pull {
 
     # we use this instead of ::UserAgent, it does better
     # overall timeout checking
-    #require LWPx::ParanoidAgent;
+    require LWPx::ParanoidAgent;
+    my $ua = LWPx::ParanoidAgent->new(agent => 'CIF/'.$VERSION);
+    
     # we can't use this yet:
     # https://rt.cpan.org/Public/Bug/Display.html?id=44569
     # it doesn't respect mirroring
-    require LWP::UserAgent;
-    my $ua = LWP::UserAgent->new(agent => 'CIF/'.$VERSION);
+    #require LWP::UserAgent;
+    #my $ua = LWP::UserAgent->new(agent => 'CIF/'.$VERSION);
+    
     $ua->timeout($timeout);
     
     # load up proxy if we have it
@@ -52,7 +56,10 @@ sub pull {
             $f->{'feed'} =~ m/\/([a-zA-Z0-9._-]+)$/;
             my $file = $f->{'mirror'}.'/'.$1;
             return($file.' isn\'t writeable by our user') if(-e $file && !-w $file);
-            $ua->mirror($f->{'feed'},$file);
+            my $ret = $ua->mirror($f->{'feed'},$file);
+            unless($ret->is_success()){
+                return $ret->decoded_content();   
+            }
             open(F,$file) || return($!.': '.$file);
             $content = join('',<F>);
             close(F);

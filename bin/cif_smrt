@@ -9,6 +9,7 @@ BEGIN {
         "lib",
         "local/lib",
         "../libcif/lib", # in case we're in -dev mode
+        "../../../lwpx-paranoidagent/lib",
     );
     my $bin_path;
 
