@@ -10,10 +10,13 @@ sub parse {
     my $f       = shift;
     my $content = shift;
 
-    return unless($content =~ /^application\/cif\n([\S\n\s]+)$/);
+    return unless($content =~ /^application\/cif\n([\S\s]+)$/);
 
     # this could all be done a better way, and will be in the future
-    my $ret = FeedType->decode($1);
+    my $ret = decompress(decode_base64($1));
+    
+    $ret = FeedType->decode($ret);
+    return unless($ret->get_data());
     
     my @blobs = @{$ret->get_data()};
     

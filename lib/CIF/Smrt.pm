@@ -244,15 +244,19 @@ sub pull_feed {
     my $ret = threads->create('_pull_feed',$f)->join();
     return(undef,'') unless($ret);
     return($ret) if($ret =~ /^ERROR: /);
-    
+
     # auto-decode the content if need be
     $ret = _decode($ret,$f);
 
+    return(undef,$ret) if($f->{'cif'} && $f->{'cif'} eq 'true');
+
     # encode to utf8
     $ret = encode_utf8($ret);
+    
     # remove any CR's
     $ret =~ s/\r//g;
     delete($f->{'feed'});
+    
     return(undef,$ret);
 }
 
@@ -270,7 +274,7 @@ sub _pull_feed {
         }
     }
     my @pulls = __PACKAGE__->plugins();
-    @pulls = grep(/::Pull::/,@pulls);
+    @pulls = sort grep(/::Pull::/,@pulls);
     foreach(@pulls){
         my ($err,$ret) = $_->pull($f);
         return('ERROR: '.$err) if($err);
@@ -292,13 +296,18 @@ sub parse {
         $f->{'proxy'} = $self->get_proxy();
     }
     debug('pulling feed: '.$f->{'feed'}) if($::debug);
+    if($self->get_client_config()){
+        $f->{'client_config'} = $self->get_client_config();
+    }
     my ($err,$content) = pull_feed($f);
     return($err) if($err);
     
     my $return;
     try {
-        # see if we designate a delimiter
-        if(my $d = $f->{'delimiter'}){
+        if($content =~ /^application\/cif/){
+            require CIF::Smrt::ParseCifFeed;
+            $return = CIF::Smrt::ParseCifFeed::parse($f,$content);
+        } elsif(my $d = $f->{'delimiter'}){
             require CIF::Smrt::ParseDelim;
             $return = CIF::Smrt::ParseDelim::parse($f,$content,$d);
         } else {

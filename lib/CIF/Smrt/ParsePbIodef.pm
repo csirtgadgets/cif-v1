@@ -1,7 +1,6 @@
 package CIF::Smrt::ParsePbIodef;
 
 use Iodef::Pb::Simple;
-use Iodef::Pb::Format;
 use MIME::Base64;
 use Compress::Snappy;
 
