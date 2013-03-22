@@ -28,8 +28,10 @@ sub pull {
         no_decode   => 1,
     });
     return($err) if($err);
-    $ret = @{$ret}[0];
-    $ret = 'application/cif'."\n".$ret;
+    # multiple...
+      
+    $ret = 'application/cif'."\n".join("\n",@$ret);
+    
     return(undef,$ret); 
 }
 
