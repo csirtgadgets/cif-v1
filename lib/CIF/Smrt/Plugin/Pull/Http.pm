@@ -31,7 +31,7 @@ sub pull {
     # load up proxy if we have it
     $ua->env_proxy();
     if($f->{'proxy'}){
-        $ua->proxy(['http','ftp'], $f->{'proxy'});
+        $ua->proxy(['http','https','ftp'], $f->{'proxy'});
     }
     
     # work-around for what appears to be a threading / race condition
