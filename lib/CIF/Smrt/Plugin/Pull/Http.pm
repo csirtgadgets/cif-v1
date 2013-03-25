@@ -57,7 +57,8 @@ sub pull {
             my $file = $f->{'mirror'}.'/'.$1;
             return($file.' isn\'t writeable by our user') if(-e $file && !-w $file);
             my $ret = $ua->mirror($f->{'feed'},$file);
-            unless($ret->is_success()){
+            # unless it's a 200 or a 304 (which means cached, not modified)
+            unless($ret->is_success() || $ret->status_line() =~ /^304 /){
                 return $ret->decoded_content();   
             }
             open(F,$file) || return($!.': '.$file);
