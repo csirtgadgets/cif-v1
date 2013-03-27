@@ -77,8 +77,7 @@ sub init_config {
     
     $self->set_config(          $args->{'config'}->param(-block => 'cif_feed'));
     $self->set_db_config(       $args->{'config'}->param(-block => 'db'));
-    $self->set_restriction_map( $args->{'config'}->param(-block => 'restriction_map')); 
-    $self->set_group_map(       $args->{'config'}->param(-block => 'groups'));
+    $self->set_restriction_map( $args->{'config'}->param(-block => 'restriction_map'));
     $self->set_archive_config(  $args->{'config'}->param(-block => 'cif_archive'));
     
     ## TODO: add groups here 
@@ -107,6 +106,8 @@ sub init_config {
             $_ = $h;
         }
         $self->set_roles($roles);
+    } else {
+        return('no roles have been defined for feed generation');
     }
 
     my $confidence = $args->{'confidence'} || $self->get_config->{'confidence'} || '95,85';
@@ -157,10 +158,8 @@ sub init_restriction_map {
 }
 
 sub init_group_map {
-    my $self = shift;
-    
-    return unless($self->get_group_map());
-    my $g = $self->get_group_map->{'groups'};
+    my $self    = shift;
+    my $g       = $self->get_archive_config->{'groups'};
     
     # system wide groups
     push(@$g, qw(everyone root));
