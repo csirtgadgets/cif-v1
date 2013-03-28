@@ -98,28 +98,28 @@ Advanced:
 Examples:
 
 Basic:
-    \$ $0 -l
-    \$ $0 -l -u joe\@example.com
-    \$ $0 -u joe\@example.com -a -g everyone,group2 -G everyone
-    \$ $0 -d -k 96818121-f1b6-482e-8851-8fb49cb2f6c0
+    $0 -l
+    $0 -l -u joe\@example.com
+    $0 -u joe\@example.com -a -g everyone,group2 -G everyone
+    $0 -d -k 96818121-f1b6-482e-8851-8fb49cb2f6c0
     
 Advanced:
 
 Adding a user's key to another group:
-    \$ $0 -k 96818121-f1b6-482e-8851-8fb49cb2f6c0 -g group2,group3
+    $0 -k 96818121-f1b6-482e-8851-8fb49cb2f6c0 -g group2,group3
 
 Setting Read/Write access to a key:
-    \$ $0 -k 96818121-f1b6-482e-8851-8fb49cb2f6c0 -w
-    \$ $0 -k 96818121-f1b6-482e-8851-8fb49cb2f6c0 -r
+    $0 -k 96818121-f1b6-482e-8851-8fb49cb2f6c0 -w
+    $0 -k 96818121-f1b6-482e-8851-8fb49cb2f6c0 -r
     
 Enabling specific queries for a user:
-    \$ $0 -u joe\@example.com -e infrastructure -a -a everyone -G everyone
+    $0 -u joe\@example.com -e infrastructure -a -a everyone -G everyone
     
 Setting an expiration date for a user:
-    \$ $0 -u joe\@example.com -E 2020-12-30T23:59:59Z
+    $0 -u joe\@example.com -E 2020-12-30T23:59:59Z
     
 Rename a user alias:
-    \$ $0 -u joe\@example.com -t bob\@example.com
+    $0 -u joe\@example.com -t bob\@example.com
     
 EOF
 }
