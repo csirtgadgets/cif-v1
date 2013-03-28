@@ -92,6 +92,7 @@ sub search {
     
     my $filter_me   = $args->{'filter_me'} || $self->get_filter_me();
     my $nolog       = (defined($args->{'nolog'})) ? $args->{'nolog'} : $self->get_nolog();
+    my $no_decode   = $args->{'no_decode'};
     
     unless($args->{'apikey'}){
         $args->{'apikey'} = $self->get_apikey();
@@ -152,6 +153,8 @@ sub search {
     }
     return(0) unless($ret->{'data'});
     my $uuid = generate_uuid_ns($args->{'apikey'});
+    
+    return(undef,$ret->get_data()) if($no_decode);
 
     debug('decoding...') if($::debug);
         ## TODO: finish this so feeds are inline with reg queries
