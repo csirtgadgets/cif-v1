@@ -38,22 +38,24 @@ use MIME::Lite;
 use Try::Tiny;
 
 my %opts;
-getopts('z:b:A:Nafdt:T:C:c:p:c:hLS:PF:v:',\%opts);
-my $period      = $opts{'p'} || 'daily';
-my $throttle    = $opts{'T'} || 'medium';
-my $threads     = $opts{'t'};
-my $cron_tool   = $opts{'b'} || 'cif_smrt';
-my $config      = $opts{'C'} || $ENV{'HOME'}.'/.cif';
-my $first_run   = $opts{'f'};
-my $debug       = $opts{'d'};
-my $debug_level = $opts{'v'};
-my $mutex       = $opts{'L'} || '/tmp/cif_crontool.lock.'.$period;
-my $start_at    = $opts{'S'};
-my $postprocess = $opts{'P'};
-my $dir         = $opts{'F'} || '/opt/cif';
-my $admin       = $opts{'A'} || 'root';
-my $fail_open   = $opts{'N'} || 1;
-my $d_postprocess = $opts{'z'};
+getopts('z:b:A:N:afdt:T:C:c:p:c:hLS:PF:v:',\%opts);
+my $period          = $opts{'p'} || 'daily';
+my $throttle        = $opts{'T'} || 'medium';
+my $threads         = $opts{'t'};
+my $cron_tool       = $opts{'b'} || 'cif_smrt';
+my $config          = $opts{'C'} || $ENV{'HOME'}.'/.cif';
+my $first_run       = $opts{'f'};
+my $debug           = $opts{'d'};
+my $debug_level     = $opts{'v'};
+my $mutex           = $opts{'L'} || '/tmp/cif_crontool.lock.'.$period;
+my $start_at        = $opts{'S'};
+my $postprocess     = $opts{'P'};
+my $dir             = $opts{'F'} || '/opt/cif';
+my $admin           = $opts{'A'} || 'root';
+my $fail_open       = $opts{'N'} || 0;
+my $d_postprocessor = $opts{'z'};
+
+$fail_open = 1 unless(defined($fail_open) && $fail_open == 0);
 
 if(! -e $cron_tool){
     if(-e './bin/'.$cron_tool){
