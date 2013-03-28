@@ -9,7 +9,7 @@ use warnings;
 use Try::Tiny;
 
 use MIME::Base64;
-require Iodef::Pb::Simple;
+use Iodef::Pb::Simple qw/iodef_guid/;
 require Compress::Snappy;
 use Digest::SHA qw/sha1_hex/;
 use Data::Dumper;
@@ -40,7 +40,9 @@ sub insert {
         $msg = IODEFDocumentType->decode($msg);
         $data->{'uuid'}         = @{$msg->get_Incident}[0]->get_IncidentID->get_content();
         $data->{'reporttime'}   = @{$msg->get_Incident}[0]->get_ReportTime();
+        $data->{'guid'}         = iodef_guid(@{$msg->get_Incident}[0]) || $data->{'guid'};
     }
+    
     
     $data->{'uuid'} = generate_uuid_random() unless($data->{'uuid'});
    
@@ -93,7 +95,10 @@ sub search {
     my $ret;
     debug('running query: '.$data->{'query'});
     if(is_uuid($data->{'query'})){
-        $ret = $class->SUPER::retrieve(uuid => $data->{'query'});
+        $ret = $class->search_lookup(
+            $data->{'query'},
+            $data->{'source'},
+        );
     } else {
         # log the query first
         unless($data->{'nolog'}){
@@ -223,5 +228,14 @@ sub log_search {
     $class->dbi_commit() unless($class->db_Main->{'AutoCommit'});
     return(undef,$id);
 }
+
+__PACKAGE__->set_sql('lookup' => qq{
+    SELECT t1.id,t1.uuid,t1.data
+    FROM __TABLE__ t1
+    LEFT JOIN apikeys_groups ON t1.guid = apikeys_groups.guid
+    WHERE
+        t1.uuid = ?
+        AND apikeys_groups.uuid = ?
+});
 
 1;
