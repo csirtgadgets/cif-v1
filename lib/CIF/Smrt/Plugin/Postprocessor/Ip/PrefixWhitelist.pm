@@ -29,7 +29,7 @@ sub process {
         next unless($confidence > 25);
         
         my $restriction = $i->get_restriction();
-        my $description = $i->get_Description->get_content();
+        my $description = @{$i->get_Description()}[0]->get_content();
         
         my $altids = $i->get_RelatedActivity();
         my $bgp = iodef_bgp($i) || next();

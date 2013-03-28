@@ -21,7 +21,7 @@ sub process {
     foreach my $i (@{$data->get_Incident()}){
         next unless($i->get_purpose && $i->get_purpose == IncidentType::IncidentPurpose::Incident_purpose_mitigation());
         next unless($i->get_EventData());
-        my $description = $i->get_Description();
+        my $description = @{$i->get_Description()}[0]->get_content();
         my $restriction = $i->get_restriction();
         my $assessment = $i->get_Assessment();
         my $confidence = @{$assessment}[0]->get_Confidence();
