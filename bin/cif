@@ -79,6 +79,7 @@ my $sortby              = $opts{'S'} || 'detecttime';
 my $sortby_direction    = $opts{'D'} || 'DESC';
 my $exclude_assessment   = $opts{'e'};
 my $csv_noheader        = $opts{'x'};
+my $new_only            = $opts{'m'} || 0;
 
 die usage() unless($query || $input);
 die usage() if($opts{'h'});
@@ -110,6 +111,7 @@ Format Options:
 Nonstandard Options:
     -z                      compact address field to 32 chars, applies only to defalt table output, default: 1 (0 turns it off)
     -I  --round-confidence: round (down) confidence to the nearest integer, default 0.
+    -m                      return only the results where "\$DETECTTIME >= \$TODAY (UTC)" (the most recent results from a feed)
 
 Example Queries:
 
@@ -281,6 +283,7 @@ foreach my $feed (0 ... $#{$feeds}){
         csv_noheader        => $csv_noheader,
         
         exclude_assessment  => $exclude_assessment,
+        new_only            => $new_only,
         
         # this is bound to cause us problems if not lined up properly
         # with the original $feeds array, or if there is a gap in $feeds
