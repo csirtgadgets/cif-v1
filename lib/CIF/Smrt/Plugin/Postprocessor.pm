@@ -37,6 +37,8 @@ sub resolve_bgp {
     # aggregate our cache, we could miss a more specific route, but unlikely
     ## TODO -- improve for ipv6
     my @bits = split(/\./,$a);
+    return if($#bits < 0);
+    
     $bits[$#bits] = '0/24';
     $a = join('.',@bits);
   
