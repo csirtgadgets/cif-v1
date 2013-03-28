@@ -8,6 +8,7 @@ Revision history for libcif
     - fixed a deprecated TLS bug in Transport/HTTP
     - added STDIN -i input to bin/cif
     - added send_json function to lib/CIF/Client/...
+    - added two new flags, no_decode and new_only
 
 0.99.05 2012-10-01
     - implemented cif-protocol perl bindings here
