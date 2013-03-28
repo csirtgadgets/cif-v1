@@ -40,7 +40,7 @@ use CIF::Feed;
 use CIF qw/debug/;
 
 my %opts;
-getopts('HVdC:S:R:c:D:l:h',\%opts);
+getopts('hHVdC:S:R:c:D:l:',\%opts);
 
 our $debug          = $opts{'d'};
 my $config          = $opts{'C'} || $ENV{'HOME'}.'/.cif';
