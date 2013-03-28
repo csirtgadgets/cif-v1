@@ -5,6 +5,7 @@ use strict;
 use warnings;
 
 use Iodef::Pb::Simple ':all';
+use Regexp::Common qw/net/;
 
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 
@@ -30,18 +31,21 @@ sub is_ipv4 {
     my $class = shift;
     my $addr = shift;
     
-    return 1 if($addr->get_category()  == AddressType::AddressCategory::Address_category_ipv4_addr());
-    return 1 if($addr->get_category()  == AddressType::AddressCategory::Address_category_ipv4_net());
-    return 1 if($addr->get_category()  == AddressType::AddressCategory::Address_category_ipv4_net_mask());
+    return 0 unless($addr->get_content() =~ /^$RE{'net'}{'IPv4'}/);
+    
+    return 0 unless($addr && $addr->get_content());
+    return 1 if($addr->get_category() == AddressType::AddressCategory::Address_category_ipv4_addr());
+    return 1 if($addr->get_category() == AddressType::AddressCategory::Address_category_ipv4_net());
+    return 1 if($addr->get_category() == AddressType::AddressCategory::Address_category_ipv4_net_mask());
 }
 
 sub is_ipv6 {
     my $class = shift;
     my $addr = shift;
     
-    return 1 if($addr->get_category()  == AddressType::AddressCategory::Address_category_ipv6_addr());
-    return 1 if($addr->get_category()  == AddressType::AddressCategory::Address_category_ipv6_net());
-    return 1 if($addr->get_category()  == AddressType::AddressCategory::Address_category_ipv6_net_mask());
+    return 1 if($addr->get_category() == AddressType::AddressCategory::Address_category_ipv6_addr());
+    return 1 if($addr->get_category() == AddressType::AddressCategory::Address_category_ipv6_net());
+    return 1 if($addr->get_category() == AddressType::AddressCategory::Address_category_ipv6_net_mask());
 }
 
 1;
