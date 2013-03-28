@@ -391,7 +391,7 @@ sub process_query {
                 query           => $q->get_query(),
                 limit           => $limit,
                 confidence      => $m->get_confidence(),
-                guid            => $m->get_guid(),
+                guid            => $m->get_guid() || $apikey_info->{'default_guid'},
                 guid_default    => $apikey_info->{'default_guid'},
                 nolog           => $q->get_nolog(),
                 source          => $m->get_apikey(),
@@ -400,7 +400,7 @@ sub process_query {
                 datatypes       => $self->get_datatypes(),
             });
             if($err){
-                warn $err;
+                debug($err);
                 return(
                     MessageType->new({
                         version => $CIF::VERSION,
