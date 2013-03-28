@@ -15,12 +15,11 @@ sub parse {
     
     my @array = split("\n\n",$1);
     my @return;
-    
+
     foreach (@array){
         my $ret = decompress(decode_base64($1));
         
         $ret = FeedType->decode($ret);
-        
         next unless($ret->get_data());
         
         my @blobs = @{$ret->get_data()};
@@ -31,6 +30,26 @@ sub parse {
             data    => \@blobs,
             format  => 'Raw',
         })};
+        
+        ## TODO -- this has too many implications for overriding guid
+        ## for both the intended audience as well as any partners
+        ## will think through later.
+        # any overrides from the config
+        # reverse this if it ends up being too slow
+        #foreach my $k (keys %$f){
+        #    # we don't want to override this
+        #    next if($k eq 'guid');
+        #    foreach my $b (@blobs){
+        #        next unless(exists($b->{$k}));
+        #        $b->{$k} = $f->{$k};
+        #    }   
+        #}
+        if($f->{'refresh'} && $f->{'refresh'} eq 'true'){
+            foreach my $b (@blobs){
+                # work-around for 'active lists'
+                delete($b->{'reporttime'});
+            }   
+        }
         push(@return,@blobs);
     }
     return(\@return);
