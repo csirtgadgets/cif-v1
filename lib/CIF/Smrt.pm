@@ -315,6 +315,7 @@ sub parse {
             debug('testing...');
             ## todo -- very hard to detect iodef-pb strings
             # might have to rely on base64 encoding decode first?
+            ## TODO -- pull this out
             if($content =~ /^application\/base64\+snappy\+pb\+iodef\n([\S\n]+)\n$/){
                 require CIF::Smrt::ParsePbIodef;
                 $return = CIF::Smrt::ParsePbIodef::parse($f,$content);
@@ -513,12 +514,13 @@ sub process {
     my $done = 0;
     my $total_recs = $master_count;
     my $sent_recs = 0;
+    debug('starting with '.$master_count.' recs...');
     do {
-        debug('waiting on message...');
+        debug('waiting on message...') if($::debug && $::debug > 1);
         
         debug('polling...') if($::debug > 5);
         $poller->poll();
-        debug('found msg');
+        debug('found msg') if($::debug && $::debug > 1);
         if($poller->has_event('workers_sum')){
             my $msg = $workers_sum->recv()->data();
             for($msg){
@@ -534,15 +536,15 @@ sub process {
         }
         
         ## TODO -- should this be after the return check?
-        debug('master count: '.$master_count);  
+        debug('master count: '.$master_count) if($::debug && $::debug > 1);  
         if($master_count == 0){
-            debug('sending total: '.$total_recs);
+            debug('sending total: '.$total_recs) if($::debug && $::debug > 1);
             $ctrl->send('TOTAL:'.$total_recs);
             $ctrl->send('WRK_DONE');
         }
         # waiting for sender
         if($poller->has_event('return')){
-            debug('return msg received');
+            debug('return msg received') if($::debug && $::debug > 1);
             my $msg = $return->recv();
             if($msg->data() =~ /^ERROR: /){
                 print $msg->data()."\n";
@@ -555,9 +557,11 @@ sub process {
         }
         nanosleep NSECS_PER_MSEC;
         # total_recs is based on 0 ... X not -1 ... X
-        debug('sent recs: '.$sent_recs);
-        debug('total recs: '.$total_recs);
+        debug('sent recs: '.$sent_recs) if($::debug && $::debug > 1);
+        debug('total recs: '.$total_recs) if($::debug && $::debug > 1);
     } while($sent_recs != -1 && $sent_recs < $total_recs);
+    
+    debug('sent recs: '.$sent_recs);
 
     $ctrl->send('WRK_DONE');
     
@@ -631,18 +635,25 @@ sub worker_routine {
             debug('generating iodef...') if($::debug > 3);
 
             my $iodef = Iodef::Pb::Simple->new($msg);
-                  
+            $iodef = [ $iodef ] unless(ref($iodef) eq 'ARRAY');
+            if($#{$iodef} > 0){
+                debug('ADDING:'.($#{$iodef}));
+                $workers_sum->send('ADDED:'.($#{$iodef}));
+                nanosleep NSECS_PER_MSEC;
+            }
             my @results;
             if($self->get_postprocess()){
                 foreach my $p (@{$self->get_postprocess}){
                     my ($err,$array);
-                    try {
-                        $array = $p->process($self,$iodef);
-                    } catch {
-                        $err = shift;
-                    };
-                    debug($err) if($::debug && $err);
-                    push(@results,@$array) if($array && @$array);
+                    foreach my $i (@$iodef){
+                        try {
+                            $array = $p->process($self,$i);
+                        } catch {
+                            $err = shift;
+                        };
+                        debug($err) if($::debug && $err);
+                        push(@results,@$array) if($array && @$array);
+                    }
                 };
 
                 # we don't do +1 here cause the parent already knows about the
@@ -653,12 +664,11 @@ sub worker_routine {
                     # sometimes the $sender->send_as will get there faster
                     # than the $workers_sum will make it up and over to the sender
                     # it's possible we'll have to re-work this with the sender thread, but it works for now
-                    #$workers_sum->send(($#results+1));
                     $workers_sum->send('ADDED:'.($#results+1));
                     nanosleep NSECS_PER_MSEC;
                 }
             }
-            push(@results,$iodef->encode());
+            push(@results,map { $_->encode() } @$iodef);
                        
             debug('sending message...') if($::debug > 3);
             $sender->send_as('json' => \@results);
