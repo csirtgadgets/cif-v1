@@ -11,7 +11,6 @@ sub process {
     my $rules   = shift;
     my $rec     = shift;
     
-    # detecttime is for legacy config support from v0
     # we just re-write it and drop it here
     my $dt = $rec->{'reporttime'} || $rec->{'detecttime'} || DateTime->from_epoch(epoch => time());
     
