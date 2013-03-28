@@ -76,7 +76,6 @@ sub process {
             }
         }
     }
-    return;
 }
 
 1;

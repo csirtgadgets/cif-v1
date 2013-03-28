@@ -31,9 +31,10 @@ sub is_fqdn {
     my $class = shift;
     my $addr = shift;
     
+    return unless($addr && $addr->get_content());
     return unless($addr->get_category() == AddressType::AddressCategory::Address_category_ext_value());
     return unless($addr->get_ext_category() =~ /^(fqdn|domain)$/);
-    return 1 if($addr->get_content() =~ /^[a-z0-9.-]+\.[a-z]{2,8}$/);
+    return 1 if($addr->get_content() =~ /^[a-zA-Z0-9.-]+\.[a-z]{2,8}$/);
 }
 
 sub resolve {
