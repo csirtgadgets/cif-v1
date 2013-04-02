@@ -384,6 +384,41 @@ sub _decode {
     return $data;
 }
 
+sub _sort_timestamp {
+    my $recs    = shift;
+    my $rules   = shift;
+    
+    my $refresh = $rules->{'refresh'} || 0;
+
+    debug('setting up sort...');
+    my $x = 0;
+    my $now = DateTime->from_epoch(epoch => time());
+    foreach my $rec (@{$recs}){
+        my $dt = $rec->{'detecttime'} || $now;
+        my $rt = $rec->{'reporttime'} || $now;
+
+        if($refresh){
+            $rt = $now;
+            $rec->{'timestamp_epoch'} = $now->epoch();
+            
+        } else {
+            $rt = normalize_timestamp($rt,$now);
+            $rec->{'timestamp_epoch'} = $dt->epoch(),
+        }
+        $dt = normalize_timestamp($dt,$now);
+        $rec->{'detecttime'}        = $dt->ymd().'T'.$dt->hms().'Z';
+        $rec->{'reporttime'}        = $rt->ymd().'T'.$rt->hms().'Z';
+    }
+    debug('sorting...');
+    if($refresh){
+        $recs = [ sort { $b->{'reporttime'} cmp $a->{'reporttime'} } @$recs ];
+    } else {
+        $recs = [ sort { $b->{'detecttime'} cmp $a->{'detecttime'} } @$recs ];
+    }
+    debug('done...');
+    return($recs);
+}
+
 sub preprocess_routine {
     my $self = shift;
 
@@ -397,7 +432,7 @@ sub preprocess_routine {
     
     if($self->get_goback()){
         debug('sorting '.($#{$recs}+1).' recs...') if($::debug);
-        $recs = _sort_detecttime($recs);
+        $recs = _sort_timestamp($recs,$self->get_rules());
     }
     
     ## TODO -- move this to the threads?
@@ -426,7 +461,7 @@ sub preprocess_routine {
         }
             
         ## TODO -- if we do this, we need to degrade the count somehow...
-        last if($r->{'reporttime_epoch'} < $self->get_goback());
+        last if($r->{'timestamp_epoch'} < $self->get_goback());
         push(@array,$r);
     }
 
@@ -818,35 +853,6 @@ sub throttle {
     
     return($cores * (DEFAULT_THROTTLE_FACTOR() * 2))  if($throttle eq 'high');
     return($cores * DEFAULT_THROTTLE_FACTOR())  if($throttle eq 'medium');
-}
-
-sub _sort_detecttime {
-    my $recs = shift;
-
-    foreach (@{$recs}){
-        delete($_->{'regex'}) if($_->{'regex'});
-        my $dt = $_->{'reporttime'} || $_->{'detecttime'};
-        if($dt){
-            $dt = normalize_timestamp($dt);
-        }
-        unless($dt){
-            $dt = DateTime->from_epoch(epoch => time());
-            if(lc($_->{'detection'}) eq 'hourly'){
-                $dt = $dt->ymd().'T'.$dt->hour.':00:00Z';
-            } elsif(lc($_->{'detection'}) eq 'monthly') {
-                $dt = $dt->year().'-'.$dt->month().'-01T00:00:00Z';
-            } elsif(lc($_->{'detection'} ne 'now')){
-                $dt = $dt->ymd().'T00:00:00Z';
-            } else {
-                $dt = $dt->ymd().'T'.$dt->hms();
-            }
-        }
-        $_->{'reporttime'} = $dt;
-        $_->{'description'} = '' unless($_->{'description'});
-    }
-    ## TODO -- can we get around having to create a new array?
-    my @new = sort { $b->{'reporttime'} cmp $a->{'reporttime'} } @$recs;
-    return(\@new);
 }
 
 1;
