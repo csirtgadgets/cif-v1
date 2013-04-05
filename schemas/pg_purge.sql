@@ -1,9 +1,9 @@
-DELETE FROM archive;
-DELETE FROM hash;
-DELETE FROM domain;
-DELETE FROM infrastructure;
-DELETE FROM url;
-DELETE FROM email;
-DELETE FROM malware;
-DELETE FROM search;
-DELETE FROM feed;
+TRUNCATE archive;
+TRUNCATE hash;
+TRUNCATE domain;
+TRUNCATE infrastructure;
+TRUNCATE url;
+TRUNCATE email;
+TRUNCATE malware;
+TRUNCATE search;
+TRUNCATE feed;
