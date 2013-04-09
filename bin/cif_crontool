@@ -38,7 +38,7 @@ use MIME::Lite;
 use Try::Tiny;
 
 my %opts;
-getopts('z:b:A:N:afdt:T:C:c:p:c:hLS:PF:v:',\%opts);
+getopts('z:b:A:Nafdt:T:C:c:p:c:hLS:PF:v:',\%opts);
 my $period          = $opts{'p'} || 'daily';
 my $throttle        = $opts{'T'} || 'medium';
 my $threads         = $opts{'t'};
@@ -52,10 +52,8 @@ my $start_at        = $opts{'S'};
 my $postprocess     = $opts{'P'};
 my $dir             = $opts{'F'} || '/opt/cif';
 my $admin           = $opts{'A'} || 'root';
-my $fail_open       = $opts{'N'} || 0;
+my $fail_closed     = $opts{'N'};
 my $d_postprocessor = $opts{'z'};
-
-$fail_open = 1 unless(defined($fail_open) && $fail_open == 0);
 
 if(! -e $cron_tool){
     if(-e './bin/'.$cron_tool){
@@ -154,8 +152,8 @@ Advanced:
     -P  --post-process: enable the post-processor
     -F  --FeedDir:      what directory $0 should look at for feed configs (eg: /opt/cif/)
                         if you've installed to a non-standard directory
-    -N  --fail-open:    don't error out if one of the jobs fail, mail the -A admin
-                        (default: $fail_open)
+    -N  --fail-closed:  error out if one of the jobs fail, mail the -A admin
+                        (default: $fail_closed)
     -A  --admin:        designate an admin email address where errors should go if we fail open
                         (default: $admin)
 
@@ -195,9 +193,9 @@ foreach(@crons){
         $cmd .= ' -T '.$throttle;
     }
     $cmd .= ' -F' if($first_run);
-    if($fail_open){
+    if($fail_closed){
         $cmd .= ' -A '.$admin if($admin);
-        $cmd .= ' -N 1' if($fail_open);
+        $cmd .= ' -N 1' if($fail_closed);
     }
     $cmd .= ' -P' if($postprocess);
     if($d_postprocessor){

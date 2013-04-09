@@ -41,7 +41,7 @@ use CIF qw/debug/;
 use Sys::MemInfo qw(totalmem);
 
 my %opts;
-getopts('z:hN:A:s:T:t:dFC:f:r:v:Pp:',\%opts);
+getopts('z:hNA:s:T:t:dFC:f:r:v:Pp:',\%opts);
 our $debug = $opts{'d'} || 0;
 $debug = $opts{'v'} if($opts{'v'});
 
@@ -55,8 +55,10 @@ my $rules_dir    = '/opt/cif/etc';
 my $throttle    = $opts{'T'} || 'medium';
 my $threads     = $opts{'t'};
 my $admin       = $opts{'A'} || 'root';
-my $fail_open   = $opts{'N'} || 0;
+my $fail_closed = $opts{'N'} || 0;
 my $disable_p   = $opts{'z'};
+
+debug('fail closed: '.$fail_closed) if($debug);
 
 if((&totalmem / (1024*1024*1024)) < 1){
     #print "total memory: ".(&totalmem / (1024*1024*1024))."\n";
@@ -137,8 +139,8 @@ Advanced:
                             medium: threads = number of cores
                             high:   threads = number of cores * 2
 
-    -N  --fail-open:        don't error out if one of the jobs fail, mail the -A admin
-                            (default: $fail_open)
+    -N  --fail-closed:      error out if one of the jobs fail, mail the -A $admin
+                            (1|0 -- default 0)
                             
     -A  --admin:            designate an admin email address where errors should go if we fail open
                             (default: $admin)
@@ -177,7 +179,7 @@ unless($err){
 print '[cif-smrt] failure: '.$smrt->get_rules()->{'source'}."\n";
 print $err."\n";
 
-if($fail_open){
+if($fail_closed){
     my $msg = MIME::Lite->new(
         To      => $admin,
         Subject => 'cif-smrt failure: '.$smrt->get_rules()->{'source'}.' -- '.$feed,
