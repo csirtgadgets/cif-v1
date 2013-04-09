@@ -393,19 +393,21 @@ sub _sort_timestamp {
     debug('setting up sort...');
     my $x = 0;
     my $now = DateTime->from_epoch(epoch => time());
+    ## TODO -- walk throught this again
     foreach my $rec (@{$recs}){
         my $dt = $rec->{'detecttime'} || $now;
         my $rt = $rec->{'reporttime'} || $now;
 
+        $dt = normalize_timestamp($dt,$now);
+
         if($refresh){
             $rt = $now;
             $rec->{'timestamp_epoch'} = $now->epoch();
-            
         } else {
             $rt = normalize_timestamp($rt,$now);
-            $rec->{'timestamp_epoch'} = $dt->epoch(),
+            $rec->{'timestamp_epoch'} = $dt->epoch();
         }
-        $dt = normalize_timestamp($dt,$now);
+       
         $rec->{'detecttime'}        = $dt->ymd().'T'.$dt->hms().'Z';
         $rec->{'reporttime'}        = $rt->ymd().'T'.$rt->hms().'Z';
     }
