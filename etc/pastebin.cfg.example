@@ -4,7 +4,6 @@ severity = low
 source = pastebin.com
 restriction = need-to-know
 alternativeid_restriction = public
-detection = daily
 
 [rsa_dump]
 feed = 'http://pastebin.com/raw.php?i=yKSQd5Z5'
