@@ -41,7 +41,7 @@ use CIF qw/debug/;
 use Sys::MemInfo qw(totalmem);
 
 my %opts;
-getopts('z:hNA:s:T:t:dFC:f:r:v:Pp:',\%opts);
+getopts('z:hN:A:s:T:t:dFC:f:r:v:Pp:',\%opts);
 our $debug = $opts{'d'} || 0;
 $debug = $opts{'v'} if($opts{'v'});
 
