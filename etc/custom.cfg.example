@@ -8,7 +8,6 @@ assessment = 'phishing'
 source = 'phishtank.com'
 fields = 'submission_time,url,target,phish_detail_url'
 fields_map = 'detecttime,address,description,alternativeid'
-detection = daily
 severity = 'medium'
 confidence = 85
 restriction = 'need-to-know'
