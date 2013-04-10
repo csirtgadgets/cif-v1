@@ -19,8 +19,8 @@ sub parse {
     # http://stackoverflow.com/questions/5199463/escaping-in-perl-generated-xml/5899049#5899049
     # needs some work, the parser still pukes.
     foreach(@lines){
-        s/(\S+)<(.*<\/\S+>)$/$1&#x3c;$2/g;
-        s/^(<.*>.*)>(.*<\/\S+>)$/$1&#x3e;$2/g;
+        s/(\S+)<(?!\!\[CDATA)(.*<\/\S+>)$/$1&#x3c;$2/g;
+        s/^(<.*>.*)(?<!\]\])>(.*<\/\S+>)$/$1&#x3e;$2/g;
     }
     $content = join("\n",@lines);
     $rss->parse($content);
