@@ -8,6 +8,11 @@ sub parse {
     my $f = shift;
     my $content = shift;
     
+    # fix malformed RSS
+    unless($content =~ /^<\?xml version/){
+        $content = '<?xml version="1.0"?>'."\n".$content;
+    }
+    
     my $rss = XML::RSS->new();
     my @lines = split(/[\r\n]/,$content);
     # work-around for any < > & that is in the feed as part of a url

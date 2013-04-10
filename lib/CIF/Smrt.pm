@@ -303,6 +303,7 @@ sub parse {
     return($err) if($err);
     
     my $return;
+    ## TODO -- this mess will be cleaned up and plugin-ized in v2
     try {
         if($content =~ /^application\/cif/){
             require CIF::Smrt::ParseCifFeed;
@@ -319,7 +320,8 @@ sub parse {
             if($content =~ /^application\/base64\+snappy\+pb\+iodef\n([\S\n]+)\n$/){
                 require CIF::Smrt::ParsePbIodef;
                 $return = CIF::Smrt::ParsePbIodef::parse($f,$content);
-            } elsif($content =~ /<\?xml version=/){
+                # in case they are just sending us <rss...>
+            } elsif($content =~ /^(<\?xml version=|<rss version=)/){
                 if($content =~ /<rss version=/ && !$f->{'nodes'}){
                     require CIF::Smrt::ParseRss;
                     $return = CIF::Smrt::ParseRss::parse($f,$content);
@@ -328,19 +330,18 @@ sub parse {
                     $return = CIF::Smrt::ParseXml::parse($f,$content);
                 }
             } elsif($content =~ /^\[?{/){
-                # possible json content or CIF
-                if($content =~ /^{"status"\:/){
-                    require CIF::Smrt::ParseCIF;
-                    $return = CIF::Smrt::ParseCIF::parse($f,$content);
-                } elsif($content =~ /urn:ietf:params:xmls:schema:iodef-1.0/) {
+                ## TODO -- remove, legacy
+                if($content =~ /urn:ietf:params:xmls:schema:iodef-1.0/) {
                     require CIF::Smrt::ParseJsonIodef;
                     $return = CIF::Smrt::ParseJsonIodef::parse($f,$content);
                 } else {
                     require CIF::Smrt::ParseJson;
                     $return = CIF::Smrt::ParseJson::parse($f,$content);
                 }
-            ## TODO -- fix this; double check it
             } elsif($content =~ /^#?\s?"\S+","\S+"/ && !$f->{'regex'}){
+                # ParseCSV only works on strictly formated CSV files
+                # o/w you should be using ParseDelim and specifying the "delimiter" field
+                # in your config
                 require CIF::Smrt::ParseCsv;
                 $return = CIF::Smrt::ParseCsv::parse($f,$content);
             } else {
