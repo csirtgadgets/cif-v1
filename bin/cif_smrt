@@ -179,7 +179,7 @@ unless($err){
 print '[cif-smrt] failure: '.$smrt->get_rules()->{'source'}."\n";
 print $err."\n";
 
-if($fail_closed){
+if(!$fail_closed){
     my $msg = MIME::Lite->new(
         To      => $admin,
         Subject => 'cif-smrt failure: '.$smrt->get_rules()->{'source'}.' -- '.$feed,
