@@ -295,6 +295,7 @@ sub parse {
     if($self->get_proxy()){
         $f->{'proxy'} = $self->get_proxy();
     }
+    return 'feed does not exist' unless($f->{'feed'});
     debug('pulling feed: '.$f->{'feed'}) if($::debug);
     if($self->get_client_config()){
         $f->{'client_config'} = $self->get_client_config();
@@ -321,7 +322,7 @@ sub parse {
                 require CIF::Smrt::ParsePbIodef;
                 $return = CIF::Smrt::ParsePbIodef::parse($f,$content);
                 # in case they are just sending us <rss...>
-            } elsif($content =~ /^(<\?xml version=|<rss version=)/){
+            } elsif(($f->{'driver'} && $f->{'driver'} eq 'xml') || $content =~ /^(<\?xml version=|<rss version=)/){
                 if($content =~ /<rss version=/ && !$f->{'nodes'}){
                     require CIF::Smrt::ParseRss;
                     $return = CIF::Smrt::ParseRss::parse($f,$content);
