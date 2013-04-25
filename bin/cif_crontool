@@ -52,7 +52,7 @@ my $start_at        = $opts{'S'};
 my $postprocess     = $opts{'P'};
 my $dir             = $opts{'F'} || '/opt/cif';
 my $admin           = $opts{'A'} || 'root';
-my $fail_closed     = $opts{'N'};
+my $fail_closed     = $opts{'N'} || 0;
 my $d_postprocessor = $opts{'z'};
 
 if(! -e $cron_tool){
