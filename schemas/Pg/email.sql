@@ -30,3 +30,7 @@ ALTER TABLE email_whitelist ADD PRIMARY KEY (id);
 DROP TABLE IF EXISTS email_spam;
 CREATE TABLE email_spam () INHERITS (email);
 ALTER TABLE email_spam ADD PRIMARY KEY (id);
+
+DROP TABLE IF EXISTS email_spamvertising;
+CREATE TABLE email_spamvertising () INHERITS (email);
+ALTER TABLE email_spamvertising ADD PRIMARY KEY (id);
