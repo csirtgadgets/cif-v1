@@ -70,7 +70,6 @@ sub insert {
     $data->{'data'} = $msg;    
     
     foreach my $p (@plugins){
-        #debug($p);
         my ($pid,$err);
         try {
             ($err,$pid) = $p->insert($data);
@@ -79,6 +78,7 @@ sub insert {
         };
         if($err){
             $class->dbi_rollback() unless($class->db_Main->{'AutoCommit'});
+            warn $err;
             return $err;
         }
     }
