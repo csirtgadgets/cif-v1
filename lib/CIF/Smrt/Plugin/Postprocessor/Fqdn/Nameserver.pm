@@ -38,6 +38,10 @@ sub process {
                 $guid = $_->get_content();
             }
         }
+        
+        my $altids = $i->get_RelatedActivity();
+        $altids = $altids->get_IncidentID() if($altids);
+        
         foreach my $e (@{$i->get_EventData()}){
             $restriction = $e->get_restriction() if($e->get_restriction());
             my @flows = (ref($e->get_Flow()) eq 'ARRAY') ? @{$e->get_Flow()} : $e->get_Flow();
@@ -74,7 +78,7 @@ sub process {
                                     description     => 'nameserver',
                                     confidence      => $confidence,
                                     RelatedActivity => RelatedActivityType->new({
-                                        IncidentID  => $i->get_IncidentID(),
+                                        IncidentID  => [ $i->get_IncidentID() ],
                                         restriction => $restriction,
                                     }),
                                     restriction     => $restriction,
@@ -90,9 +94,7 @@ sub process {
                                     }
                                 }
                                 push(@new_incidents,@{$new->get_Incident()});
-                                my $altids = $i->get_RelatedActivity();
-                                push(@$altids, RelatedActivityType->new({IncidentID => $id, restriction => $restriction }));
-                                $i->set_RelatedActivity($altids);
+                                push(@$altids,$id);
                             }
                         }
                     }
@@ -105,6 +107,13 @@ sub process {
                 }
                 
             }
+        }
+        if($altids){
+            $i->set_RelatedActivity(
+                RelatedActivityType->new({
+                    IncidentID  => $altids,
+                })
+            );
         }
     }
     return(\@new_incidents);

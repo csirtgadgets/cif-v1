@@ -16,8 +16,6 @@ sub process {
     foreach my $i (@{$data->get_Incident()}){
         next unless($i->get_EventData());
         
-        my $altids = $i->get_RelatedActivity();
-        
         my $restriction = $i->get_restriction();
         my $assessment = $i->get_Assessment();
         
@@ -32,6 +30,9 @@ sub process {
                 $guid = $_->get_content();
             }
         }
+        
+        my $altids = $i->get_RelatedActivity();
+        $altids = $altids->get_IncidentID() if($altids);
         
         foreach my $e (@{$i->get_EventData()}){
             $restriction = $e->get_restriction() if($e->get_restriction());
@@ -61,21 +62,14 @@ sub process {
                                     assessment  => $r->{'assessment'},
                                     description => $r->{'description'},
                                     confidence  => 95,
-                                    restriction     => $restriction,
-                                    RelatedActivity => RelatedActivityType->new({
-                                        IncidentID  => IncidentIDType->new({
-                                            content     => 'http://www.spamhaus.org/query/dbl?domain='.$addr->get_content(),
-                                            instance    => 'dbl.spamhaus.org',
-                                            name        => 'spamhaus.org',
-                                            restriction => RestrictionType::restriction_type_public(),
-                                        }),
-                                    }),
+                                    restriction => $restriction,
                                     Contact     => $i->get_Contact(),
                                     guid        => $guid,
-                                    
+                                    alternativeid               => 'http://www.spamhaus.org/query/dbl?domain='.$addr->get_content(),
+                                    alternativeid_restriction   => 'public',
                                 });
                                 push(@new_ids,@{$new->get_Incident()}[0]);
-                                push(@$altids, RelatedActivityType->new({IncidentID => $id, restriction => $restriction }));
+                                push(@$altids, $id);
                                 
                             }
                         }
@@ -83,9 +77,14 @@ sub process {
                 }
             }
         }
-        $i->set_RelatedActivity($altids);
+        if($altids){
+            $i->set_RelatedActivity(
+                RelatedActivityType->new({
+                    IncidentID  => $altids,
+                })
+            );
+        }
     }
-    #push(@{$data->get_Incident()},@new_ids);
     return(\@new_ids);
 }
 

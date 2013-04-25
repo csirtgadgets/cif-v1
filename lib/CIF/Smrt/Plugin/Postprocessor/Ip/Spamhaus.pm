@@ -29,6 +29,8 @@ sub process {
         return if($impact->get_content()->get_content() =~ /^scan/);
         
         my $altids = $i->get_RelatedActivity();
+        $altids = $altids->get_IncidentID() if($altids);
+        
         foreach my $e (@{$i->get_EventData()}){
             $restriction = $e->get_restriction() if($e->get_restriction());
             my @flows = (ref($e->get_Flow()) eq 'ARRAY') ? @{$e->get_Flow()} : $e->get_Flow();
@@ -63,26 +65,13 @@ sub process {
                                     description     => $rr->{'description'},
                                     confidence      => 95,
                                     restriction     => $restriction,
-                                    RelatedActivity => [
-                                        RelatedActivityType->new({
-                                            IncidentID  => IncidentIDType->new({
-                                                content     => 'http://www.spamhaus.org/query/bl?ip='.$addr->get_content(),
-                                                instance    => 'zen.spamhaus.org',
-                                                name        => 'spamhaus.org',
-                                                restriction => RestrictionType::restriction_type_public(),
-                                            }),
-                                        }),
-                                        RelatedActivityType->new({
-                                            IncidentID  => $i->get_IncidentID(),
-                                            restrcition => $restriction,
-                                        })
-                                    ],
                                     Contact         => $i->get_Contact(),
                                     guid            => iodef_guid($i),
-                                    
+                                    alternativeid               => 'http://www.spamhaus.org/query/bl?ip='.$addr->get_content(),
+                                    alternativeid_restriction   => 'public',
                                 });
                                 push(@new_ids,@{$new->get_Incident()}[0]);
-                                push(@$altids, RelatedActivityType->new({IncidentID => $new_id }));
+                                push(@$altids, $new_id);
                                 
                             }
                         }
@@ -90,7 +79,13 @@ sub process {
                 }
             }
         }
-        $i->set_RelatedActivity($altids) if($altids);
+        if($altids){
+            $i->set_RelatedActivity(
+                RelatedActivityType->new({
+                    IncidentID  => $altids,
+                })
+            );
+        }
     }
     return(\@new_ids);
 }

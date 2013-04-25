@@ -24,7 +24,6 @@ sub process {
         next unless($class->is_url($_));
         $found = 1;
     }
-    
     return unless($found);
     
     my $array;
