@@ -44,6 +44,10 @@ DROP TABLE IF EXISTS domain_spamvertising;
 CREATE TABLE domain_spamvertising () INHERITS (domain);
 ALTER TABLE domain_spamvertising ADD PRIMARY KEY (id);
 
+DROP TABLE IF EXISTS domain_spam;
+CREATE TABLE domain_spam () INHERITS (domain);
+ALTER TABLE domain_spam ADD PRIMARY KEY (id);
+
 DROP TABLE IF EXISTS domain_passive;
 CREATE TABLE domain_passive () INHERITS (domain);
 ALTER TABLE domain_passive ADD PRIMARY KEY (id);

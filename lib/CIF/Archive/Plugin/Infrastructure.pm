@@ -58,6 +58,7 @@ sub insert {
                 foreach my $a (@$addresses){
                     # we have to check for both because of urls that look like:
                     # 1.1.1.1/abc.html
+                    warn $a->get_content();
                     next unless($a->get_content() =~ /^$RE{'net'}{'IPv4'}$/ || $a->get_content() =~ /^$RE{'net'}{'CIDR'}{'IPv4'}$/);
                    
                     my $id;

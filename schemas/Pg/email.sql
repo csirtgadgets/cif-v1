@@ -26,3 +26,7 @@ ALTER TABLE email_registrant ADD PRIMARY KEY (id);
 DROP TABLE IF EXISTS email_whitelist;
 CREATE TABLE email_whitelist () INHERITS (email);
 ALTER TABLE email_whitelist ADD PRIMARY KEY (id);
+
+DROP TABLE IF EXISTS email_spam;
+CREATE TABLE email_spam () INHERITS (email);
+ALTER TABLE email_spam ADD PRIMARY KEY (id);

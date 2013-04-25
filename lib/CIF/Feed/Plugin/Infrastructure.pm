@@ -15,7 +15,7 @@ __PACKAGE__->sequence('infrastructure_id_seq');
 my @plugins = __PACKAGE__->plugins();
 
 # these are the built-in indicies
-push(@plugins, ('suspicious','botnet','malware','fastflux','phishing','scan','whitelist','passive'));
+push(@plugins, ('suspicious','botnet','malware','fastflux','phishing','scan','whitelist','passive','spam','spamvirtizing'));
 
 ## TODO -- IPv6
 my @perm_whitelist = (
