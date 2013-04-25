@@ -6,9 +6,9 @@ sub parse {
     my $f = shift;
     my $content = shift;
 
-    my @feed = @{from_json($content)};
-    my @fields = split(',',$f->{'fields'});
-    my @fields_map = split(',',$f->{'fields_map'});
+    my @feed        = @{from_json($content)};
+    my @fields      = split(',',$f->{'fields'});
+    my @fields_map  = split(',',$f->{'fields_map'});
     my @array;
     foreach my $a (@feed){
         foreach (0 ... $#fields_map){
