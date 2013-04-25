@@ -12,7 +12,7 @@ sub prepare {
     my $class = shift;
     my $data = shift;
     
-    my $impacts = iodef_impacts($data->{'data'});
+    my $impacts = iodef_impacts($data);
     foreach (@$impacts){
         return 1 if(lc($_->get_content->get_content()) =~ /^scan(?:(ning|ner))/);
     }

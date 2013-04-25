@@ -6,6 +6,7 @@ use warnings;
 
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 use Iodef::Pb::Simple qw(:all);
+use CIF qw/debug/;
 
 my @plugins = __PACKAGE__->plugins();
 
@@ -30,7 +31,7 @@ sub insert {
     my @ids;
     foreach my $i (@{$data->{'data'}->get_Incident()}){
         foreach(@plugins){
-            if($_->prepare($data)){
+            if($_->prepare($i)){
                 $class->table($_->table());
             }
         }

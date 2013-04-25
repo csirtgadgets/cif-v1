@@ -7,6 +7,7 @@ use warnings;
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 use Iodef::Pb::Simple qw(iodef_addresses iodef_confidence iodef_guid);
 use Digest::SHA qw/sha1_hex/;
+use CIF qw/debug/;
 
 __PACKAGE__->table('domain');
 __PACKAGE__->columns(Primary => 'id');
