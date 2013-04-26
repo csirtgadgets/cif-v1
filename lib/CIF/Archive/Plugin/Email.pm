@@ -20,7 +20,7 @@ sub is_email {
     my $e = shift;
     return unless($e);
     return if($e =~ /^(ftp|https?):\/\//);
-    return unless(lc($e) =~ /^[a-z0-9_.-]+\@[a-z0-9.-]+\.[a-z0-9.-]{2,5}$/);
+    return unless(lc($e) =~ /^([\w+.-_]+\@[a-z0-9.-]+\.[a-z0-9.-]{2,8})$/);
     return(1);
 }
 
@@ -60,7 +60,7 @@ sub insert {
                     reporttime  => $reporttime,
                 });
             }
-            $addr =~ /\@([a-z0-9.-]+\.[a-z0-9.-]{2,5}$)/;
+            $addr =~ /^([\w+.-_]+\@[a-z0-9.-]+\.[a-z0-9.-]{2,8})$/;
             $addr = $1;
             my @a1 = reverse(split(/\./,$addr));
             my @a2 = @a1;
