@@ -586,7 +586,7 @@ sub process {
             debug('return msg received') if($::debug && $::debug > 1);
             my $msg = $return->recv();
             if($msg->data() =~ /^ERROR: /){
-                print $msg->data()."\n";
+                $err = $msg->data();
                 $sent_recs = -1;
             } else {
                 $msg = MessageType->decode($msg->data());
@@ -609,6 +609,8 @@ sub process {
     $ctrl->close();
     $return->close();
     $context->term();
+    
+    return $err unless($sent_recs > -1);
     return(undef,1);
 }
 
