@@ -102,6 +102,7 @@ sub process {
                                     guid            => $guid,
                                     portlist        => $portlist,
                                     ip_protocol     => $protocol,
+                                    AlternativeID   => $i->get_AlternativeID(),
                                 });
                                 # block against CDN's that might thrash us into a for-loop of darkness
                                 if($confidence > 15){

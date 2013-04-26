@@ -83,6 +83,7 @@ sub process {
                                     }),
                                     restriction     => $restriction,
                                     guid            => $guid,
+                                    AlternativeID   => $i->get_AlternativeID(),
                                     
                                 });
                                 # block against CDN's that might thrash us into a for-loop of darkness

@@ -60,6 +60,7 @@ sub process {
                         restrcition => $restriction,
                 }),
                 guid            => iodef_guid($i),
+                AlternativeID   => $i->get_AlternativeID(),
                 
             });
             push(@new_ids,@{$new->get_Incident()}[0]);

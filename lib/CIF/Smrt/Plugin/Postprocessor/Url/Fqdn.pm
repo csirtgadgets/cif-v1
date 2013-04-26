@@ -38,8 +38,8 @@ sub process {
             }
         }
         
-        my $altids = $i->get_RelatedActivity();
-        $altids = $altids->get_IncidentID() if($altids);
+        my $rids = $i->get_RelatedActivity();
+        $rids = $rids->get_IncidentID() if($rids);
         
         foreach my $e (@{$i->get_EventData()}){
             $restriction = $e->get_restriction() if($e->get_restriction());
@@ -86,23 +86,24 @@ sub process {
                                 }),
                                 restriction     => $restriction,
                                 guid            => $guid, 
+                                AlternativeID   => $i->get_AlternativeID(),
                             });
                             foreach (@postprocessors){
                                 my $ret = $_->process($smrt,$new);
                                 push(@new_incidents,@$ret) if($ret);
                             }
                             push(@new_incidents,@{$new->get_Incident()});
-                            push(@$altids,$id);
+                            push(@$rids,$id);
                             
                         }
                     }
                 }
             }
         }
-        if($altids){
+        if($rids){
             $i->set_RelatedActivity(
                 RelatedActivityType->new({
-                    IncidentID  => $altids,
+                    IncidentID  => $rids,
                 })
             );
         }
