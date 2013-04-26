@@ -204,9 +204,7 @@ foreach(@crons){
     
     warn $cmd if($debug);
     my $ret = system($cmd);
-    unless(defined($ret) && $ret == 0 || $ret == 11 || $ret == 2){
-        die($!);
-    }
+    cleanup() unless(defined($ret) && $ret == 0 || $ret == 11 || $ret == 2);
     die("\ninterrupted") if($ret == 2);
 }
 remove_lock();
@@ -228,7 +226,7 @@ sub bail {
     exit(-1);
 }
 
-sub exit {
+sub _exit {
     print "\n\nCaught Interrupt (^C), Aborting\n";
     remove_lock();
     exit(1);

@@ -185,7 +185,11 @@ if(!$fail_closed){
         Subject => 'cif-smrt failure: '.$smrt->get_rules()->{'source'}.' -- '.$feed,
         Data    => "$err\nfeed: $feed"
     )->send();
-    exit(0);
+    if($err =~ /contact system administrator/){
+        exit(-1);
+    } else {
+        exit(0);
+    }
 } else {
     exit(-1) ;
 }
