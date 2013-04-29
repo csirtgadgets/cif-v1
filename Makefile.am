@@ -37,6 +37,9 @@ initdb:
 tables:
 	-( cd libcif-dbi && make tables )
 
+rebuilddb:
+	-( cd libcif-dbi && make rebuilddb )
+
 cif-router-install:
 	-( cd cif-router && make install )
 
