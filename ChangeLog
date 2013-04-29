@@ -1,5 +1,13 @@
 Revision history for libcif
 
+0.99-RC3-00 2013-05
+    - swiched bin/cif to use env instead of /usr/bin/perl (better for other UNIX's)
+    - added no_decode and new_only flags to client (see doc)
+    - added JSON STDIN support (for calling from cmdline or other langs)
+    - added exclude_assessment filter flag to client (see doc)
+    - repurposed -p 'raw' from json to native array struct
+    - misc other fixes
+
 0.99.06 2012-12
     - minor query fixes for md5 hashes
     - backported 'advanced config'
