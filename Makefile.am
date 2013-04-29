@@ -47,14 +47,17 @@ create_index:
 	[ -d $(DB_INDEX_LOC) ] || mkdir -p $(DB_INDEX_LOC) && chown $(DB_UNIXOWNER):$(DB_UNIXOWNER) $(DB_INDEX_LOC) 
 	$(PSQL) -U $(DB_DBA) -h $(DB_HOST) -p $(DB_PORT) -d $(DB_DATABASE) -c "CREATE TABLESPACE index LOCATION '$(DB_INDEX_LOC)'"
 
-tables: create_tables create_indicies
+tables: create_apikeys_table create_tables create_indicies
 
 create_tables:
-	-( cd schemas/$(DB_TYPE) && find -type f -print | grep -v index | sort ) | while read file ; do \
+	-( cd schemas/$(DB_TYPE) && find -type f -print | grep -v index | grep -v apikeys | sort ) | while read file ; do \
     $(PSQL) -U $(DB_DBA) -d $(DB_DATABASE) -h $(DB_HOST) -p $(DB_PORT) < "schemas/$(DB_TYPE)/$$file" ; \
     done
 	@echo "Tables built"
-    
+
+create_apikeys_table:
+	$(PSQL) -U $(DB_DBA) -d $(DB_DATABASE) -h $(DB_HOST) -p $(DB_PORT) < "schemas/$(DB_TYPE)/apikeys.sql"
+
 create_indicies:
 	-( cd schemas/$(DB_TYPE)/index && find -type f -print | sort ) | while read file ; do \
     $(PSQL) -U $(DB_DBA) -d $(DB_DATABASE) -h $(DB_HOST) -p $(DB_PORT) < "schemas/$(DB_TYPE)/index/$$file" ; \
@@ -74,6 +77,8 @@ drop_index:
 	
 purgedb:
 	$(PSQL) -U $(DB_DBA) -h $(DB_HOST) -p $(DB_PORT) -d $(DB_DATABASE) < "schemas/pg_purge.sql"
+
+rebuilddb: create_tables create_indicies
 
 clean:
 	rm Makefile
