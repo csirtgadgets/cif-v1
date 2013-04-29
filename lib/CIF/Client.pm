@@ -114,6 +114,7 @@ sub search {
     debug('generating query') if($::debug);
     foreach my $q (@{$args->{'query'}}){
         debug('query: '.$q);
+        debug('query sha1: '.sha1_hex($q));
         my ($err,$ret) = CIF::Client::Query->new({
             query       => $q,
             apikey      => $args->{'apikey'},
