@@ -1,5 +1,11 @@
 Revision history for cif-router
 
+0.99-RC3    2013-05
+    - minor response fixes
+    - throttling option for larger data-sets when someone wants to use the legacy api
+    - json output cleanup
+    - minor installation fixes
+
 0.99.05 2012-10-31
     - added legacy json support module
 
