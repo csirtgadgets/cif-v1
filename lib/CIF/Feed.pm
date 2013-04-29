@@ -64,7 +64,7 @@ sub init {
     $self->set_start_time($start_time->ymd().'T'.$start_time->hms().'Z');
     
     $self->set_restriction(normalize_restriction($args->{'restriction'} || $self->get_config->{'restriction'} || 'private'));
-    $self->set_feed_retention($args->{'feed_retention'} || $self->get_config->{'feed_retention'} || 3);
+    $self->set_feed_retention($args->{'feed_retention'} || $self->get_config->{'feed_retention'} || 7);
     return(undef,1);
 }
 
@@ -83,7 +83,7 @@ sub init_config {
     ## TODO: add groups here 
     
     $self->set_limit(       $args->{'limit'}        || $self->get_config->{'limit'}         || 10000);
-    $self->set_limit_days(  $args->{'limit_days'}   || $self->get_config->{'limit_days'}    || 3);
+    $self->set_limit_days(  $args->{'limit_days'}   || $self->get_config->{'limit_days'}    || 7);
     
     if(my $roles = $args->{'roles'} || $self->get_config->{'roles'}){
         unless(ref($roles) eq 'ARRAY'){
