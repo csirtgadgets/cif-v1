@@ -1,6 +1,17 @@
 Revision history for cif-smrt
 
-0.99.04 2013
+0.99-RC3-00 2013-05
+    - fixes to RelatedActivity and AlternativeID via the IODEF spec
+    - fixes to the "fail open" flags
+    - cleaned up ParseXML code
+    - [ahoying] cleaned up to ParseRSS code [https://github.com/collectiveintel/cif-smrt/issues/52]
+    - added carboncopy features (along with multi-iodef array responses from iodef-pb-simple)
+    - pushed "sharewith" / "carboncopy" down to iodef-pb-simple
+    - [akreffett] cleaned up http proxy support [https://github.com/collectiveintel/cif-smrt/issues/39]
+    - added LWPx::ParanoidAgent support (better timeout support if a feed pull get stuck)
+    - whitelist urls bugfix
+
+0.99.04 2013-01
     - added whitelist_url creation to makefile.am
     - minor doc fixes
     - added proxy support http://code.google.com/p/collective-intelligence-framework/issues/detail?id=159
