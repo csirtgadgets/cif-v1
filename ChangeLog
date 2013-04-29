@@ -1,6 +1,47 @@
 Revision history for cif-v1
 
-1.0-RC2 2013-01
+v0.99-RC3 2013-05
+
+    [libcif]
+
+    - swiched bin/cif to use env instead of /usr/bin/perl (better for other UNIX's)
+    - added no_decode and new_only flags to client (see doc)
+    - added JSON STDIN support (for calling from cmdline or other langs)
+    - added exclude_assessment filter flag to client (see doc)
+    - repurposed -p 'raw' from json to native array struct
+    - misc other fixes
+
+    [libcif-dbi]
+
+    - misc doc fixes to cmd line tools
+    - added rename function to cif_apikeys
+    - security fix to uuid-specific lookup
+    - improved make purgedb arguments (from DELETE to TRUNCATE)
+    - fixed spam and spamvirtising schemas
+    - misc regex fixes
+    - added make rebuilddb command that rebuilds all schemas with the exception of apikeys and groups
+    - changed default feed retention policies
+
+    [cif-smrt]
+
+    - fixes to RelatedActivity and AlternativeID via the IODEF spec
+    - fixes to the "fail open" flags
+    - cleaned up ParseXML code
+    - [ahoying] cleaned up to ParseRSS code [https://github.com/collectiveintel/cif-smrt/issues/52]
+    - added carboncopy features (along with multi-iodef array responses from iodef-pb-simple)
+    - pushed "sharewith" / "carboncopy" down to iodef-pb-simple
+    - [akreffett] cleaned up http proxy support [https://github.com/collectiveintel/cif-smrt/issues/39]
+    - added LWPx::ParanoidAgent support (better timeout support if a feed pull get stuck)
+    - whitelist urls bugfix
+
+    [cif-router]
+
+    - minor response fixes
+    - throttling option for larger data-sets when someone wants to use the legacy api
+    - json output cleanup
+    - minor installation fixes
+
+v0.99-RC2 2013-01
     - bugfix to whitelist_urls
     - bugfixes to the way cif-router and libcif handle default limits
     - added Text-CSV dep check
