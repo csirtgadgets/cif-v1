@@ -10,6 +10,8 @@ require LWP::UserAgent;
 use Try::Tiny;
 use JSON::XS;
 
+our $AGENT = 'libcif/'.$CIF::VERSION.' (collectiveintel.org)';
+
 __PACKAGE__->follow_best_practice();
 __PACKAGE__->mk_accessors(qw(config));
 
@@ -35,7 +37,7 @@ sub new {
         $self->proxy(['http','https'],$self->get_config->{'proxy'});
     }
     
-    $self->agent('libcif/'.$CIF::VERSION);
+    $self->agent($AGENT);
 
     return($self);
 }
