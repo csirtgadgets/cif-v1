@@ -3,9 +3,7 @@ package CIF::Smrt::Plugin::Pull::Http;
 use strict;
 use warnings;
 
-# used for LWP user-agent version
-# we should pull from higher up
-our $VERSION = '1.0';
+our $AGENT = 'cif-smrt/'.$CIF::VERSION.' (collectiveintel.org)';
 
 sub pull {
     my $class = shift;
@@ -14,6 +12,8 @@ sub pull {
     return if($f->{'cif'});
     
     my $timeout = $f->{'timeout'} || 300;
+    
+    die $AGENT;
 
     # If a proxy server is set in the configuration use LWP::UserAgent
     # since LWPx::ParanoidAgent does not allow the use of proxies
@@ -21,14 +21,14 @@ sub pull {
     my $ua;
     if ($f->{'proxy'}) {
         require LWP::UserAgent;
-        $ua = LWP::UserAgent->new(agent => 'CIF/'.$VERSION);
+        $ua = LWP::UserAgent->new(agent => $AGENT);
         $ua->env_proxy();
         $ua->proxy(['http','https','ftp'], $f->{'proxy'});
     } else {
         # we use this instead of ::UserAgent, it does better
         # overall timeout checking
         require LWPx::ParanoidAgent;
-        $ua = LWPx::ParanoidAgent->new(agent => 'CIF/'.$VERSION);
+        $ua = LWPx::ParanoidAgent->new(agent => $AGENT);
     }
     
     $ua->timeout($timeout);
