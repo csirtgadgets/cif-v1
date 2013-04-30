@@ -15,24 +15,23 @@ sub pull {
     
     my $timeout = $f->{'timeout'} || 300;
 
-    # we use this instead of ::UserAgent, it does better
-    # overall timeout checking
-    require LWPx::ParanoidAgent;
-    my $ua = LWPx::ParanoidAgent->new(agent => 'CIF/'.$VERSION);
-    
-    # we can't use this yet:
-    # https://rt.cpan.org/Public/Bug/Display.html?id=44569
-    # it doesn't respect mirroring
-    #require LWP::UserAgent;
-    #my $ua = LWP::UserAgent->new(agent => 'CIF/'.$VERSION);
+    # If a proxy server is set in the configuration use LWP::UserAgent
+    # since LWPx::ParanoidAgent does not allow the use of proxies
+    # We'll assume that the proxy is sane and handles timeouts and redirects and such appropriately.
+    my $ua;
+    if ($f->{'proxy'}) {
+        require LWP::UserAgent;
+        $ua = LWP::UserAgent->new(agent => 'CIF/'.$VERSION);
+        $ua->env_proxy();
+        $ua->proxy(['http','https','ftp'], $f->{'proxy'});
+    } else {
+        # we use this instead of ::UserAgent, it does better
+        # overall timeout checking
+        require LWPx::ParanoidAgent;
+        $ua = LWPx::ParanoidAgent->new(agent => 'CIF/'.$VERSION);
+    }
     
     $ua->timeout($timeout);
-    
-    # load up proxy if we have it
-    $ua->env_proxy();
-    if($f->{'proxy'}){
-        $ua->proxy(['http','https','ftp'], $f->{'proxy'});
-    }
     
     # work-around for what appears to be a threading / race condition
     $ua->max_redirect(0) if($f->{'feed'} =~ /^https/);
