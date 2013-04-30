@@ -12,8 +12,6 @@ sub pull {
     return if($f->{'cif'});
     
     my $timeout = $f->{'timeout'} || 300;
-    
-    die $AGENT;
 
     # If a proxy server is set in the configuration use LWP::UserAgent
     # since LWPx::ParanoidAgent does not allow the use of proxies
