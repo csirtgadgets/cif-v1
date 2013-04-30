@@ -29,7 +29,7 @@ sub process {
         ## TODO -- this could cause problems based on what comes in through the api
         ## feeds we wanna default higher than regular searches... i think..?
         ## should this be set server side?
-        confidence  => $args->{'confidence'} || 95,
+        confidence  => defined($args->{'confidence'}) ? $args->{'confidence'} : 95,
     };
 
     return(undef,$query);  
