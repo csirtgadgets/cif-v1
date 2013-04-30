@@ -41,7 +41,7 @@ sub new {
         $args->{'limit'}        = $qq->{'limit'} if($qq->{'limit'});
         $args->{'description'}  = $qq->{'description'} if($qq->{'description'});
         $args->{'feed'}         = $qq->{'feed'} if($qq->{'feed'});
-        $args->{'confidence'}   = $qq->{'confidence'} if($qq->{'confidence'});
+        $args->{'confidence'}   = (defined($qq->{'confidence'})) ? $qq->{'confidence'} : 0;
         
         $qq = MessageType::QueryStruct->new({
             query   => $qq->{'query'},

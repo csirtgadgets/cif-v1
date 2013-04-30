@@ -55,7 +55,7 @@ my $input       = $opts{'i'};
 
 # query options
 my $nolog       = $opts{'n'} || 0;
-my $confidence  = $opts{'c'} || 0;
+my $confidence  = $opts{'c'};
 my $guid        = $opts{'g'};
 my $limit       = $opts{'l'};
 
@@ -247,6 +247,7 @@ debug('formatting as '.ucfirst($plugin).'...');
 $fields = [ split(/,/,$fields) ] if($fields);
 
 my @text;
+
 foreach my $feed (0 ... $#{$feeds}){
     my $x = $feed;
     $feed = @{$feeds}[$feed];
