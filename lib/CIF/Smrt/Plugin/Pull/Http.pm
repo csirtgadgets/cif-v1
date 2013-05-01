@@ -16,8 +16,9 @@ sub pull {
     # If a proxy server is set in the configuration use LWP::UserAgent
     # since LWPx::ParanoidAgent does not allow the use of proxies
     # We'll assume that the proxy is sane and handles timeouts and redirects and such appropriately.
+    # LWPx::ParanoidAgent doesn't work well with Net-HTTP/TLS timeouts just yet
     my $ua;
-    if ($f->{'proxy'}) {
+    if ($f->{'proxy'} || $f->{'feed'} =~ /^https/) {
         require LWP::UserAgent;
         $ua = LWP::UserAgent->new(agent => $AGENT);
         $ua->env_proxy();
@@ -34,6 +35,15 @@ sub pull {
     # work-around for what appears to be a threading / race condition
     $ua->max_redirect(0) if($f->{'feed'} =~ /^https/);
 
+    if(defined($f->{'verify_tls'}) && $f->{'verify_tls'} == 0){
+        $ua->ssl_opts(SSL_verify_mode => 'SSL_VERIFY_NONE');
+    } else {
+        $ua->ssl_opts(SSL_verify_mode => 'SSL_VERIFY_PEER');
+    }
+    
+    # work-around for a bug in LWP::UserAgent
+    delete($ua->{'ssl_opts'}->{'verify_hostname'});
+
     my $content;
     if($f->{'feed_user'}){
        my $req = HTTP::Request->new(GET => $f->{'feed'});
@@ -44,10 +54,6 @@ sub pull {
        }
        $content = $ress->decoded_content();
     } else {
-        if(defined($f->{'verify_tls'}) && $f->{'verify_tls'} == 0){
-            $ua->ssl_opts(SSL_verify_mode => 'SSL_VERIFY_NONE');
-            $ua->ssl_opts(verify_hostname => 0);
-        }
         my $r;
         if($f->{'mirror'}){
             $f->{'feed'} =~ m/\/([a-zA-Z0-9._-]+)$/;
