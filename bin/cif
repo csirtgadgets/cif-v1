@@ -112,6 +112,7 @@ Nonstandard Options:
     -z                      compact address field to 32 chars, applies only to defalt table output, default: 1 (0 turns it off)
     -I  --round-confidence: round (down) confidence to the nearest integer, default 0.
     -m                      return only the results where "\$DETECTTIME >= \$TODAY (UTC)" (the most recent results from a feed)
+    -F  --filter-me:        exclude results based on my apikey (usually logged searches)
 
 Example Queries:
 
