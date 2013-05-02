@@ -41,12 +41,18 @@ sub parse {
     foreach my $node (@nodes){
         my $h = {};
         map { $h->{$_} = $f->{$_} } keys %$f;
+        my $found = 0;
         if(@elements_map){
             foreach my $e (0 ... $#elements_map){
                 my $x = $node->findvalue('./'.$elements[$e]);
                 next unless($x);
-                if(my $r = $regex{$e}){
-                    $h->{$elements_map[$e]} = $x if($x =~ $r);
+                if(my $r = $regex{$elements[$e]}){
+                    if($x =~ $r){
+                        $h->{$elements_map[$e]} = $x;
+                        $found = 1;
+                    } else {
+                        $found = 0;
+                    }
                 } else {
                     $h->{$elements_map[$e]} = $x
                 }
@@ -55,14 +61,19 @@ sub parse {
             foreach my $e (0 ... $#attributes_map){       
                 my $x = $node->getAttribute($attributes[$e]);
                 next unless($x);
-                if(my $r = $regex{$e}){
-                    $h->{$attributes_map[$e]} = $x if($x =~ $r);
+                if(my $r = $regex{$attributes[$e]}){
+                    if($x =~ $r){
+                        $h->{$attributes_map[$e]} = $x;
+                        $found = 1;
+                    } else {
+                        $found = 0;
+                    }
                 } else {
                     $h->{$attributes_map[$e]} = $x;
                 }
             }
         }
-        push(@array,$h);
+        push(@array,$h) if($found);
     }
     return(\@array);
 }
