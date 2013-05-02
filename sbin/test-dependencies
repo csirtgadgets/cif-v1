@@ -175,7 +175,7 @@ Iodef::Pb::Simple 0.18
 Net::Abuse::Utils 0.13
 Net::Abuse::Utils::Spamhaus 0.04
 Text::CSV 1.18
-LWPx::ParanoidAgent 1.08
+LWPx::ParanoidAgent 1.09
 .
 
 if ($args{'download'}) {
