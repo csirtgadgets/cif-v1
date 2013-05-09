@@ -52,7 +52,7 @@ sub retrieve {
     return($recs[0]);
 }
 
-sub vaccum {
+sub vacuum {
     my $class = shift;
     my $args = shift;
     
@@ -61,7 +61,7 @@ sub vaccum {
     my ($ret,$err);
     
     ## TODO -- try catch?
-    $ret = $class->sql_vaccum->execute($ts);
+    $ret = $class->sql_vacuum->execute($ts);
     $class->dbi_commit() unless($class->db_Main->{'AutoCommit'});
     return (undef,$ret);
 }
@@ -74,7 +74,7 @@ __PACKAGE__->set_sql('retrieve_uuid' => qq{
     LIMIT 1
 });
 
-__PACKAGE__->set_sql('vaccum' => qq{
+__PACKAGE__->set_sql('vacuum' => qq{
     DELETE FROM __TABLE__
     WHERE reporttime <= ?;
 });

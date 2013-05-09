@@ -51,8 +51,8 @@ my $limit_days      = $opts{'D'} || 7;
 my $limit           = $opts{'l'} || 50000;
 my $mutex           = $opts{'L'} || '/tmp/cif_feed.lock';
 my $restriction     = $opts{'r'} || 'private';
-my $vaccum_only     = $opts{'V'};
-my $vaccum_hash     = $opts{'H'};
+my $vacuum_only     = $opts{'V'};
+my $vacuum_hash     = $opts{'H'};
 
 my ($err,$obj) = CIF::Feed->new({
     config          => $config,
@@ -86,7 +86,7 @@ Advanced Usage:
     -R  --role:         run as a specific "role" (eg: group1_role_key)
     -S  --specific:     generate a specific feed (eg: infrastructure, domain, etc)
     -L  --mutex:        specify a different lockfile location, default: $mutex
-    -V  --vaccum-only:  don't generate feeds, just vaccum the archive
+    -V  --vacuum-only:  don't generate feeds, just vacuum the archive
 
 Examples:
 
@@ -126,7 +126,7 @@ unless(defined($ret) && $ret == 0){
     die($!);
 }
 
-unless($vaccum_only){
+unless($vacuum_only){
     foreach my $feed (@{$obj->get_feeds()}){
         debug('processing: '.$feed);
         my ($err2,$ret) = $obj->process($feed);
@@ -141,8 +141,8 @@ $ret = $obj->purge_feeds({
     timestamp   => $timestamp,
 });
 
-debug('vaccuming: '.$timestamp);
-$ret = $obj->vaccum({ timestamp => $timestamp });
+debug('vacuuming: '.$timestamp);
+$ret = $obj->vacuum({ timestamp => $timestamp });
 
 die $err if($err);
 

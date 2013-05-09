@@ -62,7 +62,7 @@ __PACKAGE__->set_sql('feed_whitelist' => qq{
 
 # override since we're just a skel.
 
-sub vaccum { }
+sub vacuum { }
 
     
 1;

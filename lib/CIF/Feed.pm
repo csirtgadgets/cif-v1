@@ -245,12 +245,12 @@ sub process {
     return(undef,\@ids);
 }
 
-sub vaccum {
+sub vacuum {
     my $self = shift;
     my $args = shift;
 
     foreach my $p (@plugins){
-        $p->vaccum($args);
+        $p->vacuum($args);
     }
 }
 
