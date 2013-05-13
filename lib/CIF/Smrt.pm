@@ -854,7 +854,7 @@ sub throttle {
     return(DEFAULT_THROTTLE_FACTOR()) unless($cpu);
     
     my $cores = $cpu->num_cpus();
-    return(DEFAULT_THROTTLE_FACTOR()) unless($cores && $cores =~ /^\d$/);
+    return(DEFAULT_THROTTLE_FACTOR()) unless($cores && $cores =~ /^\d+$/);
     return(DEFAULT_THROTTLE_FACTOR()) if($cores eq 1);
     
     return($cores * (DEFAULT_THROTTLE_FACTOR() * 2))  if($throttle eq 'high');
