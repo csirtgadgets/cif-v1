@@ -61,3 +61,41 @@ v0.99-RC2 2013-01
     - [libcif] re-factored and added to the debug / logging functions
     - [rt-cifminimal] updated to work with cif-v1
     - other various performance enhancements
+
+v0.99-RC1 2012-10
+    - renamed cif-perl to libcif
+    - renamed cif-dbi-perl to libcif-dbi
+    - merged cif-client to libcif
+    - libcif now provides (implements) cif-protocol
+    - libcif now provides HTTP transport
+    - renamed cif-router-perl to cif-router
+    - renamed cif-smrt-perl to cif-smrt
+    - misc bugfixes to cif-smrt
+    - migrated Iodef::Pb to be auto-generated and implemented in Iodef::Pb::Simple
+    - added simple access control to feed data-types (eg: domain, infrastructure, malware) based on apikey (eg: key can only access one of the feeds if you allow it, no query)
+
+v0.99-B3 2012-08
+    - re-architected cif-smrt for better memory + thread support via ZeroMQ
+    - merged cif_analytics into cif-smrt as "postprocessors", disabled by default, enabled by use of the '-P' flag in cif_smrt
+    - improved feed generation support
+    - removed direct "dbi" database integration, now uses submission support in cif-client and cif-router
+    - added submission support to cif-router
+    - added key expiration to cif-router / cif-apikeys
+
+v0.99-B2 2012-07
+    - re-architected how feeds are generated (enabled only)
+    - re-architected how ip-addresses are index'd (removed strict postgres dep)
+
+v0.99-B1 2012-05
+    - Moved from JSON to Google Protocol Buffers (protobuf)
+    - added compression (compress-snappy)
+    - enabled remote database connectivity
+    - split out:
+        - cif-perl (core cif messaging protocol)
+        - cif-dbi-perl (core database interface)
+        - cif-smrt (formally cif_feedparser)
+        - cif-router (formally CIF::WebAPI)
+    - turned cif-router into a driver framework (eg: HTTP, ZeroMQ are just plugins and can be swapped out)
+    - simplified the CIF::Router api (removed severity and restriction from the api)
+    - simplified the query data model, most things are now just sha1 hash lookups (with the exception of ipv4/6 addresses)
+    - less "index" tables to swap in and out of memory, faster lookups, ip-addr's will follow in upcoming beta's
