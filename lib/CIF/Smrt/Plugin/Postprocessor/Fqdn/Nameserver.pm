@@ -23,8 +23,6 @@ sub process {
         my $impact = iodef_impacts_first($i);
         return if($impact->get_content->get_content() eq 'nameserver');
         
-        my $description = $impact->get_content->get_content();
-        
         my $assessment = $i->get_Assessment();
         my $confidence = @{$assessment}[0]->get_Confidence();
         $confidence = $confidence->get_content();
@@ -74,7 +72,7 @@ sub process {
                                 my $new = Iodef::Pb::Simple->new({
                                     address         => $rr->nsdname(),
                                     IncidentID      => $id,
-                                    assessment      => $description,
+                                    assessment      => $impact->get_content->get_content(),
                                     description     => 'nameserver',
                                     confidence      => $confidence,
                                     RelatedActivity => RelatedActivityType->new({
