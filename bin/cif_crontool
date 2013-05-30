@@ -160,7 +160,7 @@ Advanced:
 Examples:
     $0 -T high -f -d
     $0 -T medium -p daily
-    $0 -p daily -P -A root -N 1
+    $0 -p daily -P -A root -N
 
 Current Feeds:
 $f
@@ -195,7 +195,7 @@ foreach(@crons){
     $cmd .= ' -F' if($first_run);
     if($fail_closed){
         $cmd .= ' -A '.$admin if($admin);
-        $cmd .= ' -N 1' if($fail_closed);
+        $cmd .= ' -N' if($fail_closed);
     }
     $cmd .= ' -P' if($postprocess);
     if($d_postprocessor){
