@@ -41,7 +41,7 @@ use CIF qw/debug/;
 use Sys::MemInfo qw(totalmem);
 
 my %opts;
-getopts('z:hNA:s:T:t:dFC:f:r:v:Pp:',\%opts);
+getopts('g:z:hNA:s:T:t:dFC:f:r:v:Pp:',\%opts);
 our $debug = $opts{'d'} || 0;
 $debug = $opts{'v'} if($opts{'v'});
 
@@ -57,6 +57,7 @@ my $threads     = $opts{'t'};
 my $admin       = $opts{'A'} || 'root';
 my $fail_closed = $opts{'N'} || 0;
 my $disable_p   = $opts{'z'};
+my $goback      = $opts{'g'} || 3;
 
 debug('fail closed: '.$fail_closed) if($debug);
 
@@ -126,6 +127,8 @@ Usage: perl $0 -C /home/cif/.cif -r $rules_dir/misc.cfg -f malwaredomainlist -T 
     -d  --debug:    debug 
     
 Advanced:
+    -g  --go-back:          change the default 'goback' behavior
+                            (how far back in-days to process a given feed, default: $goback)
     -P  --post-processors:  resolve domains, resolve bgp, resolve urls, etc
                             (default: $postprocess)
                             
@@ -161,6 +164,7 @@ my ($err,$smrt) = CIF::Smrt->new({
     rules           => $rules,
     load_full       => $load_full,
     postprocess     => $postprocess,
+    goback          => $goback,
 });
 
 if($err){
