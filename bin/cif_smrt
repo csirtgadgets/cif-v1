@@ -61,8 +61,6 @@ my $goback      = $opts{'g'} || 3;
 
 debug('fail closed: '.$fail_closed) if($debug);
 
-die;
-
 if((&totalmem / (1024*1024*1024)) < 1){
     #print "total memory: ".(&totalmem / (1024*1024*1024))."\n";
     print '*** WARNING ***'."\n";
