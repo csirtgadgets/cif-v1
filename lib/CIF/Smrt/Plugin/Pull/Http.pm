@@ -22,7 +22,7 @@ sub pull {
         require LWP::UserAgent;
         $ua = LWP::UserAgent->new(agent => $AGENT);
         $ua->env_proxy();
-        $ua->proxy(['http','https','ftp'], $f->{'proxy'});
+        $ua->proxy(['http','https','ftp'], $f->{'proxy'}) if($f->{'proxy'});
     } else {
         # we use this instead of ::UserAgent, it does better
         # overall timeout checking
