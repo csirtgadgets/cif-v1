@@ -11,7 +11,8 @@ use CIF qw/debug generate_uuid_ns is_uuid generate_uuid_random/;
 use Try::Tiny;
 
 sub handler {
-    my $req = shift;
+    my $router_config   = shift;
+    my $req             = shift;
 
     my $r = Apache2::Request->new($req);
     
@@ -25,8 +26,7 @@ sub handler {
     
     my ($err,$ret) = CIF::Client->new({
         apikey      => $apikey,
-        ## TODO -- fix this
-        config      => '/home/cif/.cif', 
+        config      => $router_config, 
     });
     return($err) if($err);
     

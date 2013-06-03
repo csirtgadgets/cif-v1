@@ -32,8 +32,10 @@ sub new {
 sub handler {
     my $req = shift;
     
+    my $config = $req->dir_config->get('CIFRouterConfig') || '/home/cif/.cif';
+    
     my ($err,$router) = CIF::Router->new({
-        config  => $req->dir_config->get('CIFRouterConfig') || '/home/cif/.cif',
+        config  => $config,
     });
     if($err){
         ## TODO -- set debugging variable
@@ -54,7 +56,7 @@ sub handler {
             $reply = "For performance reasons, it appears that legacy JSON support has been disabled by your administrator";
         } else {
             $req->content_type('application/json');
-            $reply = CIF::Router::HTTP::Json::handler($req);
+            $reply = CIF::Router::HTTP::Json::handler($config,$req);
             if($reply =~ /^\d+$/){
                 $req->status($reply);
                 return $reply;
