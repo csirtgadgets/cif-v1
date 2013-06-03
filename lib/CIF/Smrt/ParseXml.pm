@@ -16,10 +16,10 @@ sub parse {
     return unless(@nodes);
     
     my @array;
-    my @elements        = @{$f->{'elements'}}       if($f->{'elements'});
-    my @elements_map    = @{$f->{'elements_map'}}   if($f->{'elements_map'});
-    my @attributes_map  = @{$f->{'attributes_map'}} if($f->{'attributes_map'});
-    my @attributes      = @{$f->{'attributes'}}     if($f->{'attributes'});
+    my @elements        = split(',', $f->{'elements'})       if($f->{'elements'});
+    my @elements_map    = split(',', $f->{'elements_map'})   if($f->{'elements_map'});
+    my @attributes_map  = split(',', $f->{'attributes_map'}) if($f->{'attributes_map'});
+    my @attributes      = split(',', $f->{'attributes'})     if($f->{'attributes'});
     
     my %regex;
     foreach my $k (keys %$f){
