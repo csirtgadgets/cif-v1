@@ -143,7 +143,7 @@ Advanced:
                             high:   threads = number of cores * 2
 
     -N  --fail-closed:      error out if one of the jobs fail, mail the -A $admin
-                            (1|0 -- default 0)
+                            (default: $failclosed)
                             
     -A  --admin:            designate an admin email address where errors should go if we fail open
                             (default: $admin)
