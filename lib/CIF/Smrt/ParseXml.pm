@@ -37,7 +37,7 @@ sub parse {
             }
         }
     }
-  
+   
     foreach my $node (@nodes){
         my $h = {};
         map { $h->{$_} = $f->{$_} } keys %$f;
@@ -54,7 +54,8 @@ sub parse {
                         $found = 0;
                     }
                 } else {
-                    $h->{$elements_map[$e]} = $x
+                    $h->{$elements_map[$e]} = $x;
+                    $found = 1;
                 }
             }
         } else {
@@ -70,6 +71,7 @@ sub parse {
                     }
                 } else {
                     $h->{$attributes_map[$e]} = $x;
+                    $found = 1;
                 }
             }
         }
