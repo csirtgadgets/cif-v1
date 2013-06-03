@@ -4,10 +4,6 @@ use base 'Class::Accessor';
 use strict;
 use warnings;
 
-## TODO -- this should be set my CIF::Message
-our $VERSION = '0.99_04';
-$VERSION = eval $VERSION;
-
 use Try::Tiny;
 use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 use Config::Simple;
@@ -230,14 +226,14 @@ sub authorized_read {
     my @groups = ($self->get_group_map()) ? @{$self->get_group_map()} : undef;
    
     my @array;
-    debug('groups: '.join(',',map { $_->get_key() } @groups));
+    #debug('groups: '.join(',',map { $_->get_key() } @groups));
     
     foreach my $g (@groups){
         next unless($rec->inGroup($g->get_key()));
         push(@array,$g);
     }
 
-    debug('groups: '.join(',',map { $_->get_key() } @array)) if($debug > 3);
+    #debug('groups: '.join(',',map { $_->get_key() } @array)) if($debug > 3);
 
     $ret->{'group_map'} = \@array;
     
@@ -260,6 +256,7 @@ sub authorized_read_query {
     foreach (@recs){
         # if we've given explicit access to that query (eg: domain/malware, domain/botnet, etc...)
         # return 1
+        debug('access: '.$_->access());
         return 1 if($_->access() eq $args->{'query'});
     }
     # fail closed

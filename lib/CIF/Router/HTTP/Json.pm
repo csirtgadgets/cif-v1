@@ -17,6 +17,9 @@ sub handler {
     
     my $apikey  = $r->param('apikey')   || return 'missing apikey';
     my $guid    = $r->param('guid')     || 'everyone';
+    my $format  = $r->param('fmt')      || 'json';
+    
+    return Apache2::Const::Forbidden() unless($format =~ /^[a-zA-Z]+$/);
     
     $guid = generate_uuid_ns($guid) unless(is_uuid($guid));    
     
@@ -32,7 +35,6 @@ sub handler {
     for($req->method()){
         if(/^GET$/){
             my $query       = $r->param('q')    || $r->param('query');
-            my $format      = $r->param('fmt')  || 'json';
             
             unless($query){
                 if($format eq 'json'){    
@@ -43,8 +45,6 @@ sub handler {
                 }
                 return 'missing query';
             }
-                
-            return Apache2::Const::Forbidden() unless($format =~ /^[a-zA-Z]+$/);
             
             $query = lc($query);
             
@@ -72,7 +72,7 @@ sub handler {
             }
             
             my $nomap = 0;
-            
+                        
             my @text;
             foreach my $feed (@$ret){
                 next unless($feed->get_data());
@@ -89,7 +89,7 @@ sub handler {
                     description         => $feed->get_description(),
                     restriction         => $feed->get_restriction(),
                     reporttime          => $feed->get_ReportTime(),
-                    config              => $cli->get_config(),
+                    config              => $cli->get_global_config(),
                 });
                 
                 ## TODO -- add feed meta data to this.
