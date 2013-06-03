@@ -107,6 +107,12 @@ sub init {
     }
     
     $self->set_goback(time() - ($self->get_goback() * 84600));
+    
+    if($::debug){
+        my $gb = DateTime->from_epoch(epoch => $self->get_goback());
+        debug('goback: '.$gb);
+    }
+    
     $self->set_goback(0) if($self->get_load_full());
     
     
