@@ -8,7 +8,7 @@ sub process {
     my $rules = shift;
     my $rec = shift;
 
-    $rec->{'assessment'} = lc($rec->{'assessment'});
+    $rec->{'assessment'} = lc($rec->{'assessment'}) if($rec->{'assessment'});
     unless($rec->{'description'}){
         $rec->{'description'} = 'unknown';
     } else {
