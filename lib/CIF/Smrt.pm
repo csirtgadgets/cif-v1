@@ -228,10 +228,9 @@ sub init_rules {
    
     map { $defaults->{$_} = $rules->{$_} } keys (%$rules);
     
-    if($defaults->{'guid'}){
-        unless(is_uuid($defaults->{'guid'})){
-            $defaults->{'guid'} = generate_uuid_url($defaults->{'guid'});
-        }
+    $defaults->{'guid'} = 'everyone' unless($defaults->{'guid'});
+    unless(is_uuid($defaults->{'guid'})){
+        $defaults->{'guid'} = generate_uuid_url($defaults->{'guid'});
     }
 
     $self->set_rules($defaults);
