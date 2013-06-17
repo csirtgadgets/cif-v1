@@ -675,7 +675,7 @@ sub worker_routine {
             $msg->{'id'} = generate_uuid_random();
             
             if($::debug > 1){
-                my $thing = $msg->{'address'} || $msg->{'malware_md5'} || $msg->{'malware_sha1'};
+                my $thing = $msg->{'address'} || $msg->{'malware_md5'} || $msg->{'malware_sha1'} || 'NA -- SOMETHING BROKEN IN THE FEED CONFIG';
                 debug('uuid: '.$msg->{'id'}.' - '.$msg->{'reporttime'}.' - '.$thing.' - '.$msg->{'assessment'}.' - '.$msg->{'description'});
             }
     
