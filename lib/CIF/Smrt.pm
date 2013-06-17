@@ -467,7 +467,7 @@ sub preprocess_routine {
         
         # TODO -- work-around, make this more configurable
         unless($r->{'severity'}){
-            $r->{'severity'} = ($self->get_severity_map->{$r->{'assessment'}}) ? $self->get_severity_map->{$r->{'assessment'}} : 'medium';
+            $r->{'severity'} = (defined($self->get_severity_map->{$r->{'assessment'}})) ? $self->get_severity_map->{$r->{'assessment'}} : 'medium';
         }
             
         ## TODO -- if we do this, we need to degrade the count somehow...
