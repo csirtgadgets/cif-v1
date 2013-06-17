@@ -462,6 +462,7 @@ sub preprocess_routine {
         }
         
         unless($r->{'assessment'}){
+            debug('WARNING: config missing an assessment') if($::debug);
             $r->{'assessment'} = 'unknown';
         }
              
