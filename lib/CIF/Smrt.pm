@@ -460,6 +460,10 @@ sub preprocess_routine {
                 }
             }
         }
+        
+        unless($r->{'assessment'}){
+            $r->{'assessment'} = 'unknown';
+        }
              
         foreach my $p (@preprocessors){
             $r = $p->process($self->get_rules(),$r);
@@ -469,7 +473,7 @@ sub preprocess_routine {
         unless($r->{'severity'}){
             $r->{'severity'} = (defined($self->get_severity_map->{$r->{'assessment'}})) ? $self->get_severity_map->{$r->{'assessment'}} : 'medium';
         }
-            
+    
         ## TODO -- if we do this, we need to degrade the count somehow...
         last if($r->{'timestamp_epoch'} < $self->get_goback());
         push(@array,$r);
