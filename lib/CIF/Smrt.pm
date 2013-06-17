@@ -271,7 +271,7 @@ sub pull_feed {
 sub _pull_feed {
     my $f = shift;
     return unless($f->{'feed'});
-
+    
     foreach my $key (keys %$f){
         foreach my $key2 (keys %$f){
             if($f->{$key} =~ /<$key2>/){
@@ -863,8 +863,9 @@ sub throttle {
     return(DEFAULT_THROTTLE_FACTOR()) unless($cores && $cores =~ /^\d+$/);
     return(DEFAULT_THROTTLE_FACTOR()) if($cores eq 1);
     
-    return($cores * (DEFAULT_THROTTLE_FACTOR() * 2))  if($throttle eq 'high');
-    return($cores * DEFAULT_THROTTLE_FACTOR())  if($throttle eq 'medium');
+    return($cores * (DEFAULT_THROTTLE_FACTOR() * 2))    if($throttle eq 'high');
+    return($cores * DEFAULT_THROTTLE_FACTOR())          if($throttle eq 'medium');
+    return($cores / 2)                                  if($throttle eq 'low');
 }
 
 1;
