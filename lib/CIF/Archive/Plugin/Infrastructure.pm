@@ -24,11 +24,11 @@ __PACKAGE__->sequence('infrastructure_id_seq');
 sub insert {
     my $class = shift;
     my $data = shift;
-    
+
     return unless($class->test_datatype($data));
     return unless(ref($data->{'data'}) eq 'IODEFDocumentType');       
     my @ids;
-    
+   
     ## TODO -- clean this up, refactor
     my $tbl = $class->table();
     foreach my $i (@{$data->{'data'}->get_Incident()}){
@@ -76,7 +76,6 @@ sub insert {
                                 my $portlist = $service->get_Portlist();
                                 if($portlist){
                                     if($portlist =~ /^\d([\d,-]+)?$/){
-                                        debug('portlist: '.$portlist) if($::debug && $::debug > 3);
                                         $portlist = parse_range($portlist);
                                         push(@{$ranges->{$service->get_ip_protocol()}},$portlist);
                                     } else {
@@ -87,11 +86,9 @@ sub insert {
                             }
                             if($ranges){
                                 $ranges = encode_json($ranges);
-                                debug('ranges: '.$ranges) if($::debug && $::debug > 3);
                                 $hash = sha1_hex($hash.$ranges);
                             }
                         }
-      
                         $class->SUPER::insert({
                             guid        => $data->{'guid'},
                             uuid        => $data->{'uuid'},
@@ -99,8 +96,7 @@ sub insert {
                             hash        => $hash,
                             address     => $a->get_content(),
                             reporttime  => $reporttime,
-                        });
-                        
+                        }); 
                     }
                     
                     ## TODO -- clean this up into a function, map with ipv6
