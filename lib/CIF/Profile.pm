@@ -173,7 +173,7 @@ sub restriction_add {
     my @ids;
     foreach (@$restriction){
         my @bits = split(/\//);
-        my $feed = join(' ',reverse(@bits)).' feed';
+        my $feed = join(' ',reverse(@bits));
         $feed = sha1_hex($feed) unless(/^[a-z0-9]{40}$/);
         my $id = CIF::APIKeyRestrictions->insert({
             uuid    => $args->{'key'},

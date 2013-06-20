@@ -13,19 +13,36 @@ sub new {
     
     my $self = {};
     bless($self,$class);
-    
-    my ($err,$ret) = $self->init_db($args);
+
+    my ($err,$ret) = $self->init($args);
     return $err if($err);
     return(undef,$self);
 }
+
+sub init {
+    my $self = shift;
+    my $args = shift;
+    
+    my $config = Config::Simple->new($args->{'config'}) || return('missing config file');
+    
+    my $datatypes   = $config->param(-block => 'archive')->{'datatypes'} || ['infrastructure','domain','url','email','malware','search'];
+    my $feeds       = $config->param(-block => 'archive')->{'feeds'};
+    
+    $self->{'datatypes'}    = $datatypes;
+    $self->{'feeds'}        = $feeds;
+    
+    my ($err,$ret) = $self->init_db($args);
+    return $err unless($ret);
+    
+    return (undef,$ret);
+} 
 
 sub init_db {
     my $self = shift;
     my $args = shift;
     
-    debug('initdb...');
     my $config = Config::Simple->new($args->{'config'}) || return('missing config file');
-    
+
     $config = $config->param(-block => 'db');
     
     my $db          = $config->{'database'} || 'cif';
@@ -34,7 +51,6 @@ sub init_db {
     my $host        = $config->{'host'}     || '127.0.0.1';
     
     my $dbi = 'DBI:Pg:database='.$db.';host='.$host;
-
     my $ret = $self->connection($dbi,$user,$password,{ AutoCommit => 0});
     return(undef,$ret);
 }
