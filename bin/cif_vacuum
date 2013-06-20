@@ -45,7 +45,7 @@ getopts('dC:k:h',\%opts);
 our $debug          = $opts{'d'};
 my $config          = $opts{'C'} || $ENV{'HOME'}.'/.cif';
 my $keep_days       = $opts{'k'} || 365;
-my $mutex           = $opts{'L'} || '/tmp/cif_vaccum.lock';
+my $mutex           = $opts{'L'} || '/tmp/cif_vacuum.lock';
 
 die usage() if($opts{'h'});
 
