@@ -80,6 +80,21 @@ purgedb:
 
 rebuilddb: create_tables create_indicies
 
+upgradedb: alter_tables upgrade_tables create_indicies
+
+upgrade_tables:
+	-( cd schemas/$(DB_TYPE) && find -type f -print | grep -v index | grep -v apikeys | grep -v 00_archive | sort ) | while read file ; do \
+    $(PSQL) -U $(DB_DBA) -d $(DB_DATABASE) -h $(DB_HOST) -p $(DB_PORT) < "schemas/$(DB_TYPE)/$$file" ; \
+    done
+	@echo "Tables built"
+
+
+alter_tables:
+	-( cd etc/upgrade/schema && find -type f -print ) | while read file ; do \
+	$(PSQL) -U $(DB_DBA) -d $(DB_DATABASE) -h $(DB_HOST) -p $(DB_PORT) < "etc/upgrade/schema/$$file" ; \
+	done
+	@echo "Schema Altered, run sbin/upgrade-database.pl when you're ready (this will take a few days to run)"
+
 clean:
 	rm Makefile
 	rm config.log
