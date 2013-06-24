@@ -38,7 +38,7 @@ use MIME::Lite;
 use Try::Tiny;
 
 my %opts;
-getopts('z:b:A:Nadt:T:C:c:p:c:hLS:PF:v:',\%opts);
+getopts('z:b:A:Nadt:T:C:c:p:c:hL:S:PF:v:',\%opts);
 my $period          = $opts{'p'} || 'daily';
 my $throttle        = $opts{'T'} || 'medium';
 my $threads         = $opts{'t'};
