@@ -38,13 +38,12 @@ use MIME::Lite;
 use Try::Tiny;
 
 my %opts;
-getopts('z:b:A:Nafdt:T:C:c:p:c:hLS:PF:v:',\%opts);
+getopts('z:b:A:Nadt:T:C:c:p:c:hLS:PF:v:',\%opts);
 my $period          = $opts{'p'} || 'daily';
 my $throttle        = $opts{'T'} || 'medium';
 my $threads         = $opts{'t'};
 my $cron_tool       = $opts{'b'} || 'cif_smrt';
 my $config          = $opts{'C'} || $ENV{'HOME'}.'/.cif';
-my $first_run       = $opts{'f'};
 my $debug           = $opts{'d'};
 my $debug_level     = $opts{'v'};
 my $mutex           = $opts{'L'} || '/tmp/cif_crontool.lock.'.$period;
@@ -112,14 +111,10 @@ foreach(@files){
         my $skip = $cc->param(-block => $sec)->{'disabled'};
         next if($skip);
         my $tool = $cc->param(-block => $sec)->{'cron_tool'};
-        if($first_run){
-            my $f = $cc->param(-block => $sec)->{'first_run'};
-            next unless($f  && $f eq 'true');
-        } else {
-            next if($tool && $tool eq 'false');
-            my $cron_period = $cc->param(-block => $sec)->{'period'} || 'daily';
-            next unless($cron_period eq $period);
-        }
+        next if($tool && $tool eq 'false');
+        my $cron_period = $cc->param(-block => $sec)->{'period'} || 'daily';
+        next unless($cron_period eq $period);
+        
         my $h = {
             feed    => $sec,
             config  => $cc_name,
@@ -192,7 +187,6 @@ foreach(@crons){
     } else {
         $cmd .= ' -T '.$throttle;
     }
-    $cmd .= ' -F' if($first_run);
     if($fail_closed){
         $cmd .= ' -A '.$admin if($admin);
         $cmd .= ' -N' if($fail_closed);

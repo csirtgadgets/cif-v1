@@ -41,14 +41,13 @@ use CIF qw/debug/;
 use Sys::MemInfo qw(totalmem);
 
 my %opts;
-getopts('g:z:hNA:s:T:t:dFC:f:r:v:Pp:',\%opts);
+getopts('g:z:hNA:s:T:t:dC:f:r:v:Pp:',\%opts);
 our $debug = $opts{'d'} || 0;
 $debug = $opts{'v'} if($opts{'v'});
 
 my $config      = $opts{'C'} || $ENV{'HOME'}.'/.cif';
 my $rules       = $opts{'r'};
 my $feed        = $opts{'f'};
-my $load_full   = $opts{'F'};
 my $postprocess = $opts{'P'} || $opts{'p'} || 0;
 
 my $rules_dir    = '/opt/cif/etc';
@@ -162,7 +161,6 @@ my ($err,$smrt) = CIF::Smrt->new({
     threads         => $threads,
     feed            => $feed,
     rules           => $rules,
-    load_full       => $load_full,
     postprocess     => $postprocess,
     goback          => $goback,
 });

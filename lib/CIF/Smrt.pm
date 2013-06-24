@@ -90,7 +90,6 @@ sub init {
 
     $self->set_threads(         $args->{'threads'}          || $self->get_config->{'threads'}           || 1);
     $self->set_goback(          $args->{'goback'}           || $self->get_config->{'goback'}            || 3);
-    $self->set_load_full(       $args->{'load_full'}        || $self->get_config->{'load_full'}         || 0);
     $self->set_wait_for_server( $args->{'wait_for_server'}  || $self->get_config->{'wait_for_server'}   || 0);
     $self->set_batch_control(   $args->{'batch_control'}    || $self->get_config->{'batch_control'}     || 10000); # arbitrary
     $self->set_apikey(          $args->{'apikey'}           || $self->get_config->{'apikey'}            || return('missing apikey'));
@@ -111,10 +110,7 @@ sub init {
     if($::debug){
         my $gb = DateTime->from_epoch(epoch => $self->get_goback());
         debug('goback: '.$gb);
-    }
-    
-    $self->set_goback(0) if($self->get_load_full());
-    
+    }    
     
     ## TODO -- this isnt' being passed to the plugins, the config is
     $self->set_name(        $args->{'name'}     || $self->get_config->{'name'}      || 'localhost');
