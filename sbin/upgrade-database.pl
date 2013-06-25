@@ -184,7 +184,7 @@ sub _pager_routine {
     my $archive = $ret;
     $archive->load_page_info({ sql => $sql });
     
-    $archive->{'limit'} = 20000;
+    $archive->{'limit'} = 5000;
     $archive->{'offset'} = 0;
     
     my $total = $archive->{'total'};
@@ -205,7 +205,7 @@ sub _pager_routine {
     
     debug('creating '.$threads.' worker threads...');
     for (1 ... $threads) {
-        threads->create('_worker_routine',$config,$archive->{'limit'})->detach();
+        threads->create('_worker_routine',$config)->detach();
     }
     nanosleep NSECS_PER_MSEC;
     
@@ -270,8 +270,6 @@ sub _pager_routine {
 }
 
 sub _worker_routine {
-    my $config      = shift;
-    my $commit_size = shift;
     my $context = ZeroMQ::Context->new();
     
     debug('starting worker: '.threads->tid()) if($::debug > 1);
@@ -289,9 +287,6 @@ sub _worker_routine {
     $ctrl->setsockopt(ZMQ_SUBSCRIBE,''); 
     $ctrl->connect(CTRL_CONNECTION());
     
-    my $msgs_written = $context->socket(ZMQ_PUSH);
-    $msgs_written->connect(MSGS_WRITTEN_CONNECTION());
-    
      my $poller = ZeroMQ::Poller->new(
         {
             name    => 'worker',
@@ -303,25 +298,13 @@ sub _worker_routine {
             socket  => $ctrl,
             events  => ZMQ_POLLIN,
         },
-    );
-    
-    init_db({ config => $config });
-    
-    require Iodef::Pb::Simple;
-    my ($e,$dbi) = CIF::Archive->new({ config => $config });
-    return($e) if($e);
-    
-    $dbi->set_sql(custom2 => qq{
-        UPDATE archive SET data = ?, created = ? where id = ?
-    });
+    ); 
        
     my $done = 0;
+    my $recs = 0;
     my $tmp_total = 0;
-    my ($ret,$err);
-    my ($done,$total_r,$total_w) = (0,0,0);
-    
+    my $err;
     while(!$done){
-        #sleep(1);
         debug('polling...') if($::debug > 5);
         $poller->poll();
         debug('checking control...') if($::debug > 5);
@@ -330,33 +313,20 @@ sub _worker_routine {
             debug('ctrl sig received: '.$msg) if($::debug > 5 && $msg eq 'WRK_DONE');
             $done = 1 if($msg eq 'WRK_DONE');
         }
-        
-        #debug('checking event...') if($::debug);
+        debug('checking event...') if($::debug > 4);
         if($poller->has_event('worker')){
             #debug('['.threads->tid.']'.' receiving event...') if($::debug > 2 && $tmp_total % 10 == 0);
             my $msg = $receiver->recv()->data();
-            #debug('processing message...') if($::debug);
+            debug('processing message...') if($::debug > 4);
            
             ($err,$msg) = _process_message($msg);
-            
             if($msg){
-                $tmp_total++;
-                ($err,$ret) = _write_message({
-                    dbi => $dbi,
-                    msg => $msg,
-                });
-                $msgs_written->send(1);
-                #debug($tmp_total);
-                #debug($tmp_total) if($tmp_total % 100 == 0);
-                if(($tmp_total % $commit_size) == 0 || $done){
-                    debug('flushing...');
-                    $dbi->dbi_commit();
-                    debug('wrote: '.$tmp_total.' messages...');
-                    $tmp_total = 0; 
-                }
+                $writer->send_as('json' => $msg);
+                debug('sent to writer...') if($::debug > 4);
+                $msgs_processed->send('1');
             }
         }
-        
+        $tmp_total++;
     }
     debug('done...') if($::debug > 2);
     debug('worker exiting...');
@@ -364,30 +334,6 @@ sub _worker_routine {
     $receiver->close();
     $ctrl->close();
     $context->term();
-}
-
-sub _write_message {
-    my $args = shift;
-    
-    my $dbi = $args->{'dbi'};
-    my $msg = $args->{'msg'};
-    
-    require Iodef::Pb::Simple;
-    my $tmsg = Iodef::Pb::Simple->new($msg->{'data'});
-    
-    my $sth = $dbi->sql_custom2();
-    $sth->execute($msg->{'orig'},$msg->{'reporttime'},$msg->{'id'});
-    
-    my ($err,$ret) = $dbi->insert_index({ 
-        data        => $tmsg,
-        feeds       => $dbi->{'feeds'},
-        datatypes   => $dbi->{'datatypes'}, 
-        uuid        => $msg->{'uuid'},
-        guid        => $msg->{'guid'},
-        reporttime  => $msg->{'reporttime'},
-    });
-    return $err if($err);
-    return($ret);       
 }
 
 sub _process_message {

@@ -42,11 +42,10 @@ use Try::Tiny;
 use CIF qw/debug/;
 
 my %opts;
-getopt('t:E:G:g:k:u:C:R:L:d', \%opts);
+getopt('t:E:e:G:g:k:u:C:R:L:d', \%opts);
 die(usage()) if($opts{'h'});
 
 my $user            = $opts{'u'};
-my $access          = $opts{'e'};
 my $groups          = $opts{'g'};
 my $default_group   = $opts{'G'};
 my $desc            = $opts{'D'};
@@ -180,7 +179,6 @@ if($add){
     my $id = $profile->user_add({
         userid              => $user,
         description         => $desc,
-        access              => $access,
         write               => $write,
         revoked             => $revoke,
         parentid            => $parentid,
