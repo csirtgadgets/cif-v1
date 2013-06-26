@@ -2,7 +2,6 @@
 
 use strict;
 use warnings;
-use diagnostics;
 
 # fix lib paths, some may be relative
 BEGIN {
@@ -69,7 +68,7 @@ use constant NSECS_PER_MSEC     => 1_000_000;
 use constant DEFAULT_THROTTLE_FACTOR => 1;
 
 my %opts;
-getopts('v:hdC:T:t:A:J:B:',\%opts);
+getopts('v:hdC:T:t:A:L:k:',\%opts);
 our $debug = $opts{'d'} || 0;
 $debug = $opts{'v'} if($opts{'v'});
 
@@ -77,14 +76,40 @@ my $config      = $opts{'C'} || $ENV{'HOME'}.'/.cif';
 my $throttle    = $opts{'T'} || 'low';
 my $threads     = $opts{'t'};
 my $admin       = $opts{'A'} || 'root';
-my $journal     = $opts{'J'} || '/tmp/cif-upgrade-database.journal';
-my $batch_size  = $opts{'B'} || 5000;
+my $keep_days   = $opts{'k'};
+my $mutex       = $opts{'L'} || '/tmp/cif-upgrade-database.lock';
 
-die usage() if($opts{'h'});
+#$SIG{'INT'} = 'cleanup';
+$SIG{__DIE__} = 'cleanup';
 
-my $j = check_journal();
+if(-e $mutex){
+    print 'already running, mutex found: '.$mutex."\n" if($debug);
+    exit(-1);
+}
+my $ret;
+#my $ret = system('touch '.$mutex);
+#unless(defined($ret) && $ret == 0){
+#    die($!);
+#}
 
-$SIG{__DIE__} = \&cleanup;
+$threads = _throttle($throttle) unless($threads);
+
+my $timestamp;
+if($keep_days){
+    $timestamp = DateTime->from_epoch(epoch => (time() - ((1 + $keep_days) * 84600)));
+    $timestamp = $timestamp->ymd().'T00:00:00Z';
+} else {
+    $timestamp = '1900-01-01T00:00:00Z';
+}
+
+debug('using date: '.$timestamp);
+
+my ($e,$r) = threads->create('_pager_routine',$config,$timestamp)->join();
+warn $e if($e);
+
+remove_lock();
+debug('done...');
+exit(0);
 
 sub cleanup {
     my $msg = shift;
@@ -99,82 +124,29 @@ sub cleanup {
         my $pipe = './'.$_;
         unlink ($pipe) if(-e $pipe);
     }
+    
+    remove_lock();
     exit(0);
 }
 
-$threads = CIF::Legacy::_throttle($throttle) unless($threads);
-
-threads->create('_pager_routine',$config)->join();
-
-debug('done...');
-exit(0);
-
-sub usage {
-    return <<EOF;
-Usage: perl $0 {options...}
-
-Basic:
-    -h  --help:             this message
-
-Basic:
-
-    -C  --config:           configuration file, default: $config
-    -A  --admin:            admin address, default: $admin
-    
-Advanced:
-
-    -J  --journal:          journal location, default: $journal
-    -B  --batch-size:       default commit size, default: $batch_size
-    
-Debugging:
-
-    -d  --debug
-    -v  --verbosity  
-    
-
-Examples:
-
-Basic:
-    
-    $0 -C ~/.cifv1
-    $0 -C ~/.cifv1 -A root\@localhost
-    
-Advanced:
-    
-    $0 -C ~/.cifv1 -L /tmp/mylock.lock
-    $0 -C ~/.cifv1 -B 500
-    
-EOF
+sub remove_lock {
+    system('rm '.$mutex) if(-e $mutex);
 }
 
-sub check_journal { 
-    my $value = 0;
-    # doesn't exist, create
-    if(! -e $journal){
-        open(F,'>',$journal) || die('failed to open journal file: '.$!);
-        print F '0';
-    } else {
-        # exists, read in value
-        open(F,'<',$journal);
-        $value = <F>;
-        unless(defined($value)){
-            set_journal(0);
-            $value = 0;
-        }
-    }
-    close(F);
-    
-    # return value   
-    return $value;
-}
+sub init_db {
+    my $args = shift;
 
-sub set_journal {
-    my $value = shift;
+    my $config = Config::Simple->new($args->{'config'}) || return('missing config file');
+    $config = $config->param(-block => 'db');
     
-    open(F,'>',$journal);
-    print F $value;
-    close(F);
-    return $value;
+    my $db          = $config->{'database'} || 'cif';
+    my $user        = $config->{'user'}     || 'postgres';
+    my $password    = $config->{'password'} || '';
+    my $host        = $config->{'host'}     || '127.0.0.1';
+    
+    my $dbi = 'DBI:Pg:database='.$db.';host='.$host;
+    my $ret = CIF::DBI->connection($dbi,$user,$password,{ AutoCommit => 0});
+    return (undef,$ret);
 }
 
 sub _pager_routine {
@@ -197,6 +169,10 @@ sub _pager_routine {
     my $msgs_processed = $context->socket(ZMQ_PULL);
     $msgs_processed->bind(MSGS_PROCESSED_CONNECTION());
     
+    # setup the sql
+    my $sql = qq{
+        created >= '$ts'
+    };
     my ($ret,$err,$data,$tmp,$sth);
 
     ($err,$ret) = init_db({ config => $config });
@@ -204,98 +180,79 @@ sub _pager_routine {
     
     ($err,$ret) = CIF::Archive->new({ config => $config });
     return $err if($err);
-    
+
     my $archive = $ret;
-    $archive->{'limit'} = $batch_size;
+    $archive->load_page_info({ sql => $sql });
+    
+    $archive->{'limit'} = 20000;
     $archive->{'offset'} = 0;
-    
-    # setup the sql
-    my $sql = 'SELECT id,uuid,guid,data FROM archive';
-    
-    my $jj = check_journal();
-    if($jj > 0){ 
-       debug('starting at id: '.$jj);
-       $archive->load_page_info({ sql => qq{ id > $jj } });
-       $sql .= ' WHERE id > '.$jj;
-    } else {
-        $archive->load_page_info();
-    }
-    
-    $sql .= ' ORDER BY id ASC LIMIT '.$archive->{'limit'}.' OFFSET ?';
     
     my $total = $archive->{'total'};
     debug('total count: '.$total);
     debug('pages: '.$archive->page_count());
     
-    if($total){
-        $archive->set_sql(custom1 => $sql);
-        $sth = $archive->sql_custom1();
-        
-        # feature of zmq, pub/sub's need a warm up msg
-        debug('sending ctrl warm-up msg...');
-        $ctrl->send('WARMING_UP');
+    my $q = 'ORDER BY id DESC LIMIT '.$archive->{'limit'}.' OFFSET ?';
+    my $ssql = 'SELECT id,uuid,guid,data FROM archive WHERE '.$sql.' '.$q;
+    $archive->set_sql(custom1 => $ssql);
+    $sth = $archive->sql_custom1();
     
-        my $writer_t = threads->create('_writer_routine',$config,$total,$archive->{'limit'})->detach();
-        nanosleep NSECS_PER_MSEC;
-        
-        debug('creating '.$threads.' worker threads...');
-        for (1 ... $threads) {
-            threads->create('_worker_routine',$config)->detach();
-        }
-        nanosleep NSECS_PER_MSEC;
-        
-        my $poll = ZeroMQ::Poller->new(
-            {
-                name    => 'msgs_written',
-                socket  => $msgs_written,
-                events  => ZMQ_POLLIN,
-            },
-            {
-                name    => 'msgs_processed',
-                socket  => $msgs_processed,
-                events  => ZMQ_POLLIN,
-            },
-        );
-        
-        do {
-            debug('executing sql...');
-            $sth->execute($archive->{'offset'});
-            $ret = $sth->fetchall_hashref('id');
-      
-            my @keys = sort map { $_ = $ret->{$_}->{'id'} } keys(%$ret);
-            
-            debug('sending next pages to workers...');
-            $workers->send_as('json' => $ret->{$_}) foreach(keys(%$ret));
-            
-            debug('waiting on workers to finish up...') if($::debug > 4);
-            my $completed = 0;
-            # need to tell the writer process when they should commit between pages
-            # send signal or something
-            do {
-                debug('polling...') if($::debug > 4);
-                $poll->poll();
-                if($poll->has_event('msgs_written')){
-                    $ret = $msgs_written->recv()->data();
-                    $completed += $ret;
-                    $total -= $ret;
-                }        
-                #sleep(1); # so ->poll() doesn't crush us and we can INT out
-                nanosleep NSECS_PER_MSEC;
-            } while(($completed < $archive->{'limit'}) && $total > 0);
-            
-            #debug('completed: '.$completed.'/'.$archive->{'limit'}) if($::debug > 1););
-            debug('remaining: '.$total.' ('.int(($total/$archive->{'total'})*100).'%)');
-            
-            set_journal($keys[$#keys]);
-           
-            my $pages_left = $archive->page_count() - $archive->current_page();
-            debug('pages left: '.$pages_left);
-            debug('last id: '.$keys[$#keys]);
-            $archive->{'offset'} = $archive->next_offset();
-        } while($archive->current_page <= $archive->page_count());
-    } else {
-        debug('nothing to do...');
+    # feature of zmq, pub/sub's need a warm up msg
+    debug('sending ctrl warm-up msg...');
+    $ctrl->send('WARMING_UP');
+
+    my $writer_t = threads->create('_writer_routine',$config,$total,$archive->{'limit'})->detach();
+    nanosleep NSECS_PER_MSEC;
+    
+    debug('creating '.$threads.' worker threads...');
+    for (1 ... $threads) {
+        threads->create('_worker_routine',$config,$archive->{'limit'})->detach();
     }
+    nanosleep NSECS_PER_MSEC;
+    
+    my $poll = ZeroMQ::Poller->new(
+        {
+            name    => 'msgs_written',
+            socket  => $msgs_written,
+            events  => ZMQ_POLLIN,
+        },
+        {
+            name    => 'msgs_processed',
+            socket  => $msgs_processed,
+            events  => ZMQ_POLLIN,
+        },
+    );
+    
+    do {
+        debug('executing sql...');
+        $sth->execute($archive->{'offset'});
+        $ret = $sth->fetchall_hashref('id');
+        
+        debug('sending next pages to workers...');
+        $workers->send_as('json' => $ret->{$_}) foreach(keys(%$ret));
+        
+        debug('waiting on workers to finish up...') if($::debug > 4);
+        my $completed = 0;
+        # need to tell the writer process when they should commit between pages
+        # send signal or something
+        do {
+            debug('polling...') if($::debug > 4);
+            $poll->poll();
+            if($poll->has_event('msgs_written')){
+                $ret = $msgs_written->recv()->data();
+                $completed += $ret;
+                $total -= $ret;
+            }        
+            #sleep(1); # so ->poll() doesn't crush us and we can INT out
+            nanosleep NSECS_PER_MSEC;
+        } while(($completed < $archive->{'limit'}) && $total > 0);
+        
+        #debug('completed: '.$completed.'/'.$archive->{'limit'}) if($::debug > 1););
+        debug('remaining: '.$total.' ('.int(($total/$archive->{'total'})*100).'%)');
+       
+        my $pages_left = $archive->page_count() - $archive->current_page();
+        debug('pages left: '.$pages_left) if($pages_left % 10 == 0);
+        $archive->{'offset'} = $archive->next_offset();
+    } while($archive->current_page <= $archive->page_count());
     
     debug('sending WRK_DONE...') if($::debug);
     $ctrl->send('WRK_DONE');
@@ -309,10 +266,12 @@ sub _pager_routine {
     $workers->close();
     $msgs_written->close();
     $context->term();
-    return (undef,1);
+    return 1;
 }
 
 sub _worker_routine {
+    my $config      = shift;
+    my $commit_size = shift;
     my $context = ZeroMQ::Context->new();
     
     debug('starting worker: '.threads->tid()) if($::debug > 1);
@@ -330,6 +289,9 @@ sub _worker_routine {
     $ctrl->setsockopt(ZMQ_SUBSCRIBE,''); 
     $ctrl->connect(CTRL_CONNECTION());
     
+    my $msgs_written = $context->socket(ZMQ_PUSH);
+    $msgs_written->connect(MSGS_WRITTEN_CONNECTION());
+    
      my $poller = ZeroMQ::Poller->new(
         {
             name    => 'worker',
@@ -341,13 +303,25 @@ sub _worker_routine {
             socket  => $ctrl,
             events  => ZMQ_POLLIN,
         },
-    ); 
+    );
+    
+    init_db({ config => $config });
+    
+    require Iodef::Pb::Simple;
+    my ($e,$dbi) = CIF::Archive->new({ config => $config });
+    return($e) if($e);
+    
+    $dbi->set_sql(custom2 => qq{
+        UPDATE archive SET data = ?, created = ? where id = ?
+    });
        
     my $done = 0;
-    my $recs = 0;
     my $tmp_total = 0;
-    my $err;
+    my ($ret,$err);
+    my ($done,$total_r,$total_w) = (0,0,0);
+    
     while(!$done){
+        #sleep(1);
         debug('polling...') if($::debug > 5);
         $poller->poll();
         debug('checking control...') if($::debug > 5);
@@ -356,25 +330,33 @@ sub _worker_routine {
             debug('ctrl sig received: '.$msg) if($::debug > 5 && $msg eq 'WRK_DONE');
             $done = 1 if($msg eq 'WRK_DONE');
         }
-        debug('checking event...') if($::debug > 4);
+        
+        #debug('checking event...') if($::debug);
         if($poller->has_event('worker')){
             #debug('['.threads->tid.']'.' receiving event...') if($::debug > 2 && $tmp_total % 10 == 0);
             my $msg = $receiver->recv()->data();
-            debug('processing message...') if($::debug > 4);
+            #debug('processing message...') if($::debug);
            
             ($err,$msg) = _process_message($msg);
+            
             if($msg){
-                $writer->send_as('json' => $msg);
-                debug('sent to writer...') if($::debug > 4);
-                $msgs_processed->send('1');
-            } elsif($err =~ /skipping/){
-                $writer->send('-1');
-                $msgs_processed->send('1');
-            } else {
-                die($err);
+                $tmp_total++;
+                ($err,$ret) = _write_message({
+                    dbi => $dbi,
+                    msg => $msg,
+                });
+                $msgs_written->send(1);
+                #debug($tmp_total);
+                #debug($tmp_total) if($tmp_total % 100 == 0);
+                if(($tmp_total % $commit_size) == 0 || $done){
+                    debug('flushing...');
+                    $dbi->dbi_commit();
+                    debug('wrote: '.$tmp_total.' messages...');
+                    $tmp_total = 0; 
+                }
             }
         }
-        $tmp_total++;
+        
     }
     debug('done...') if($::debug > 2);
     debug('worker exiting...');
@@ -384,15 +366,38 @@ sub _worker_routine {
     $context->term();
 }
 
+sub _write_message {
+    my $args = shift;
+    
+    my $dbi = $args->{'dbi'};
+    my $msg = $args->{'msg'};
+    
+    require Iodef::Pb::Simple;
+    my $tmsg = Iodef::Pb::Simple->new($msg->{'data'});
+    
+    my $sth = $dbi->sql_custom2();
+    $sth->execute($msg->{'orig'},$msg->{'reporttime'},$msg->{'id'});
+    
+    my ($err,$ret) = $dbi->insert_index({ 
+        data        => $tmsg,
+        feeds       => $dbi->{'feeds'},
+        datatypes   => $dbi->{'datatypes'}, 
+        uuid        => $msg->{'uuid'},
+        guid        => $msg->{'guid'},
+        reporttime  => $msg->{'reporttime'},
+    });
+    return $err if($err);
+    return($ret);       
+}
+
 sub _process_message {
     my $data = shift;
     
     my $err;
     
     $data = JSON::XS::decode_json($data);
-    
     unless($data->{'data'} =~ /^\{\"xmlns\:xsi/){
-        debug('skipping: '.$data->{'id'}) if($debug > 4);
+        debug('skipping: '.$data->{'id'});
         return 'skipping: '.$data->{'id'};
     }
     
@@ -402,50 +407,35 @@ sub _process_message {
     $data       = $data->{'data'};
     
     debug('id: '.$id) if($::debug > 4);
+ 
+    ## TODO -- REMOVE!
+    my $orig = $data;
    
     # to keypairs
     $data = CIF::Legacy::hash_simple($data,$uuid);
-    
     my $reporttime = $data->{'reporttime'};
     
-    
     # to IODEF::PB
-    $data = Iodef::Pb::Simple->new($data);
-    try {
-        $data = $data->encode();
-    } catch {
-        $err = shift;
-    };
-    if($err){
-        return $err;
-    }
+    #$data = Iodef::Pb::Simple->new($data);
+    #try {
+    #    $data = $data->encode();
+    #} catch {
+    #    $err = shift;
+    #};
+    #if($err){
+    #    return $err;
+    #}
     
-    # json gets angry at some chars... so we have to transport as a base64 string.
-    $data = encode_base64($data);
-    
+    #$data = Compress::Snappy::compress($data);
+    #$data = encode_base64($data);
     return (undef,{
         uuid        => $uuid,
         guid        => $guid,
         reporttime  => $reporttime,
         id          => $id,
         data        => $data,
+        orig        => $orig,
     });
-}
-
-sub init_db {
-    my $args = shift;
-
-    my $config = Config::Simple->new($args->{'config'}) || return('missing config file');
-    $config = $config->param(-block => 'db');
-    
-    my $db          = $config->{'database'} || 'cif';
-    my $user        = $config->{'user'}     || 'postgres';
-    my $password    = $config->{'password'} || '';
-    my $host        = $config->{'host'}     || '127.0.0.1';
-    
-    my $dbi = 'DBI:Pg:database='.$db.';host='.$host;
-    my $ret = CIF::DBI->connection($dbi,$user,$password,{ AutoCommit => 0});
-    return (undef,$ret);
 }
 
 sub _writer_routine {
@@ -469,19 +459,18 @@ sub _writer_routine {
             events  => ZMQ_POLLIN,
         },
     ); 
-    local $^W = 0;
+    
     init_db({ config => $config });
 
-    
-    my $dbi = CIF::Archive->new({ config => $config });
-    
     require Iodef::Pb::Simple;
+    my ($e,$dbi) = CIF::Archive->new({ config => $config });
+    return($e) if($e);
     
     $dbi->set_sql(custom2 => qq{
         UPDATE archive SET data = ?, created = ? where id = ?
     });
     
-    my $sth2 = CIF::Archive->sql_custom2();
+    my $sth2 = $dbi->sql_custom2();
                  
     
     my ($msg,$tmsg);
@@ -497,30 +486,24 @@ sub _writer_routine {
         $poller->poll();
         if($poller->has_event('writer')){
             debug('found message...') if($::debug > 4);
-            $msg = $writer->recv()->data();
-            if($msg ne '-1'){
-                $msg = JSON::XS::decode_json($msg);
+            $msg = $writer->recv_as('json');
             
-                require Iodef::Pb::Simple;
-                $tmsg = $msg->{'data'};
-                $msg->{'data'} = decode_base64($msg->{'data'});
-                $msg->{'data'} = IODEFDocumentType->decode($msg->{'data'});
-                
-                $sth2->execute($tmsg,$msg->{'reporttime'},$msg->{'id'});
-                
-                ($err,$ret) = CIF::Archive->insert_index({ 
-                    data        => $msg->{'data'},
-                    feeds       => $dbi->{'feeds'},
-                    datatypes   => $dbi->{'datatypes'}, 
-                    uuid        => $msg->{'uuid'},
-                    guid        => $msg->{'guid'},
-                    reporttime  => $msg->{'reporttime'},
-                });
-                debug($err) if($err);
-            } 
+            $tmsg = Iodef::Pb::Simple->new($msg->{'data'});
+            
+            $sth2->execute($msg->{'orig'},$msg->{'reporttime'},$msg->{'id'});
+            
+            ($err,$ret) = $dbi->insert_index({ 
+                data        => $tmsg,
+                feeds       => $dbi->{'feeds'},
+                datatypes   => $dbi->{'datatypes'}, 
+                uuid        => $msg->{'uuid'},
+                guid        => $msg->{'guid'},
+                reporttime  => $msg->{'reporttime'},
+            });
+            debug($err) if($err);
             $total_r += 1;
             $tmp_total += 1;
-            #debug($tmp_total) if($tmp_total % 100 == 0);
+            debug($tmp_total) if($tmp_total % 100 == 0);
         }
         $done = 1 if($total_r == $total);
         
@@ -543,4 +526,20 @@ sub _writer_routine {
     $writer->close();
     $context->term();
     return;
+}
+
+sub _throttle {
+    my $throttle = shift;
+
+    require Linux::Cpuinfo;
+    my $cpu = Linux::Cpuinfo->new();
+    return(DEFAULT_THROTTLE_FACTOR()) unless($cpu);
+    
+    my $cores = $cpu->num_cpus();
+    return(DEFAULT_THROTTLE_FACTOR()) unless($cores && $cores =~ /^\d+$/);
+    return(DEFAULT_THROTTLE_FACTOR()) if($cores eq 1);
+    
+    return($cores * (DEFAULT_THROTTLE_FACTOR() * 2))  if($throttle eq 'high');
+    return($cores * DEFAULT_THROTTLE_FACTOR())  if($throttle eq 'medium');
+    return($cores / 2) if($throttle eq 'low');
 }
