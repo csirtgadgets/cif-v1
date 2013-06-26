@@ -84,6 +84,11 @@ sub debug {
 
     my $msg = shift;
     my ($pkg,$f,$line,$sub) = caller(1);
+    
+    unless($f){
+        ($pkg,$f,$line) = caller();
+    }
+    
     $sub = '' unless($sub);
     my $ts = DateTime->from_epoch(epoch => time());
     $ts = $ts->ymd().'T'.$ts->hms().'Z';

@@ -13,10 +13,11 @@ sub process {
     return unless($args->{'query'} =~ $regex);
     
     $args->{'query'} =~ s/^(as|AS)//g;
-  
+    $args->{'query'} = 'as'.$args->{'query'};
+    
     my $query = {
         query       => $args->{'query'},
-        description => 'search AS'.$args->{'query'},        
+        description => 'search '.$args->{'query'},        
     };
 
     return(undef,$query);  
