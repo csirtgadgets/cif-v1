@@ -24,9 +24,9 @@ libcif-install:
 
 libcif-dbi-install:
 	-( cd libcif-dbi && make install )
-	if [ $(PLUGIN_DBI_ASN) ]; then cd libcif-dbi-asn && make install; fi
-	if [ $(PLUGIN_DBI_CC) ]; then cd libcif-dbi-cc && make install; fi
-	if [ $(PLUGIN_DBI_RIR) ]; then cd libcif-dbi-rir && make install; fi
+	-( cd libcif-dbi-asn && make install )
+	-( cd libcif-dbi-cc && make install )
+	-( cd libcif-dbi-rir && make install )
 
 purgedb:
 	-( cd libcif-dbi && make purgedb )
@@ -39,6 +39,9 @@ tables:
 
 rebuilddb:
 	-( cd libcif-dbi && make rebuilddb )
+
+upgradedb:
+	-( cd libcif-dbi && make upradedb )
 
 cif-router-install:
 	-( cd cif-router && make install )
