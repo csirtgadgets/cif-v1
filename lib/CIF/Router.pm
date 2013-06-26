@@ -39,9 +39,9 @@ sub new {
     my $class = shift;
     my $args = shift;
       
-    return(undef,'missing config file') unless($args->{'config'});
+    return('missing config file') unless($args->{'config'});
     
-    $args->{'config'} = Config::Simple->new($args->{'config'}) || return(undef,'missing config file');
+    $args->{'config'} = Config::Simple->new($args->{'config'}) || return('missing config file');
     
     my $self = {};
     bless($self,$class);
