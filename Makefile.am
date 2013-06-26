@@ -88,7 +88,6 @@ upgrade_tables:
     done
 	@echo "Tables built"
 
-
 alter_tables:
 	-( cd etc/upgrade/schema && find -type f -print ) | while read file ; do \
 	$(PSQL) -U $(DB_DBA) -d $(DB_DATABASE) -h $(DB_HOST) -p $(DB_PORT) < "etc/upgrade/schema/$$file" ; \
