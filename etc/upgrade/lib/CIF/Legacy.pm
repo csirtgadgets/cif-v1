@@ -38,3 +38,19 @@ sub hash_simple {
     }
     return ($h);
 }
+
+sub _throttle {
+    my $throttle = shift;
+
+    require Linux::Cpuinfo;
+    my $cpu = Linux::Cpuinfo->new();
+    return(DEFAULT_THROTTLE_FACTOR()) unless($cpu);
+    
+    my $cores = $cpu->num_cpus();
+    return(DEFAULT_THROTTLE_FACTOR()) unless($cores && $cores =~ /^\d+$/);
+    return(DEFAULT_THROTTLE_FACTOR()) if($cores eq 1);
+    
+    return($cores * (DEFAULT_THROTTLE_FACTOR() * 2))  if($throttle eq 'high');
+    return($cores * DEFAULT_THROTTLE_FACTOR())  if($throttle eq 'medium');
+    return($cores / 2) if($throttle eq 'low');
+}

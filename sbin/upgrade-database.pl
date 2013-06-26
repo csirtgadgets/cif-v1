@@ -68,7 +68,7 @@ use constant NSECS_PER_MSEC     => 1_000_000;
 use constant DEFAULT_THROTTLE_FACTOR => 1;
 
 my %opts;
-getopts('v:hdC:T:t:A:L:k:',\%opts);
+getopts('v:hdC:T:t:A:L:J:B:',\%opts);
 our $debug = $opts{'d'} || 0;
 $debug = $opts{'v'} if($opts{'v'});
 
@@ -76,8 +76,13 @@ my $config      = $opts{'C'} || $ENV{'HOME'}.'/.cif';
 my $throttle    = $opts{'T'} || 'low';
 my $threads     = $opts{'t'};
 my $admin       = $opts{'A'} || 'root';
-my $keep_days   = $opts{'k'};
 my $mutex       = $opts{'L'} || '/tmp/cif-upgrade-database.lock';
+my $journal     = $opts{'J'} || '/tmp/cif-upgrade-database.journal';
+my $batch_size  = $opts{'B'} || 5000;
+
+die usage() if($opts{'h'});
+
+my $j = check_journal();
 
 #$SIG{'INT'} = 'cleanup';
 $SIG{__DIE__} = 'cleanup';
@@ -92,24 +97,81 @@ my $ret;
 #    die($!);
 #}
 
-$threads = _throttle($throttle) unless($threads);
+$threads = CIF::Legacy::_throttle($throttle) unless($threads);
 
-my $timestamp;
-if($keep_days){
-    $timestamp = DateTime->from_epoch(epoch => (time() - ((1 + $keep_days) * 84600)));
-    $timestamp = $timestamp->ymd().'T00:00:00Z';
-} else {
-    $timestamp = '1900-01-01T00:00:00Z';
-}
-
-debug('using date: '.$timestamp);
-
-my ($e,$r) = threads->create('_pager_routine',$config,$timestamp)->join();
+my ($e,$r) = threads->create('_pager_routine',$config)->join();
 warn $e if($e);
+
+set_journal(0);
 
 remove_lock();
 debug('done...');
 exit(0);
+
+sub usage {
+    return <<EOF;
+Usage: perl $0 {options...}
+
+Basic:
+    -h  --help:             this message
+
+Basic:
+
+    -C  --config:           configuration file, default: $config
+    -A  --admin:            admin address, default: $admin
+    
+Advanced:
+
+    -L  --lock:             mutex lock, default: $mutex
+    -J  --journal:          journal location, default: $journal
+    -B  --batch-size:       default commit size, default: $batch_size
+    
+Debugging:
+
+    -d  --debug
+    -v  --verbosity  
+    
+
+Examples:
+
+Basic:
+    
+    $0 -C ~/.cifv1
+    $0 -C ~/.cifv1 -A root\@localhost
+    
+Advanced:
+    
+    $0 -C ~/.cifv1 -L /tmp/mylock.lock
+    $0 -C ~/.cifv1 -B 500
+    
+EOF
+}
+
+sub check_journal { 
+    my $value = 0;
+    # doesn't exist, create
+    if(! -e $journal){
+        open(F,'>',$journal) || die('failed to open journal file: '.$!);
+        print F '0';
+    } else {
+        # exists, read in value
+        open(F,'<',$journal);
+        $value = <F>;
+    }
+    close(F);
+    
+    # return value   
+    return $value;
+}
+
+sub set_journal {
+    my $value = shift;
+    
+    open(F,'>',$journal);
+    print F $value;
+    close(F);
+    return $value;
+}
 
 sub cleanup {
     my $msg = shift;
@@ -169,10 +231,6 @@ sub _pager_routine {
     my $msgs_processed = $context->socket(ZMQ_PULL);
     $msgs_processed->bind(MSGS_PROCESSED_CONNECTION());
     
-    # setup the sql
-    my $sql = qq{
-        created >= '$ts'
-    };
     my ($ret,$err,$data,$tmp,$sth);
 
     ($err,$ret) = init_db({ config => $config });
@@ -180,20 +238,30 @@ sub _pager_routine {
     
     ($err,$ret) = CIF::Archive->new({ config => $config });
     return $err if($err);
-
-    my $archive = $ret;
-    $archive->load_page_info({ sql => $sql });
     
-    $archive->{'limit'} = 5000;
+    my $archive = $ret;
+    $archive->{'limit'} = $batch_size;
     $archive->{'offset'} = 0;
+    
+    # setup the sql
+    my $sql = 'SELECT id,uuid,guid,data FROM archive';
+    
+    my $jj = check_journal();
+    if($jj > 0){ 
+       debug('starting at id: '.$jj);
+       $archive->load_page_info({ sql => qq{ id < $jj } });
+       $sql .= ' WHERE id < '.$jj;
+    } else {
+        $archive->load_page_info();
+    }
+    
+    $sql .= ' ORDER BY id DESC LIMIT '.$archive->{'limit'}.' OFFSET ?';
     
     my $total = $archive->{'total'};
     debug('total count: '.$total);
     debug('pages: '.$archive->page_count());
-    
-    my $q = 'ORDER BY id DESC LIMIT '.$archive->{'limit'}.' OFFSET ?';
-    my $ssql = 'SELECT id,uuid,guid,data FROM archive WHERE '.$sql.' '.$q;
-    $archive->set_sql(custom1 => $ssql);
+
+    $archive->set_sql(custom1 => $sql);
     $sth = $archive->sql_custom1();
     
     # feature of zmq, pub/sub's need a warm up msg
@@ -226,6 +294,8 @@ sub _pager_routine {
         debug('executing sql...');
         $sth->execute($archive->{'offset'});
         $ret = $sth->fetchall_hashref('id');
+  
+        my @keys = sort map { $_ = $ret->{$_}->{'id'} } keys(%$ret);
         
         debug('sending next pages to workers...');
         $workers->send_as('json' => $ret->{$_}) foreach(keys(%$ret));
@@ -248,6 +318,8 @@ sub _pager_routine {
         
         #debug('completed: '.$completed.'/'.$archive->{'limit'}) if($::debug > 1););
         debug('remaining: '.$total.' ('.int(($total/$archive->{'total'})*100).'%)');
+        
+        set_journal($keys[0]);
        
         my $pages_left = $archive->page_count() - $archive->current_page();
         debug('pages left: '.$pages_left) if($pages_left % 10 == 0);
@@ -359,21 +431,24 @@ sub _process_message {
    
     # to keypairs
     $data = CIF::Legacy::hash_simple($data,$uuid);
+    
     my $reporttime = $data->{'reporttime'};
     
-    # to IODEF::PB
-    #$data = Iodef::Pb::Simple->new($data);
-    #try {
-    #    $data = $data->encode();
-    #} catch {
-    #    $err = shift;
-    #};
-    #if($err){
-    #    return $err;
-    #}
     
-    #$data = Compress::Snappy::compress($data);
-    #$data = encode_base64($data);
+    # to IODEF::PB
+    $data = Iodef::Pb::Simple->new($data);
+    try {
+        $data = $data->encode();
+    } catch {
+        $err = shift;
+    };
+    if($err){
+        return $err;
+    }
+    
+    # json gets angry at some chars... so we have to transport as a base64 string.
+    $data = encode_base64($data);
+    
     return (undef,{
         uuid        => $uuid,
         guid        => $guid,
@@ -434,12 +509,15 @@ sub _writer_routine {
             debug('found message...') if($::debug > 4);
             $msg = $writer->recv_as('json');
             
-            $tmsg = Iodef::Pb::Simple->new($msg->{'data'});
+            require Iodef::Pb::Simple;
+            $tmsg = $msg->{'data'};
+            $msg->{'data'} = decode_base64($msg->{'data'});
+            $msg->{'data'} = IODEFDocumentType->decode($msg->{'data'});
             
-            $sth2->execute($msg->{'orig'},$msg->{'reporttime'},$msg->{'id'});
+            $sth2->execute($tmsg,$msg->{'reporttime'},$msg->{'id'});
             
             ($err,$ret) = $dbi->insert_index({ 
-                data        => $tmsg,
+                data        => $msg->{'data'},
                 feeds       => $dbi->{'feeds'},
                 datatypes   => $dbi->{'datatypes'}, 
                 uuid        => $msg->{'uuid'},
@@ -472,20 +550,4 @@ sub _writer_routine {
     $writer->close();
     $context->term();
     return;
-}
-
-sub _throttle {
-    my $throttle = shift;
-
-    require Linux::Cpuinfo;
-    my $cpu = Linux::Cpuinfo->new();
-    return(DEFAULT_THROTTLE_FACTOR()) unless($cpu);
-    
-    my $cores = $cpu->num_cpus();
-    return(DEFAULT_THROTTLE_FACTOR()) unless($cores && $cores =~ /^\d+$/);
-    return(DEFAULT_THROTTLE_FACTOR()) if($cores eq 1);
-    
-    return($cores * (DEFAULT_THROTTLE_FACTOR() * 2))  if($throttle eq 'high');
-    return($cores * DEFAULT_THROTTLE_FACTOR())  if($throttle eq 'medium');
-    return($cores / 2) if($throttle eq 'low');
 }
