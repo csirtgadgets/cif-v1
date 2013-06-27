@@ -18,10 +18,15 @@ sub pull {
     # We'll assume that the proxy is sane and handles timeouts and redirects and such appropriately.
     # LWPx::ParanoidAgent doesn't work well with Net-HTTP/TLS timeouts just yet
     my $ua;
-    if ($f->{'proxy'} || $f->{'feed'} =~ /^https/) {
+    if (env_proxy() || $f->{'proxy'} || $f->{'feed'} =~ /^https/) {
+        # setup the initial agent
         require LWP::UserAgent;
         $ua = LWP::UserAgent->new(agent => $AGENT);
+        
+        # pull from env_
         $ua->env_proxy();
+        
+        # if we override, specify
         $ua->proxy(['http','https','ftp'], $f->{'proxy'}) if($f->{'proxy'});
     } else {
         # we use this instead of ::UserAgent, it does better
@@ -81,4 +86,30 @@ sub pull {
     return(undef,$content);
 }
 
+sub env_proxy {
+    my ($self) = @_;
+    require Encode;
+    require Encode::Locale;
+    my($k,$v);
+    my $found = 0;
+    while(($k, $v) = each %ENV) {
+        if ($ENV{REQUEST_METHOD}) {
+            # Need to be careful when called in the CGI environment, as
+            # the HTTP_PROXY variable is under control of that other guy.
+            next if $k =~ /^HTTP_/;
+            $k = "HTTP_PROXY" if $k eq "CGI_HTTP_PROXY";
+        }
+        $k = lc($k);
+        next unless $k =~ /^(.*)_proxy$/;
+        $k = $1;
+        unless($k eq 'no') {
+            # Ignore random _proxy variables, allow only valid schemes
+            next unless $k =~ /^$URI::scheme_re\z/;
+            # Ignore xxx_proxy variables if xxx isn't a supported protocol
+            next unless LWP::Protocol::implementor($k);
+            $found = 1;
+        }
+    }
+    return $found;
+}
 1;
