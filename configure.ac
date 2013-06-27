@@ -56,48 +56,4 @@ AC_ARG_WITH(group,
 )
 AC_SUBST(CIF_GROUP)
 
-dnl DB_TYPE
-AC_ARG_WITH(db-type,
-        AC_HELP_STRING([--with-db-type=TYPE],
-                   [sort of database RT will use (default: Pg) (only Pg currently valid)]),
-            DB_TYPE=$withval,
-            DB_TYPE=Pg)
-if test "$DB_TYPE" != 'Pg' ; then
-    AC_MSG_ERROR([Only Pg is a valid db type])
-fi
-AC_SUBST(DB_TYPE)
-DB_UNIXOWNER=postgres
-AC_SUBST(DB_UNIXOWNER)
-
-dnl DB_HOST
-AC_ARG_WITH(db-host,
-        AC_HELP_STRING([--with-db-host=HOSTNAME],
-                   [FQDN of database server (default: localhost)]),
-            DB_HOST=$withval,
-            DB_HOST=localhost)
-AC_SUBST(DB_HOST)
-
-dnl DB_PORT
-AC_ARG_WITH(db-port,
-        AC_HELP_STRING([--with-db-port=PORT],
-                   [port on which the database listens on (default: 5432]),
-            DB_PORT=$withval,
-            DB_PORT=5432)
-AC_SUBST(DB_PORT)
-
-AC_ARG_WITH(db-dba,
-        AC_HELP_STRING([--with-db-dba=DBA],
-                   [name of database administrator (default: postgres)]),
-            DB_DBA=$withval,
-            DB_DBA="postgres")
-AC_SUBST(DB_DBA)
-
-dnl DB_DATABASE
-AC_ARG_WITH(db-database,
-        AC_HELP_STRING([--with-db-database=DBNAME],
-                   [name of the database to use (default: cif_route)]),
-            DB_DATABASE=$withval,
-            DB_DATABASE=cif)
-AC_SUBST(DB_DATABASE)
-
 AC_OUTPUT
