@@ -32,6 +32,11 @@ sub new {
         $self->ssl_opts(verify_hostname => 0);
     }
 
+    # set proxy
+    # eg: export http_proxy='http://localhost:5050'
+    $self->env_proxy();
+
+    # override
     if($self->get_config->{'proxy'}){
         debug('setting proxy') if($::debug);
         $self->proxy(['http','https'],$self->get_config->{'proxy'});
