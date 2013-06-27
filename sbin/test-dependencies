@@ -134,7 +134,7 @@ my %AVOID = (
 
 $deps{'CORE'} = [ text_to_hash( << '.') ];
 CIF 0.99_05
-CIF::DBI 0.99_03
+CIF::DBI 0.99_05
 Apache2::RequestRec 2.0.4
 .
 
