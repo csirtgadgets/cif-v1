@@ -25,6 +25,11 @@ sub parse {
             }
             $h->{$cols[$_]} = $m[$_];
         }
+        # a work-around, we do some of this in iodef::pb::simple too
+        # adding this here makes the debugging messages a little less complicated
+        if($h->{'address_mask'}){
+            $h->{'address'} .= '/'.$h->{'address_mask'};
+        }
         map { $h->{$_} = $f->{$_} } keys %$f;
         push(@array,$h);
     }
