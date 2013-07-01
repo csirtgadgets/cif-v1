@@ -1,4 +1,4 @@
-EXTRA_DIST = lib bin sbin schemas
+EXTRA_DIST = lib bin sbin schemas etc
 
 ME=libcif-dbi
 BUILD=$(shell git describe --tags)

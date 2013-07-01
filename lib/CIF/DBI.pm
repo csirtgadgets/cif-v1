@@ -28,8 +28,8 @@ sub init {
     
     my $config = Config::Simple->new($args->{'config'}) || return('missing config file');
     
-    my $datatypes   = $config->param(-block => 'archive')->{'datatypes'} || ['infrastructure','domain','url','email','malware','search'];
-    my $feeds       = $config->param(-block => 'archive')->{'feeds'};
+    my $datatypes   = $config->param(-block => 'cif_archive')->{'datatypes'} || ['infrastructure','domain','url','email','malware','search'];
+    my $feeds       = $config->param(-block => 'cif_archive')->{'feeds'};
     
     $self->{'datatypes'}    = $datatypes;
     $self->{'feeds'}        = $feeds;

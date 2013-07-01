@@ -1,10 +1,8 @@
 set default_tablespace = archive;
 
-DROP TYPE IF EXISTS severity;
-DROP TYPE IF EXISTS restriction;
-
 ALTER TABLE apikeys DROP COLUMN access;
 ALTER TABLE apikeys ADD COLUMN restricted_access boolean default false;
+ALTER TABLE apikeys ADD COLUMN expires timestamp with time zone;
 
 CREATE TABLE apikeys_restrictions (
     id BIGSERIAL PRIMARY KEY NOT NULL,

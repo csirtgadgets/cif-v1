@@ -82,6 +82,8 @@ my $batch_size  = $opts{'B'} || 5000;
 
 die usage() if($opts{'h'});
 
+die usage()."\n\n".'missing config' unless(-e $config);
+
 my $j = check_journal();
 
 $SIG{__DIE__} = \&cleanup;
@@ -421,7 +423,7 @@ sub _process_message {
     }
     
     # json gets angry at some chars... so we have to transport as a base64 string.
-    $data = encode_base64($data);
+    $data = encode_base64(Compress::Snappy::compress($data));
     
     return (undef,{
         uuid        => $uuid,
@@ -503,7 +505,7 @@ sub _writer_routine {
             
                 require Iodef::Pb::Simple;
                 $tmsg = $msg->{'data'};
-                $msg->{'data'} = decode_base64($msg->{'data'});
+                $msg->{'data'} = Compress::Snappy::decompress(decode_base64($msg->{'data'}));
                 $msg->{'data'} = IODEFDocumentType->decode($msg->{'data'});
                 
                 $sth2->execute($tmsg,$msg->{'reporttime'},$msg->{'id'});

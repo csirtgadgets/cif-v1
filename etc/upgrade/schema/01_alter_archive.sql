@@ -1,5 +1,8 @@
 set default_tablespace = archive;
 
+DROP TYPE IF EXISTS severity;
+DROP TYPE IF EXISTS restriction;
+
 ALTER TABLE archive DROP COLUMN source;
 ALTER TABLE archive DROP COLUMN restriction;
 ALTER TABLE archive DROP COLUMN description;
