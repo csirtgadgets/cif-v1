@@ -114,17 +114,16 @@ sub cleanup {
 }
 
 sub remove_lock {
-    system('rm '.$mutex);
+    unlink($mutex);
 }
 
 if(-e $mutex && !$specific_feed){
     print 'already running, mutex found: '.$mutex."\n" if($debug);
     exit(-1);
 }
-my $ret = system('touch '.$mutex);
-unless(defined($ret) && $ret == 0){
-    die($!);
-}
+
+open(MUTEX, ">>$mutex") or die "$mutex: $!";
+close MUTEX;
 
 unless($vacuum_only){
     foreach my $feed (@{$obj->get_feeds()}){
@@ -137,7 +136,7 @@ my $timestamp = DateTime->from_epoch(epoch => (time() - ((1 + $limit_days) * 846
 $timestamp = $timestamp->ymd().'T00:00:00Z';
 
 debug('purging from: '.$timestamp);
-$ret = $obj->purge_feeds({ 
+my $ret = $obj->purge_feeds({ 
     timestamp   => $timestamp,
 });
 
