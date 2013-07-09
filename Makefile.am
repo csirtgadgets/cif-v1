@@ -41,7 +41,7 @@ rebuilddb:
 	-( cd libcif-dbi && make rebuilddb )
 
 upgradedb:
-	-( cd libcif-dbi && make upradedb )
+	-( cd libcif-dbi && make upgradedb )
 
 cif-router-install:
 	-( cd cif-router && make install )
