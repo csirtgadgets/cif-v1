@@ -1,5 +1,8 @@
 Revision history for libcif
 
+v1.0.0-rc.4 2013-07-10
+    - misc bugfixes
+
 0.99-RC3-00 2013-05
     - swiched bin/cif to use env instead of /usr/bin/perl (better for other UNIX's)
     - added no_decode and new_only flags to client (see doc)
