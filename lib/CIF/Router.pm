@@ -270,6 +270,9 @@ sub authorized_write {
     my $rec = $self->key_retrieve($key);
     
     return(0) unless($rec);
+    
+    # we must meet all these requirements
+    return(0) unless($rec->write());
     return(0) if($rec->revoked() || $rec->restricted_access());
     return(0) if($rec->expired());
     return({
