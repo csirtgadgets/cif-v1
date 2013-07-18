@@ -413,6 +413,11 @@ sub _process_message {
     
     # to IODEF::PB
     $data = Iodef::Pb::Simple->new($data);
+    if(ref($data) eq 'ARRAY'){
+        # work-around for sharewith/carboncontact
+        # those rec's should already be split out and in the db anyway
+        $data = @{$data}[0];
+    }
     try {
         $data = $data->encode();
     } catch {
