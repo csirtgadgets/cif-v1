@@ -42,7 +42,7 @@ use Try::Tiny;
 use CIF qw/debug/;
 
 my %opts;
-getopt('t:E:e:G:g:k:u:C:R:L:dD:', \%opts);
+getopt('t:E:G:g:k:u:C:R:L:dD:X', \%opts);
 die(usage()) if($opts{'h'});
 
 my $user            = $opts{'u'};
@@ -52,7 +52,7 @@ my $desc            = $opts{'D'};
 my $key             = $opts{'k'};
 my $write           = $opts{'w'};
 my $revoke          = $opts{'r'};
-my $delete          = $opts{'d'};
+my $delete          = $opts{'X'};
 my $add             = $opts{'a'};
 my $parentid        = $opts{'p'};
 my $expires         = $opts{'E'};
@@ -63,7 +63,7 @@ my $import          = $opts{'I'} || 0;
 my $import_ver      = $opts{'Z'} || 'v0';
 my $import_location = $opts{'L'};
 my $rename          = $opts{'t'};
-our $debug           = $opts{'d'} || 0;
+our $debug          = $opts{'d'} || 0;
 
 if($user){
     die(usage()) unless($key || $opts{'u'} || $opts{'l'} || $opts{'a'} || $opts{'d'});
@@ -79,12 +79,13 @@ Basic:
     -C  --config:           configuration file, default: $config
     -u  --user:             specify user alias (root\@localhost)
     -a  --add:              add key
-    -d  --delete:           delete key
+    -X  --delete:           delete key
     -k  --key:              apikey
     -l  --list:             list users
     
 Advanced:
-    -e  --enable:           enable access to specific section (infrastructure,domain,malware,etc... default: all)
+    -R  --restrict:         restrict access to specific type of query 
+                            (infrastructure/botnet,domain/malware,malware/md5,etc... default: 0)
     -r  --revoke:           revoke a key
     -w  --write:            enable write access
     -E  --expires:          set an expiration date
