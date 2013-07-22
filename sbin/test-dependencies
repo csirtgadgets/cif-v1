@@ -145,8 +145,8 @@ URI::Escape 1.56
 Encode 2.23
 ZeroMQ 0.21
 Time::HiRes 1.9719
-Net::Abuse::Utils 0.12
-Net::Abuse::Utils::Spamhaus 0.03
+Net::Abuse::Utils 0.13
+Net::Abuse::Utils::Spamhaus 0.04
 Sys::MemInfo 0.91
 LWPx::ParanoidAgent 1.09
 .
