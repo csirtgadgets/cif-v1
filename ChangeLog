@@ -2,6 +2,7 @@ Revision history for libcif-dbi
 
 v1.0.0-rc.5 2013-07
     - bugfix to migrate-data script when handling "sharewith/carboncopy" data
+    - migrated asn, cc and rir plugins back into repo (disabled by default)
 
 v1.0.0-rc.4 2013-07-10
     - added upgrade scripts, minor tweaks to support
