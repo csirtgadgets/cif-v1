@@ -42,7 +42,7 @@ use Try::Tiny;
 use CIF qw/debug/;
 
 my %opts;
-getopt('t:E:e:G:g:k:u:C:R:L:d', \%opts);
+getopt('t:E:e:G:g:k:u:C:R:L:dD:', \%opts);
 die(usage()) if($opts{'h'});
 
 my $user            = $opts{'u'};
