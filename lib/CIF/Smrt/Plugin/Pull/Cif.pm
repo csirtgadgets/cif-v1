@@ -19,10 +19,8 @@ sub pull {
     
     my $confidence = $f->{'confidence'} || 85;
     
-    my @q = split(/,/,$f->{'feed'});
-    
     ($err,$ret) = $ret->search({
-        query       => \@q,
+        query       => $f->{'feed'},
         confidence  => $confidence,
         nolog       => 1,
         no_decode   => 1,

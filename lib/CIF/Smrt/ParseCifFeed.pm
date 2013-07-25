@@ -30,7 +30,12 @@ sub parse {
             data    => \@blobs,
             format  => 'Raw',
         })};
-        push(@return,@blobs);
+        if($f->{'guid'}){
+            foreach my $b (@blobs){
+                $b->{'guid'} = $f->{'guid'};
+            }
+        }
+        push(@return,@blobs); 
     }
     return(\@return);
 }

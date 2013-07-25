@@ -2,6 +2,7 @@ Revision history for cif-smrt
 
 1.0.0-rc.5  2013-07
     - dep fix for net-abuse-utils
+    - bugfix to ParseCifFeed for federated sharing
 
 1.0.0-rc.4  2013-07-10
     - misc bugfixes to parser code (xml)
