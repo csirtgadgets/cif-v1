@@ -18,7 +18,7 @@ use URI::Escape;
 use Digest::MD5 qw/md5_hex/;
 use Encode qw(encode_utf8);
 
-use CIF qw(generate_uuid_ns is_uuid debug);
+use CIF qw(generate_uuid_ns generate_uuid_random is_uuid debug);
 use CIF::Msg;
 use CIF::Msg::Feed;
 
@@ -265,6 +265,31 @@ sub send_json {
         apikey  => $self->get_apikey(),
     });   
 }
+
+sub send_keypairs {
+    my $self = shift;
+    my $args = shift;
+    
+    my $guid = $args->{'guid'} || 'everyone';
+    my $data = $args->{'data'};
+    
+    return unless(ref($data) eq 'ARRAY' || ref($data) eq 'HASH');
+    $data = [$data] unless(ref($data) eq 'ARRAY');
+    
+    foreach (@$data){
+        unless(exists($_->{'id'})){
+            $_->{'id'} = generate_uuid_random();
+        }
+        $_ = Iodef::Pb::Simple->new($_)->encode();
+    }
+ 
+    my $ret = $self->new_submission({
+        guid    => $guid,
+        data    => $data,
+    });
+    return $self->submit($ret);
+}
+    
 
 sub submit {
     my $self = shift;
