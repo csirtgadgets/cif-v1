@@ -18,7 +18,7 @@ sub run {
     my $err;
     foreach my $t (@tests){
         try {
-            $t = Iodef::Pb::Simple->new($t);
+            $t = Iodef::Pb::Simple->new({%$t});
         } catch {
             $err = shift;
         };

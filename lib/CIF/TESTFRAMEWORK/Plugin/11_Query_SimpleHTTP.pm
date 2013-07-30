@@ -1,8 +1,11 @@
-package CIF::TESTFRAMEWORK::Plugin::10_Query;
+package CIF::TESTFRAMEWORK::Plugin::11_Query_SimpleHTTP;
 use base 'CIF::TESTFRAMEWORK::Plugin';
 
 use strict;
 use warnings;
+
+use LWP::UserAgent;
+use JSON::XS;
 
 use CIF qw/debug/;
 
@@ -14,20 +17,27 @@ sub run {
     my $cli = $args->{'client'};
     
     my $loop    = $args->{'loop'} || 0;
-
+    
+    my $ua = LWP::UserAgent->new();
+    $ua->ssl_opts(SSL_verify_mode => 'SSL_VERIFY_NONE');
+    $ua->ssl_opts(verify_hostname => 0);
+    $ua->default_header('Accept' => 'application/json');
+    
+    my $url = $cli->get_config->{'host'};
+    $url .= '?apikey='.$cli->get_config->{'apikey'};
+    
     my ($ret,$err);
     for (my $i = 0; $i < $loop; $i++){
         foreach my $t (@tests){
             debug('query: '.$t->{'address'});
-            ($err,$ret) = $cli->search({
-                query   => $t->{'address'},
-                nolog   => 1,
-            });
-            return($err) if($err);
+            $ret = $ua->get($url."&query=".$t->{'address'});
+
+            return ($ret->content()) unless($ret->status_line() eq '200');
             return('query failed: '.$t->{'address'}) unless($ret);
         }
     }
     debug('query tests successful...');
+    
     return 1;
 }
 

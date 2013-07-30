@@ -10,7 +10,6 @@ BEGIN {
         "./lib",
         "../libcif/lib", # dev mode
         "../libcif-dbi/lib", # dev mode
-        "../../../iodef-pb-simple-perl/lib",
     );
     my $bin_path;
 
@@ -36,19 +35,14 @@ use CIF::TESTFRAMEWORK;
 use Getopt::Std;
 use Data::Dumper;
 use CIF qw/debug generate_uuid_random generate_uuid_ns/;
-use threads;
 
 my %opts;
 
-getopts('hdv:C:l:t:S',\%opts);
+getopts('hdv:C:',\%opts);
 our $debug = $opts{'d'} || 1;
 $debug = $opts{'v'} if($opts{'v'});
 
 my $config      = $opts{'C'} || $ENV{'HOME'}.'/.cif';
-
-my $loop    = $opts{'l'} || 0;
-my $threads = $opts{'t'} || 1;
-my $simple  = $opts{'S'} || 0;
 
 # basic tests
 
@@ -59,7 +53,6 @@ our $tests = [
         guid        => generate_uuid_ns('everyone'),
         confidence  => 75,
         id          => generate_uuid_random(),
-        description => 'ssh',
     },
     {
         address     => 'example.com',
@@ -67,58 +60,37 @@ our $tests = [
         guid        => generate_uuid_ns('group1'),
         confidence  => 35,
         id          => generate_uuid_random(),
-        description => 'spyeye',
     },
 ];
 
-my %active_threads;
-foreach my $tid (1 ... $threads){
-    my $t = threads->create('run_thread');
-    $active_threads{$tid} = $t;
-}
+# create new test framework object
 
-my $completed = 0;
-do{
-    foreach my $t (keys %active_threads){
-        if($active_threads{$t}->join()){
-            delete($active_threads{$t});
-        } else {
-            sleep(1);
-        }
-    }
-} while(keys(%active_threads));
-    
+my ($err,$ret) = CIF::TESTFRAMEWORK->new({
+    config  => $config,
+    tests   => $tests,
+});
 
-sub run_thread {
-    # create new test framework object
-    my ($err,$ret) = CIF::TESTFRAMEWORK->new({
-        config  => $config,
-        tests   => $tests,
-    });
-    
-    die($err) if($err);
-    my $obj = $ret;
-    
-    # generate temp apikey
-    
-    debug('generating apikey...');
-    my $apikey = $obj->init_apikey();
-    
-    # set the apikey to the client
-    $obj->get_client->set_apikey($apikey);
-    
-    # run tests
-    ($err,$ret) = $obj->process({
-        client  => $obj->get_client(),
-        loop    => $loop,
-        simple  => $simple,
-    });
-    
-    debug('all tests successful...') if($ret);
-    
-    # cleanup
-    debug('removing key: '.$apikey);
-    $obj->purge_apikey($apikey);
-}
+die($err) if($err);
 
-1;
+my $obj = $ret;
+
+# generate temp apikey
+
+debug('generating apikey...');
+my $apikey = $obj->init_apikey();
+
+# set the apikey to the client
+$obj->get_client->set_apikey($apikey);
+
+# run tests
+
+($err,$ret) = $obj->process({
+    client  => $obj->get_client(),
+});
+
+debug('all tests successful...') if($ret);
+
+# cleanup
+
+debug('removing key: '.$apikey);
+$obj->purge_apikey($apikey);
