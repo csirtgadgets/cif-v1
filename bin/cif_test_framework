@@ -35,14 +35,18 @@ use CIF::TESTFRAMEWORK;
 use Getopt::Std;
 use Data::Dumper;
 use CIF qw/debug generate_uuid_random generate_uuid_ns/;
+use threads;
 
 my %opts;
 
-getopts('hdv:C:',\%opts);
+getopts('hdv:C:l:t:',\%opts);
 our $debug = $opts{'d'} || 1;
 $debug = $opts{'v'} if($opts{'v'});
 
 my $config      = $opts{'C'} || $ENV{'HOME'}.'/.cif';
+
+my $loop = $opts{'l'} || 0;
+my $threads = $opts{'t'} || 1;
 
 # basic tests
 
@@ -63,45 +67,53 @@ our $tests = [
     },
 ];
 
-# create new test framework object
+my %active_threads;
+foreach my $tid (1 ... $threads){
+    my $t = threads->create('run_thread');
+    $active_threads{$tid} = $t;
+}
 
-my ($err,$ret) = CIF::TESTFRAMEWORK->new({
-    config  => $config,
-    tests   => $tests,
-});
+my $completed = 0;
+do{
+    foreach my $t (keys %active_threads){
+        if($active_threads{$t}->join()){
+            delete($active_threads{$t});
+        } else {
+            sleep(1);
+        }
+    }
+} while(keys(%active_threads));
+    
 
-die($err) if($err);
+sub run_thread {
+    # create new test framework object
+    my ($err,$ret) = CIF::TESTFRAMEWORK->new({
+        config  => $config,
+        tests   => $tests,
+    });
+    
+    die($err) if($err);
+    my $obj = $ret;
+    
+    # generate temp apikey
+    
+    debug('generating apikey...');
+    my $apikey = $obj->init_apikey();
+    
+    # set the apikey to the client
+    $obj->get_client->set_apikey($apikey);
+    
+    # run tests
+    ($err,$ret) = $obj->process({
+        client  => $obj->get_client(),
+        loop    => $loop,
+    });
+    
+    debug('all tests successful...') if($ret);
+    
+    # cleanup
+    debug('removing key: '.$apikey);
+    $obj->purge_apikey($apikey);
+}
 
-my $obj = $ret;
-
-# generate temp apikey
-
-debug('generating apikey...');
-my $apikey = $obj->init_apikey();
-
-# set the apikey to the client
-$obj->get_client->set_apikey($apikey);
-
-# run tests
-
-($err,$ret) = $obj->process({
-    client  => $obj->get_client(),
-});
-
-debug('all tests successful...') if($ret);
-
-# cleanup
-
-debug('removing key: '.$apikey);
-$obj->purge_apikey($apikey);
-
-# clean out the archive
-#DELETE FROM archive;
-#DELETE FROM hash;
-#DELETE FROM domain;
-#DELETE FROM infrastructure;
-#DELETE FROM url;
-#DELETE FROM email;
-#DELETE FROM malware;
-#DELETE FROM search;
-#DELETE FROM feed;
+1;

@@ -13,14 +13,19 @@ sub run {
     my @tests = @{$args->{'tests'}};
     my $cli = $args->{'client'};
     
+    my $loop = $args->{'loop'} || 0;
+    
     my ($ret,$err);
-    foreach my $t (@tests){
-        debug('query: '.$t->{'address'});
-        ($err,$ret) = $cli->search({
-            query => $t->{'address'},
-        });
-        return($err) if($err);
-        return('query failed: '.$t->{'address'}) unless($ret);
+    for (my $i = 0; $i < $loop; $i++){
+        foreach my $t (@tests){
+            debug('query: '.$t->{'address'});
+            ($err,$ret) = $cli->search({
+                query   => $t->{'address'},
+                nolog   => 1,
+            });
+            return($err) if($err);
+            return('query failed: '.$t->{'address'}) unless($ret);
+        }
     }
     debug('query tests successful...');
     

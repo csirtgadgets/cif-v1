@@ -13,7 +13,7 @@ __PACKAGE__->follow_best_practice;
 __PACKAGE__->mk_accessors(qw(
     dbh config db_config
     plugins profile client
-    tests
+    tests loop
 ));
 
 our @plugins = sort  __PACKAGE__->plugins();
@@ -41,6 +41,7 @@ sub init {
     return ($err) if($err);
     
     $self->set_tests($args->{'tests'});
+    $self->set_loop($args->{'loop'});
     
     # do this last, it turns config into an obj
     ($err,$ret) = $self->init_config($args);
