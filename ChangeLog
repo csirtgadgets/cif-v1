@@ -1,7 +1,8 @@
 Revision history for libcif
 
-v1.0.0-rc.5 2013-07
+v1.0.0-rc.5 2013-08
     - added send_keypairs function
+    - bugfix to bin/cif
 
 v1.0.0-rc.4 2013-07-10
     - misc bugfixes

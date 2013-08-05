@@ -221,6 +221,9 @@ if($outfile){
     open(F,">",$outfile) || die($!);
 }
 
+# make sure if there are no spaces between queries
+$query =~ s/\s//g;
+
 my @q = split(/,/,$query);
 
 ($err,$ret) = $cli->search({
