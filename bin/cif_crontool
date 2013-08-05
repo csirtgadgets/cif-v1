@@ -169,10 +169,9 @@ if(-e $mutex){
     bail('cif_crontool already running or hung...');
 }
 
-my $ret = system('touch '.$mutex);
-unless(defined($ret) && $ret == 0){
-    die($!);
-}
+open(MUTEX, ">>$mutex") or die "$mutex: $!";
+close(MUTEX);
+
 foreach(@crons){
     my $c_tool = $_->{'tool'} || $cron_tool;
     my $cmd = $c_tool.' -C '.$config.' -r '.$_->{'config'}.' -f '.$_->{'feed'};
@@ -215,6 +214,8 @@ sub bail {
         );
         $msg->send();
         system('touch /tmp/.cif_crontool.err');
+        open(MUTEX, ">>/tmp/.cif_crontool.err") or die "/tmp/.cif_crontool.err: $!";
+        close(MUTEX);
     }
     warn($msg);
     exit(-1);
@@ -227,5 +228,7 @@ sub _exit {
 }
 
 sub remove_lock {
-    system('rm '.$mutex) if(-e $mutex);
+    if(-e $mutex){
+        unlink($mutex) or die "Could not remove $mutex: $!";
+    }
 }
