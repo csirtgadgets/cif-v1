@@ -114,7 +114,7 @@ sub cleanup {
 }
 
 sub remove_lock {
-    unlink($mutex);
+    unlink($mutex) or die "Could not remove $mutex: $!";
 }
 
 if(-e $mutex && !$specific_feed){

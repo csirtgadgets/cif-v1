@@ -89,19 +89,18 @@ sub cleanup {
 }
 
 sub remove_lock {
-    system('rm '.$mutex);
+    unlink($mutex) or die "Could not remove $mutex: $!";
 }
 
 if(-e $mutex){
     debug('already running, mutex found: '.$mutex);
     exit(-1);
 }
-my $ret = system('touch '.$mutex);
-unless(defined($ret) && $ret == 0){
-    die($!);
-}
 
-my $err;
+open(MUTEX, ">>$mutex") or die "$mutex: $!";
+close(MUTEX);
+
+my ($ret,$err);
 my $timestamp = DateTime->from_epoch(epoch => (time() - ((1 + $keep_days) * 84600)));
 $timestamp = $timestamp->ymd().'T00:00:00Z';
 
