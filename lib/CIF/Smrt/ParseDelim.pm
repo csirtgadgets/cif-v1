@@ -22,6 +22,8 @@ sub parse {
         @lines = @lines[$start..$end];
     }
 
+    shift @array if($f->{'skipfirst'});
+
     foreach(@lines){
         next if(/^(#|$|<)/);
         my @m = split($split,$_);

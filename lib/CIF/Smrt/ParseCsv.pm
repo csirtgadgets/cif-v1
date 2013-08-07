@@ -23,6 +23,9 @@ sub parse {
     
     my $csv = Text::CSV->new({binary => 1});
     my @cols = split(',',$f->{'values'});
+
+    shift @lines if($f->{'skipfirst'});
+    
     foreach(@lines){
         next if(/^(#|<|$)/);
         my $row = $csv->parse($_);
