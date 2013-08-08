@@ -31,6 +31,7 @@ sub pull {
         } else {
             ($start,$end) = (0,$l-1);
         }
+        $end = $#lines if ($end > $#lines);
         @lines = @lines[$start..$end];
     }
     my $content = join('',@lines) || '';
