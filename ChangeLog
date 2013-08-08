@@ -7,6 +7,7 @@ Revision history for cif-smrt
     - fixed https://github.com/collectiveintel/cif-v1/issues/43
     - fixed https://github.com/collectiveintel/cif-v1/issues/44
     - fixed https://github.com/collectiveintel/cif-v1/issues/42
+    - fixed https://github.com/collectiveintel/cif-v1/issues/41
 
 1.0.0-rc.4  2013-07-10
     - misc bugfixes to parser code (xml)
