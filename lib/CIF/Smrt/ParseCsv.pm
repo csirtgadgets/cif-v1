@@ -19,6 +19,12 @@ sub parse {
             ($start,$end) = (0,$l-1);
         }
         @lines = @lines[$start..$end];
+        
+        # A feed limit may have already been applied to
+        # this data.  If so, don't apply it again.
+        if ($#lines > ($end - $start)){
+            @lines = @lines[$start..$end];
+        }
     }
     
     my $csv = Text::CSV->new({binary => 1});
