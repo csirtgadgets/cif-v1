@@ -340,7 +340,7 @@ sub parse {
                     require CIF::Smrt::ParseJson;
                     $return = CIF::Smrt::ParseJson::parse($f,$content);
                 }
-            } elsif($content =~ /^#?\s?"[\S|\s]+","[\S|\s]+"/ && !$f->{'regex'}){
+            } elsif($content =~ /^#?\s?"[^"]+","[^"]+"/ && !$f->{'regex'}){
                 # ParseCSV only works on strictly formated CSV files
                 # o/w you should be using ParseDelim and specifying the "delimiter" field
                 # in your config
