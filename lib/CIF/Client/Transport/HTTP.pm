@@ -43,6 +43,12 @@ sub new {
     }
     
     $self->agent($AGENT);
+    
+    my $cache = $self->get_config->{'total_capacity'} || 5;
+    $self->conn_cache({ total_capacity => $cache });
+    
+    my $timeout = $self->get_config->{'timeout'} || 300;
+    $self->timeout($timeout);
 
     return($self);
 }
@@ -75,6 +81,7 @@ sub _send {
     my $x = 0;
     
     do {
+        debug('posting data...') if($::debug);
         try {
             $ret = $self->post($self->get_config->{'host'},Content => $data);
         } catch {
@@ -99,8 +106,9 @@ sub _send {
         }
     } while(!$ret && ($x++ < 5));
     ## TODO -- do we turn this into a re-submit?
-    return('ERROR: unknown server failure....') unless($ret);
+    return('unknown, possible server timeout....') unless($ret);
     return($ret->status_line()) unless($ret->is_success());
+    debug('data sent succesfully...') if($::debug);
     return(undef,$ret->decoded_content());
 }
 

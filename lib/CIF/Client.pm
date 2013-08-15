@@ -306,7 +306,7 @@ sub submit {
     });
     
     my ($err,$ret) = $self->send($msg->encode());
-    return('ERROR: server failure, contact system administrator') unless($ret);
+    return('ERROR: server failure, contact system administrator: '.$err) unless($ret);
     
     $ret = MessageType->decode($ret);
     
