@@ -91,7 +91,7 @@ sub init {
     $self->set_threads(         $args->{'threads'}          || $self->get_config->{'threads'}           || 1);
     $self->set_goback(          $args->{'goback'}           || $self->get_config->{'goback'}            || 3);
     $self->set_wait_for_server( $args->{'wait_for_server'}  || $self->get_config->{'wait_for_server'}   || 0);
-    $self->set_batch_control(   $args->{'batch_control'}    || $self->get_config->{'batch_control'}     || 10000); # arbitrary
+    $self->set_batch_control(   $args->{'batch_control'}    || $self->get_config->{'batch_control'}     || 2500); # arbitrary
     $self->set_apikey(          $args->{'apikey'}           || $self->get_config->{'apikey'}            || return('missing apikey'));
     $self->set_proxy(           $args->{'proxy'}            || $self->get_config->{'proxy'});
    
@@ -559,6 +559,7 @@ sub process {
     my $done = 0;
     my $total_recs = $master_count;
     my $sent_recs = 0;
+    my $msg;
     debug('starting with '.$master_count.' recs...');
     do {
         debug('waiting on message...') if($::debug && $::debug > 1);
@@ -567,7 +568,7 @@ sub process {
         $poller->poll();
         debug('found msg') if($::debug && $::debug > 1);
         if($poller->has_event('workers_sum')){
-            my $msg = $workers_sum->recv()->data();
+            $msg = $workers_sum->recv()->data();
             for($msg){
                 if(/^COMPLETED:(\d+)$/){
                     $master_count -= $1; 
@@ -578,6 +579,7 @@ sub process {
                     last;
                 }
             }
+            $msg = undef;
         }
         
         ## TODO -- should this be after the return check?
@@ -590,7 +592,7 @@ sub process {
         # waiting for sender
         if($poller->has_event('return')){
             debug('return msg received') if($::debug && $::debug > 1);
-            my $msg = $return->recv();
+            $msg = $return->recv();
             if($msg->data() =~ /^ERROR: /){
                 $err = $msg->data();
                 $sent_recs = -1;
@@ -599,6 +601,7 @@ sub process {
                 # size of the array returned +1
                 $sent_recs += ($#{$msg->get_data()} + 1);
             }
+            $msg = undef;
         }
         nanosleep NSECS_PER_MSEC;
         # total_recs is based on 0 ... X not -1 ... X
@@ -656,6 +659,7 @@ sub worker_routine {
        
     my $done = 0;
     my $recs = 0;
+    my (@results,$tmp_results);
     while(!$done){
         debug('polling...') if($::debug > 5);
         $poller->poll();
@@ -688,24 +692,26 @@ sub worker_routine {
                 $workers_sum->send('ADDED:'.($#{$iodef}));
                 nanosleep NSECS_PER_MSEC;
             }
-            my @results;
+            #my @results;
             if($self->get_postprocess()){
                 foreach my $p (@{$self->get_postprocess}){
-                    my ($err,$array);
+                    #my ($err,$array);
+                    my $err;
                     foreach my $i (@$iodef){
                         try {
-                            $array = $p->process($self,$i);
+                            $tmp_results = $p->process($self,$i);
                         } catch {
                             $err = shift;
                         };
                         debug($err) if($::debug && $err);
-                        push(@results,@$array) if($array && @$array);
+                        #push(@results,@$array) if($array && @$array);
+                        push(@results,@$tmp_results) if($tmp_results && @$tmp_results);
                     }
+                    $tmp_results = undef;
                 };
 
                 # we don't do +1 here cause the parent already knows about the
                 # original record
-             
                 if($#results > -1){
                     @results = map { IODEFDocumentType->new({ lang => 'EN', Incident => $_ })->encode() } @results;
                     # sometimes the $sender->send_as will get there faster
@@ -715,12 +721,16 @@ sub worker_routine {
                     nanosleep NSECS_PER_MSEC;
                 }
             }
+            
             push(@results,map { $_->encode() } @$iodef);
                        
-            debug('sending message...') if($::debug > 3);
+            debug('sending message...') if($::debug && $::debug > 2);
             $sender->send_as('json' => \@results);
-            debug('message sent...') if($::debug > 3);
+            debug('message sent...') if($::debug && $::debug > 2);
             $workers_sum->send('COMPLETED:1');
+            
+            # clear the global var
+            $#results = -1;
         }
         # thread/zmq safety requirement
         nanosleep NSECS_PER_MSEC;
@@ -816,9 +826,9 @@ sub sender_routine {
         }
 
         if($#{$queue} > $batch_control || $done){
-            debug('sending data to router: '.($#{$queue}+1)) if($::debug > 2);
+            debug('sending data to router: '.($#{$queue}+1)) if($::debug);
             my ($err,$ret) = $self->send($queue);
-            debug('returning answer from router...') if($::debug > 2);
+            debug('returning answer from router...') if($::debug);
             if($err){
                 $return->send($err);
             } else {
@@ -826,9 +836,9 @@ sub sender_routine {
             }
             $sent_recs += ($#{$queue}+1);
             $queue = [];
+            debug('getting ready to poll...') if($::debug);
         }
         nanosleep NSECS_PER_MSEC;
-
     } while (!$done);
     
     debug('sender done...') if($::debug > 1);;
