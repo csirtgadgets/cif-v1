@@ -2,6 +2,7 @@ Revision history for cif-v1
 
 v1.0.0-rc.5 2013-07
     - merged asn, cc and rir plugins back into libcif-dbi
+    - bugfixes to cif-smrt and libcif
 
 v1.0.0-rc.4 2013-07-10
     [libcif]
