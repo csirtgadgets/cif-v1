@@ -30,9 +30,9 @@ sub parse {
             data    => \@blobs,
             format  => 'Raw',
         })};
-        if($f->{'guid'}){
+        if($f->{'guid_overwrite'}){
             foreach my $b (@blobs){
-                $b->{'guid'} = $f->{'guid'};
+                $b->{'guid'} = $f->{'guid_overwrite'};
             }
         }
         push(@return,@blobs); 
