@@ -1,4 +1,4 @@
-EXTRA_DIST = src sbin
+EXTRA_DIST = src
 
 ME=cif-protocol
 BUILD=$(shell git describe --tags)
