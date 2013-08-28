@@ -7,7 +7,7 @@ AM_INIT_AUTOMAKE
 
 # setup
 
-AC_CONFIG_SUBDIRS([libcif libcif-dbi cif-router cif-smrt libcif-dbi-asn libcif-dbi-cc libcif-dbi-rir])
+AC_CONFIG_SUBDIRS([libcif libcif-dbi cif-router cif-smrt])
 AC_CONFIG_FILES([
     Makefile
 ])
