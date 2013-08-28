@@ -1,3 +1,4 @@
+SUBDIRS = protocol
 EXTRA_DIST = lib sbin bin
 
 ME=libcif
