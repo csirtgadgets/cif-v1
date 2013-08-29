@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use threads;
 
-our $VERSION = '0.99_03';
+our $VERSION = '1.0.0';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
 # we're using ipc instead of inproc cause perl sucks
