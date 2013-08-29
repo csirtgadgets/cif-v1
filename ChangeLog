@@ -1,8 +1,27 @@
 Revision history for cif-v1
 
-v1.0.0-rc.5 2013-07
+v1.0.0 2013-08-30
+    [libcif]
+    - added send_keypairs function
+    - bugfix to bin/cif
+
+    [libcif-dbi]
     - merged asn, cc and rir plugins back into libcif-dbi
-    - bugfixes to cif-smrt and libcif
+    - bugfix to cif_apikeys
+    - bugfix to how mutex's are handled (using unlink)
+
+    [cif-smrt]
+    - dep fix for net-abuse-utils
+    - bugfix to ParseCifFeed for federated sharing
+    - mutex fix for cif_crontool
+    - fixed https://github.com/collectiveintel/cif-v1/issues/43
+    - fixed https://github.com/collectiveintel/cif-v1/issues/44
+    - fixed https://github.com/collectiveintel/cif-v1/issues/42
+    - fixed https://github.com/collectiveintel/cif-v1/issues/41
+    - memory management enhancements
+
+    [cif-router]
+    - [security] fixed bug in authorized_write function
 
 v1.0.0-rc.4 2013-07-10
     [libcif]
