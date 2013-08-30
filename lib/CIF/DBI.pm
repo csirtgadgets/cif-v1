@@ -2,7 +2,6 @@ package CIF::DBI;
 use base 'Class::DBI';
 
 our $VERSION = '1.0.0';
-$VERSION = eval $VERSION;
 
 use strict;
 use warnings;
