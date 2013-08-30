@@ -5,7 +5,6 @@ use strict;
 use warnings;
 
 our $VERSION = '1.0.0';
-$VERSION = eval $VERSION;
 
 use DateTime::Format::DateParse;
 use OSSP::uuid;
