@@ -1,5 +1,16 @@
 Revision history for cif-v1
 
+v1.0.1  2013-09
+[libcif]
+
+[libcif-dbi]
+
+[cif-smrt]
+    - bugfix to rules [drg]
+    - bugfix to goback flag
+
+[cif-router]
+
 v1.0.0 2013-08-30
     [libcif]
     - added send_keypairs function
