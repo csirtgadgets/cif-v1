@@ -56,7 +56,7 @@ my $threads     = $opts{'t'};
 my $admin       = $opts{'A'} || 'root';
 my $fail_closed = $opts{'N'} || 0;
 my $disable_p   = $opts{'z'};
-my $goback      = $opts{'g'} || 3;
+my $goback      = $opts{'g'};
 
 debug('fail closed: '.$fail_closed) if($debug);
 
@@ -127,7 +127,7 @@ Usage: perl $0 -C /home/cif/.cif -r $rules_dir/misc.cfg -f malwaredomainlist -T 
     
 Advanced:
     -g  --go-back:          change the default 'goback' behavior
-                            (how far back in-days to process a given feed, default: $goback)
+                            (how far back in-days to process a given feed, default: $CIF::Smrt::DEFAULT_GOBACK)
     -P  --post-processors:  resolve domains, resolve bgp, resolve urls, etc
                             (default: $postprocess)
                             

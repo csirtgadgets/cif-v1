@@ -41,6 +41,8 @@ Net::SSLeay::SSLeay_add_ssl_algorithms();
 
 use CIF qw/generate_uuid_url generate_uuid_random is_uuid debug normalize_timestamp/;
 
+our $DEFAULT_GOBACK = 3;
+
 use Time::HiRes qw/nanosleep/;
 use ZeroMQ qw/:all/;
 
@@ -86,14 +88,14 @@ sub init {
       
     ($err,$ret) = $self->init_rules($args);
     return($err) if($err);
-
+   
     $self->set_threads(         $args->{'threads'}          || $self->get_config->{'threads'}           || 1);
-    $self->set_goback(          $args->{'goback'}           || $self->get_config->{'goback'}            || 3);
     $self->set_wait_for_server( $args->{'wait_for_server'}  || $self->get_config->{'wait_for_server'}   || 0);
     $self->set_batch_control(   $args->{'batch_control'}    || $self->get_config->{'batch_control'}     || 2500); # arbitrary
     $self->set_apikey(          $args->{'apikey'}           || $self->get_config->{'apikey'}            || return('missing apikey'));
+    $self->set_goback(          $args->{'goback'}           || $self->get_rules->{'goback'}             || $self->get_config->{'goback'} || $DEFAULT_GOBACK);
     $self->set_proxy(           $args->{'proxy'}            || $self->get_config->{'proxy'});
-   
+
     ($err,$ret) = $self->init_postprocessors($args);
     return($err) if($err);
     
