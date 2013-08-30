@@ -3,7 +3,7 @@ package CIF::Smrt::Plugin::Pull::Http;
 use strict;
 use warnings;
 
-our $AGENT = 'cif-smrt/'.$CIF::VERSION.' (collectiveintel.org)';
+our $AGENT = 'cif-smrt/'.$CIF::Smrt::VERSION.' (collectiveintel.org)';
 
 sub pull {
     my $class = shift;
