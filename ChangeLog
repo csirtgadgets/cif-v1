@@ -3,6 +3,7 @@ Revision history for cif-smrt
 1.0.1   2013-09
     - bugfix to rules [drg]
     - bugfix to goback flag
+    - added a 'prefetch' execution flag
 
 1.0.0  2013-08-30
     - dep fix for net-abuse-utils
