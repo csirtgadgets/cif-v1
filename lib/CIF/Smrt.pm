@@ -275,6 +275,12 @@ sub _pull_feed {
             }
         }
     }
+    
+    if(my $prefetch = $f->{'prefetch'}){
+        my $r = _prefetch($prefetch);
+        return unless($r);
+    }
+    
     my @pulls = __PACKAGE__->plugins();
     @pulls = sort grep(/::Pull::/,@pulls);
     foreach(@pulls){
@@ -286,6 +292,27 @@ sub _pull_feed {
         return($ret);
     }
     return('ERROR: could not pull feed');
+}
+
+sub _prefetch {
+    my $cmd = shift;
+
+    my $bad_chars = qr/(\/?\.\.+\/?|;|\w+\(|=>)/;
+    unless(-x $cmd){
+        debug('prefetch non-executable: '.$cmd) if($::debug);
+    }
+    if($cmd =~ $bad_chars){
+        debug('illegal chars in the prefetch command, returning');
+        return(0);
+    }
+    
+    debug('running pre-fetch: '.$cmd) if($::debug > 1);
+    
+    my ($file,$args) = split /\s/,$cmd,2;
+    $args = [] unless($args);
+    my $ret = system($file,@$args);
+    return 1 if($ret && $ret == 0);
+    return 0;
 }
 
 
