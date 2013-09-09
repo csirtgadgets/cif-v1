@@ -164,7 +164,7 @@ Optional. Int32.
 
 7. Reference Implementations
 ==
-1. Google Protocol Buffers Developer Guide - [developers.google.com](https://developers.google.com/protocol-buffers/docs/overview)
+1. libcif v1 - [github.com](https://github.com/collectiveintel/libcif/tree/v1)
 
 8. References
 ==
