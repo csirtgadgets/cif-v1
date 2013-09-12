@@ -5,6 +5,8 @@ AC_PREREQ([2.64])
 AC_INIT(libcif, m4_esyscmd_s([git describe --tags]), [ci-framework@googlegroups.com])
 AM_INIT_AUTOMAKE
 
+AC_CONFIG_SUBDIRS([protocol])
+
 # Checks for programs.
 AC_ARG_VAR([PERL],[Perl interpreter command])
 AC_PATH_PROG([PERL], [perl], [not found])
