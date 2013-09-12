@@ -2,12 +2,15 @@ Revision history for cif-v1
 
 v1.0.1  2013-09
 [libcif]
+        - fixes https://github.com/collectiveintel/libcif/issues/13
+        - bugfix to configure.ac wrt protocol/
 
 [libcif-dbi]
 
 [cif-smrt]
     - bugfix to rules [drg]
     - bugfix to goback flag
+    - added a 'prefetch' execution flag
 
 [cif-router]
 
