@@ -17,11 +17,11 @@ sub process {
     $args->{'query'} =~ s/\/$//g;
     $args->{'query'} = uri_escape($args->{'query'},'\x00-\x1f\x7f-\xff');
     $args->{'query'} = lc($args->{'query'});
-  
+    
     my $query = {
-        query       => $args->{'query'},
-        description => 'search '.$args->{'query'},        
-    };    
+        description => 'search '.$args->{'query'},   
+        %$args,     
+    };
 
     return(undef,$query);  
 }
