@@ -30,10 +30,10 @@ if test "x$with_python" != "xno"; then
     fi
 fi
 
-AC_PATH_PROG([PROTOC], [protoc], [not found])
-    if test "$PROTOC" = 'not found'; then
-        AC_MSG_ERROR([cannot use $PACKAGE_NAME without protoc])
-    fi
+#AC_PATH_PROG([PROTOC], [protoc], [not found])
+#    if test "$PROTOC" = 'not found'; then
+#        AC_MSG_ERROR([cannot use $PACKAGE_NAME without protoc])
+#    fi
 
 AC_CONFIG_FILES([
                  Makefile
