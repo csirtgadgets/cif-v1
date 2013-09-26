@@ -47,10 +47,10 @@ my $config          = $opts{'C'} || $ENV{'HOME'}.'/.cif';
 my $debug           = $opts{'d'};
 my $debug_level     = $opts{'v'};
 my $mutex           = $opts{'L'} || '/tmp/cif_crontool.lock.'.$period;
-my $start_at        = $opts{'S'};
 my $postprocess     = $opts{'P'};
 my $dir             = $opts{'F'} || '/opt/cif';
 my $admin           = $opts{'A'} || 'root';
+my $subject         = $opts{'S'};
 my $fail_closed     = $opts{'N'} || 0;
 my $d_postprocessor = $opts{'z'};
 
@@ -151,11 +151,12 @@ Advanced:
                         (default: $fail_closed)
     -A  --admin:        designate an admin email address where errors should go if we fail open
                         (default: $admin)
+    -S  --subject:      designate an email subject for errors (eg: a hostname, etc).
 
 Examples:
     $0 -T high -f -d
     $0 -T medium -p daily
-    $0 -p daily -P -A root -N
+    $0 -p daily -P -A root -N -S 'myhost01.example.com'
 
 Current Feeds:
 $f
@@ -207,9 +208,11 @@ sub bail {
     if(-e '/tmp/.cif_crontool.err'){
         print $msg."\n";
     } else {
+        my $subject = $opts{'S'} || '';
+        $subject .= ' cif_crontool failure';
         my $msg = MIME::Lite->new(
             To      => $admin,
-            Subject => 'cif_crontool failure',
+            Subject => $subject,
             Data    => $msg || 'unknown',
         );
         $msg->send();
