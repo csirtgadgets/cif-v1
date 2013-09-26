@@ -1,5 +1,8 @@
 Revision history for cif-router
 
+v1.0.1 2013-10
+    - bugfix to protocol version check
+
 v1.0.0 2013-08-30
     - [security] fixed bug in authorized_write function
 

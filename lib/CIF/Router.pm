@@ -292,8 +292,8 @@ sub process {
         status  => MessageType::StatusType::FAILED(),
     });
     
-    my $pversion = sprintf("%4f",$msg->get_version());
-    if($pversion != $CIF::VERSION){
+    my $pversion = $msg->get_version();
+    if($pversion lt $CIF::VERSION){
         $reply->set_data('invalid protocol version: '.$pversion.', should be: '.$CIF::VERSION);
         return $reply->encode();
     }
