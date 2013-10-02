@@ -90,7 +90,7 @@ Usage: perl $0 -q xyz.com
 
 Standard Options:
     -h  --help:             this message
-    -C  --config:           specify cofiguration file, default: $config
+    -C  --config:           specify configuration file, default: $config
     
 Query Options:
     -q  --query:            query string
