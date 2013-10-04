@@ -39,10 +39,10 @@ use Config::Simple;
 use DateTime::Format::DateParse;
 use Data::Dumper;
 use Try::Tiny;
-use CIF qw/debug/;
+use CIF qw/debug is_uuid/;
 
-my %opts;
-getopt('t:E:G:g:k:u:C:R:L:dD:X', \%opts);
+our %opts;
+getopt('t:E:G:g:k:u:C:R:L:D:', \%opts);
 die(usage()) if($opts{'h'});
 
 my $user            = $opts{'u'};
@@ -64,6 +64,7 @@ my $import_ver      = $opts{'Z'} || 'v0';
 my $import_location = $opts{'L'};
 my $rename          = $opts{'t'};
 our $debug          = $opts{'d'} || 0;
+
 
 if($user){
     die(usage()) unless($key || $opts{'u'} || $opts{'l'} || $opts{'a'} || $opts{'d'});
@@ -101,7 +102,7 @@ Basic:
     $0 -l
     $0 -l -u joe\@example.com
     $0 -u joe\@example.com -a -g everyone,group2 -G everyone
-    $0 -d -k 96818121-f1b6-482e-8851-8fb49cb2f6c0
+    $0 -x -k 96818121-f1b6-482e-8851-8fb49cb2f6c0
     
 Advanced:
 
@@ -127,6 +128,11 @@ EOF
 if($expires){
     $expires = DateTime::Format::DateParse->parse_datetime($expires);
     die 'invalid `expires` timestamp'."\n\n".usage() unless($expires);
+}
+
+if($key && !is_uuid($key)){
+    print 'invalid key: '.$key.', should be a uuid'."\n";
+    exit(-1);
 }
 
 my ($err,$ret) = CIF::Profile->new({
@@ -190,7 +196,7 @@ if($add){
     });
 } elsif($opts{'g'}){
     if($key){
-        if($opts{'d'}){
+        if($delete){
             $profile->group_remove({
                 key     => $key,
                 group   => $opts{'g'},
@@ -249,7 +255,7 @@ if($add){
         });
     }
     
-    if(exists($opts{'d'})){
+    if($delete){
         die(usage()) unless($key || $user);
         my $obj = $key || $user;
         print 'removing: '.$obj."\n";
