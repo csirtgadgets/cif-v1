@@ -2,15 +2,17 @@ Revision history for cif-v1
 
 v1.0.1  2013-09
 [libcif]
-        - fixes https://github.com/collectiveintel/libcif/issues/13
-        - bugfix to configure.ac wrt protocol/
+    - fixes https://github.com/collectiveintel/libcif/issues/13
+    - bugfix to configure.ac wrt protocol/
 
 [libcif-dbi]
+    - bugfix to cif_apikeys when deleting specific keys
 
 [cif-smrt]
     - bugfix to rules [drg]
     - bugfix to goback flag
     - added a 'prefetch' execution flag
+    - removed mpatrol as a default feed, new business model, set as example.
 
 [cif-router]
 
