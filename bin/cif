@@ -10,7 +10,7 @@ BEGIN {
         "lib", 
         "local/lib",
         "../libcif/lib", # in case we're in -dev mode
-        "../../../iodef-pb-simple-perl/lib",
+        "../../iodef-pb-simple-perl/lib",
     );
     my $bin_path;
 
@@ -42,7 +42,7 @@ use Iodef::Pb::Format;
 use Iodef::Pb::Simple;
 
 my %opts;
-getopt('D:S:O:G:l:g:THL:p:f:q:c:s:r:C:zP:Fe:', \%opts);
+getopt('D:S:O:l:g:THL:p:f:q:c:s:r:C:zP:Fe:', \%opts);
 
 our $debug       = ($opts{'d'}) ? 1 : 0;
 
@@ -71,7 +71,7 @@ my $nomap               = $opts{'N'};
 our $uuid               = $opts{'u'} || 0;
 our $relateduuid        = $opts{'R'} || 0;
 my $round_confidence    = $opts{'I'} || 0;
-my $group_map           = (defined($opts{'G'})) ? $opts{'G'} : 1;
+my $no_group_map        = $opts{'G'};
 my $compress_address    = (defined($opts{'z'})) ? $opts{'z'} : 1;
 my $table_showmeta      = $opts{'M'} || 0;
 my $filter_me           = $opts{'F'};
@@ -104,7 +104,7 @@ Format Options:
     -S  --summary:          consolidated Text::Table output (default: True)
     -N  --nomap:            don't map restrictions
     -g  --guid:             filter by a specific group id (guid), ex: group1.example.com
-    -G  --groupmap:         turn group mapping (guid to 'group name') on/off, default: $group_map
+    -G  --noguidmap:        turn off group guid mapping
     -e  --exclude:          exclude a specific assessment (search,botnet,malware, etc).
     -x  --csv-noheader:     don't display the header when using the csv plugin
     
@@ -259,13 +259,15 @@ foreach my $feed (0 ... $#{$feeds}){
     my $query_limit = $limit || $feed->get_query_limit();
 
     my $r_map = ($nomap) ? undef : $feed->get_restriction_map();
+    
+    my $group_map = $feed->get_group_map() unless($no_group_map);
     my $t = Iodef::Pb::Format->new({
         config              => $cli->get_global_config(),
         format              => ucfirst($plugin),
         fields              => $fields,
         data                => $feed->get_data(),
         
-        group_map           => $feed->get_group_map(),
+        group_map           => $group_map,
         restriction_map     => $r_map,
         
         confidence          => $feed->get_confidence(),
