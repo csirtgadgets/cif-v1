@@ -1,3 +1,6 @@
+# mpatriol recently changed their business model
+# see: https://www.malwarepatrol.net/lists.shtml
+
 # these top-level configs are the defaults applied to each section
 confidence = 85
 restriction = 'need-to-know'
