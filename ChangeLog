@@ -4,6 +4,7 @@ v1.0.1  2013-09
 [libcif]
     - fixes https://github.com/collectiveintel/libcif/issues/13
     - bugfix to configure.ac wrt protocol/
+    - bugfix to -G flag
 
 [libcif-dbi]
     - bugfix to cif_apikeys when deleting specific keys
