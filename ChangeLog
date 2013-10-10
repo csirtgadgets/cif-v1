@@ -4,6 +4,7 @@ Revision history for cif-smrt
     - bugfix to rules [drg]
     - bugfix to goback flag
     - added a 'prefetch' execution flag
+    - removed mpatrol as a default feed, new business model, set as example.
 
 1.0.0  2013-08-30
     - dep fix for net-abuse-utils
