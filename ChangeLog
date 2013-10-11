@@ -3,6 +3,7 @@ Revision history for libcif-dbi
 v1.0.1  2013-10
     - bugfix to cif_apikeys when deleting specific keys
     - bugfix to domain whitelisting, requires Net::DNS::Match v0.05
+    - bugfix for feed searches
 
 v1.0.0 2013-08-30
     - bugfix to migrate-data script when handling "sharewith/carboncopy" data
