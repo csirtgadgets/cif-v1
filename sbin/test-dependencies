@@ -138,7 +138,7 @@ DBI 1.37
 Class::DBI 3.0.17
 Class::Trigger 0.14
 DBD::Pg 1.43
-Net::DNS::Match 0.04
+Net::DNS::Match 0.05
 .
 
 if ($args{'download'}) {

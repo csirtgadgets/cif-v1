@@ -72,7 +72,7 @@ sub generate_whitelist {
     
     debug('generating whitelist');
     my $tbl = $class->table();
-    $class->table('infrastructure_whitelist');
+    $class->table('domain_whitelist');
     my @whitelist = $class->search_feed_whitelist(
         $args->{'start_time'},
         25, #confidence
@@ -80,9 +80,8 @@ sub generate_whitelist {
     );
     $class->table($tbl);
     return unless($#whitelist > -1 );
-    
+
     @whitelist = map { $_ = $_->{'address'} } @whitelist;
-    
     return(\@whitelist);
 } 
 
@@ -93,10 +92,10 @@ sub test_whitelist {
     return $args->{'recs'} if($class->table() =~ /whitelist$/);
     return $args->{'recs'} unless($args->{'whitelist'}); 
     my $whitelist = $args->{'whitelist'};
-    
+
     my $wl_tree = Net::DNS::Match->new();
     $wl_tree->add($whitelist);
-     
+    
     my $recs = $args->{'recs'};
 
     debug('filtering through '.(keys %$recs).' records');
