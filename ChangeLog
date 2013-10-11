@@ -5,10 +5,12 @@ v1.0.1  2013-09
     - fixes https://github.com/collectiveintel/libcif/issues/13
     - bugfix to configure.ac wrt protocol/
     - bugfix to -G flag
+    - various feed search bugfixes
 
 [libcif-dbi]
     - bugfix to cif_apikeys when deleting specific keys
     - bugfix to domain whitelisting, requires Net::DNS::Match v0.05
+    - various feed search bugfixes
 
 [cif-smrt]
     - bugfix to rules [drg]
