@@ -4,6 +4,7 @@ v1.0.1  2013-09
     - fixes https://github.com/collectiveintel/libcif/issues/13
     - bugfix to configure.ac wrt protocol/
     - bugfix to -G flag
+    - misc query nolog fixes
 
 v1.0.0 2013-08-30
     - added send_keypairs function
