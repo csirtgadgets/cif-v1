@@ -169,11 +169,17 @@ sub log_search {
     my ($q_type,$q_thing);
     for(lc($desc)){
         # reg hashes
-        if(/^search ([a-f0-9]{40}|[a-f0-9]{32})$/){
+        if(/^search ([a-f0-9]{40}|[a-f0-9]{32,40})$/){
             $q_type = 'hash';
             $q_thing = $1;
             last;
         } 
+        # feeds
+        if(/^search ([\w|\s]+) feed$/){
+            $q_type  = 'hash';
+            $q_thing = sha1_hex($1);
+            last;
+        }
         # asn
         if(/^search as(\d+)$/){
             $q_type = 'hash';
