@@ -8,6 +8,7 @@ v1.0.1  2013-09
 
 [libcif-dbi]
     - bugfix to cif_apikeys when deleting specific keys
+    - bugfix to domain whitelisting, requires Net::DNS::Match v0.05
 
 [cif-smrt]
     - bugfix to rules [drg]
