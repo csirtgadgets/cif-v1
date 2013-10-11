@@ -16,8 +16,8 @@ sub process {
     $args->{'query'} = 'as'.$args->{'query'};
     
     my $query = {
-        query       => $args->{'query'},
-        description => 'search '.$args->{'query'},        
+        description => 'search '.$args->{'query'},
+        %$args,        
     };
 
     return(undef,$query);  

@@ -18,8 +18,8 @@ sub process {
     $args->{'query'} = uc($args->{'query'});
   
     my $query = {
-        query       => $args->{'query'},
-        description => 'search CC '.$args->{'query'},        
+        description => 'search CC '.$args->{'query'},
+        %$args,     
     };
 
     return(undef,$query);  

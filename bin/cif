@@ -64,7 +64,6 @@ my $plugin      = $opts{'p'} || 'Table';
 my $fields      = $opts{'f'};
 my $max_desc    = $opts{'L'} || 100;
 
-
 # display options
 my $summary             = $opts{'S'};
 my $nomap               = $opts{'N'};
