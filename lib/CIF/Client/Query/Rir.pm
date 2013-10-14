@@ -20,6 +20,7 @@ sub process {
     my $query = {
         query       => $args->{'query'},
         description => 'search RIR '.uc($args->{'query'}),
+        %$args,
     };
 
     return(undef,$query);

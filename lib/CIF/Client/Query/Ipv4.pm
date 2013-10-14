@@ -23,10 +23,10 @@ sub process {
     for($args->{'query'}){
         if(/^$RE{'net'}{'IPv4'}$/){
             $queries = [    
-                { query   => $args->{'query'},                              nolog => $args->{'nolog'} },
-                { query => $array[0].'.'.$array[1].'.'.$array[2].'.0/24',   nolog => 1, },
-                { query => $array[0].'.'.$array[1].'.0.0/16',               nolog => 1, },
-                { query => $array[0].'.0.0.0/8',                            nolog => 1, },
+                { query   => $args->{'query'},                              nolog => $args->{'nolog'},  confidence   => $args->{'confidence'} },
+                { query => $array[0].'.'.$array[1].'.'.$array[2].'.0/24',   nolog => 1,                 confidence   => $args->{'confidence'} },
+                { query => $array[0].'.'.$array[1].'.0.0/16',               nolog => 1,                 confidence   => $args->{'confidence'} },
+                { query => $array[0].'.0.0.0/8',                            nolog => 1,                 confidence   => $args->{'confidence'} },
             ];
         }
         if(/^$RE{'net'}{'CIDR'}{'IPv4'}{-keep}$/){
@@ -36,16 +36,16 @@ sub process {
             
             for($mask){
                 if($_ > 8){
-                    push(@$queries, { query => $array[0].'.0.0.0/8', nolog => 1 });
+                    push(@$queries, { query => $array[0].'.0.0.0/8', nolog => 1, confidence   => $args->{'confidence'} });
                 }
                 if($_ > 16){
-                    push(@$queries, { query => $array[0].'.'.$array[1].'.0.0/16', nolog => 1 });
+                    push(@$queries, { query => $array[0].'.'.$array[1].'.0.0/16', nolog => 1, confidence   => $args->{'confidence'} });
                 }
                 if($_ > 24){
-                    push(@$queries, { query => $array[0].'.'.$array[1].'.'.$array[2].'.0/24', nolog => 1 });
+                    push(@$queries, { query => $array[0].'.'.$array[1].'.'.$array[2].'.0/24', nolog => 1, confidence   => $args->{'confidence'} });
                 }
             }
-            push(@$queries, { query => $args->{'query'}, nolog  => $args->{'nolog'} });
+            push(@$queries, { query => $args->{'query'}, nolog  => $args->{'nolog'}, confidence   => $args->{'confidence'} });
         }
     }
     return(undef,$queries);

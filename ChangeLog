@@ -5,6 +5,7 @@ v1.0.1  2013-09
     - bugfix to configure.ac wrt protocol/
     - bugfix to -G flag
     - misc query nolog fixes
+    - misc bugfixes to client/query types
 
 v1.0.0 2013-08-30
     - added send_keypairs function
