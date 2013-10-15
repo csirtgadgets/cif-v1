@@ -15,9 +15,6 @@ BEGIN {
         # dev mode stuff
         '../libcif/lib',
         '../libcif-dbi/lib',
-        '../libcif-dbi-asn/lib',
-        '../libcif-dbi-cc/lib',
-        '../libcif-dbi-rir/lib',
     );
     my $bin_path;
 
