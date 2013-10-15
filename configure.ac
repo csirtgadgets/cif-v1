@@ -42,7 +42,7 @@ AC_CONFIG_FILES([
 
 # Checks for libraries.
 
-PKG_CHECK_MODULES([protobuf],[protobuf >= 2.4.1])
+#PKG_CHECK_MODULES([protobuf],[protobuf >= 2.4.1])
 
 # Checks for header files.
 
