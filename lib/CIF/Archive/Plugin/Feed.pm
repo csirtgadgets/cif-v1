@@ -50,9 +50,9 @@ sub insert {
 }
 
 __PACKAGE__->set_sql(feeds => qq{
-    SELECT count(hash),hash,confidence 
+    SELECT count(hash),guid,hash,confidence 
     FROM __TABLE__ t
-    GROUP BY hash,confidence
+    GROUP BY hash,guid,confidence
     ORDER BY count desc
 });
 
