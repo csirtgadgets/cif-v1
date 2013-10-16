@@ -11,6 +11,7 @@ v1.0.1  2013-09
     - bugfix to cif_apikeys when deleting specific keys
     - bugfix to domain whitelisting, requires Net::DNS::Match v0.05
     - various feed search bugfixes
+    - bugfixes to feed retention code
 
 [cif-smrt]
     - bugfix to rules [drg]
