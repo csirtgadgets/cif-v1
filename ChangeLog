@@ -5,6 +5,7 @@ v1.0.1  2013-10
     - bugfix to domain whitelisting, requires Net::DNS::Match v0.05
     - bugfix to profile restrictions
     - bugfix for feed searches
+    - bugfix to feed retention code
 
 v1.0.0 2013-08-30
     - bugfix to migrate-data script when handling "sharewith/carboncopy" data
