@@ -12,7 +12,9 @@ sub parse {
     my @array;
     foreach my $a (@feed){
         foreach (0 ... $#fields_map){
-            $a->{$fields_map[$_]} = lc($a->{$fields[$_]});
+            if($a->{$fields[$_]){
+                $a->{$fields_map[$_]} = lc($a->{$fields[$_]});
+            }
         }
         map { $a->{$_} = $f->{$_} } keys %$f;
         push(@array,$a);
