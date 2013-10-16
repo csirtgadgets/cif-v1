@@ -6,6 +6,7 @@ __PACKAGE__->columns(Primary => 'uuid');
 __PACKAGE__->columns(All => qw/uuid uuid_alias description parentid revoked write restricted_access expires created/);
 __PACKAGE__->sequence('apikeys_id_seq');
 __PACKAGE__->has_many(groups  => 'CIF::APIKeyGroups');
+__PACKAGE__->has_many(restrictions  => 'CIF::APIKeyRestrictions');
 
 use CIF qw/is_uuid generate_uuid_random generate_uuid_url generate_uuid_ns/;
 
