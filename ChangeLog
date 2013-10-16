@@ -17,6 +17,7 @@ v1.0.1  2013-09
     - bugfix to goback flag
     - added a 'prefetch' execution flag
     - removed mpatrol as a default feed, new business model, set as example.
+    - bugfix to ParseJson
 
 [cif-router]
 
