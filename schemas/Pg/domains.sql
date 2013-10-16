@@ -36,10 +36,6 @@ DROP TABLE IF EXISTS domain_phishing;
 CREATE TABLE domain_phishing () INHERITS (domain);
 ALTER TABLE domain_phishing ADD PRIMARY KEY (id);
 
-DROP TABLE IF EXISTS domain_nameserver;
-CREATE TABLE domain_nameserver () INHERITS (domain);
-ALTER TABLE domain_nameserver ADD PRIMARY KEY (id);
-
 DROP TABLE IF EXISTS domain_spamvertising;
 CREATE TABLE domain_spamvertising () INHERITS (domain);
 ALTER TABLE domain_spamvertising ADD PRIMARY KEY (id);
