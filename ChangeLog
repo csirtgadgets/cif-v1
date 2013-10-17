@@ -1,6 +1,6 @@
 Revision history for cif-v1
 
-v1.0.1  2013-09
+v1.0.1  2013-10
 [libcif]
     - fixes https://github.com/collectiveintel/libcif/issues/13
     - bugfix to configure.ac wrt protocol/
@@ -21,6 +21,7 @@ v1.0.1  2013-09
     - bugfix to ParseJson
 
 [cif-router]
+    - bugfix to protocol version check
 
 v1.0.0 2013-08-30
     [libcif]
