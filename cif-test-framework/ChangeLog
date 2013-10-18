@@ -1,0 +1,7 @@
+Revision history for libcif-dbi-cc
+
+1.0.0-rc.5 2013-08
+    - added threading (-t <int>) and looping (-l <int>) options
+
+0.99.01 2013-01
+    - initial release
