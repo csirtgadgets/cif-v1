@@ -1,0 +1,44 @@
+// TODO -- version, namespace, etc
+// VERSION string should be set by make script (git describe or so)
+
+message MessageType {
+    enum StatusType {
+        SUCCESS         = 1;
+        FAILED          = 2;
+        UNAUTHORIZED    = 3;
+    }
+    enum MsgType {
+        QUERY       = 1;
+        SUBMISSION  = 2;
+        REPLY       = 3;
+    }
+    message QueryStruct {
+        required string query   = 1;
+        optional bool nolog     = 2;
+    }
+    message QueryType {
+        optional string apikey      = 1;
+        optional string guid        = 2;
+        optional int32 limit        = 3;
+        optional int32 confidence   = 4;
+        repeated QueryStruct query  = 5;
+        optional string description = 6;
+        optional bool feed          = 7 [ default = false ];
+    }
+    message SubmissionType {
+        optional string guid    = 1;
+        repeated bytes data     = 2;
+    }
+    // TODO: this is a string for now
+    // git describe will give off string references
+    // based on the tags, may not be optimal
+    required string version     = 1;
+    required MsgType type       = 2;
+    optional StatusType status  = 3;
+    
+    optional string apikey  = 4;
+
+    // TODO: research [ packed = true ]
+    // src/msg.proto:37:14: [packed = true] can only be specified for repeated primitive fields.
+    repeated bytes data         = 5;
+}
