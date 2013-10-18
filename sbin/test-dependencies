@@ -158,7 +158,7 @@ DBD::Pg 1.43
 Date::Manip 6.11
 DateTime 0.42
 DateTime::Format::DateParse 0.05
-Net::DNS::Match 0.04
+Net::DNS::Match 0.05
 Regexp::Common 2.122
 Regexp::Common::net::CIDR 0.02
 Net::Patricia 1.16
