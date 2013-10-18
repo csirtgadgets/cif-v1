@@ -1,0 +1,237 @@
+#!/usr/bin/perl -w
+
+use strict;
+use warnings;
+
+# fix lib paths, some may be relative
+BEGIN {
+    require File::Spec;
+    my @libs = (
+        "lib",
+        "local/lib",
+    );
+    my $bin_path;
+
+    for my $lib (@libs) {
+        unless ( File::Spec->file_name_is_absolute($lib) ) {
+            unless ($bin_path) {
+                if ( File::Spec->file_name_is_absolute(__FILE__) ) {
+                    $bin_path = ( File::Spec->splitpath(__FILE__) )[1];
+                }
+                else {
+                    require FindBin;
+                    no warnings "once";
+                    $bin_path = $FindBin::Bin;
+                }
+            }
+            $lib = File::Spec->catfile( $bin_path, File::Spec->updir, $lib );
+        }
+        unshift @INC, $lib;
+    }
+
+}
+
+use Config::Simple;
+use Getopt::Std;
+use Data::Dumper;
+use MIME::Lite;
+use Try::Tiny;
+
+my %opts;
+getopts('z:b:A:Nadt:T:C:c:p:c:hL:S:PF:v:',\%opts);
+my $period          = $opts{'p'} || 'daily';
+my $throttle        = $opts{'T'} || 'medium';
+my $threads         = $opts{'t'};
+my $cron_tool       = $opts{'b'} || 'cif_smrt';
+my $config          = $opts{'C'} || $ENV{'HOME'}.'/.cif';
+my $debug           = $opts{'d'};
+my $debug_level     = $opts{'v'};
+my $mutex           = $opts{'L'} || '/tmp/cif_crontool.lock.'.$period;
+my $postprocess     = $opts{'P'};
+my $dir             = $opts{'F'} || '/opt/cif';
+my $admin           = $opts{'A'} || 'root';
+my $subject         = $opts{'S'};
+my $fail_closed     = $opts{'N'} || 0;
+my $d_postprocessor = $opts{'z'};
+
+if(! -e $cron_tool){
+    if(-e './bin/'.$cron_tool){
+       $cron_tool = './bin/'.$cron_tool;
+    } elsif(-e $dir.'/bin/'.$cron_tool){
+        $cron_tool = $dir.'/bin/'.$cron_tool;
+    } else {
+        die 'unable to find '.$cron_tool;
+    }
+}
+sub cleanup {
+    my $msg = shift;
+    if($msg){
+        print $msg."\n";
+    } else {
+        print "\n\nCaught Interrupt (^C), Aborting\n";
+    }
+    remove_lock();
+    exit(1);
+}
+
+my @files;
+## TODO make this a var
+my $feedsdir = (-e './rules/etc') ? './rules/etc' : $dir.'/etc';
+unless($opts{'c'}){
+    # TODO -- this is a confusing error, it means you installed cif to a non-std location and aren't using the -F option
+    # we're getting rid of cif_crontool in the future, so this is the shim for now.
+    opendir(F,$feedsdir) || die('the directory: '.$feedsdir.' doesn\'t exist.. check your -F option if you installed cif somewhere else'."\n".$!);
+    @files = sort { $a cmp $b } grep(/.cfg$/,readdir(F));
+    close(F);
+} else {
+    push(@files,$opts{'c'});
+}
+
+my @crons;
+foreach(@files){
+    my $cc_name = $feedsdir.'/'.$_;
+    my $err;
+    my $cc;
+    try {
+        $cc = Config::Simple->new($cc_name);
+    } catch {
+        $err = shift;
+    };
+    if($err){
+        my @errmsg;
+        push(@errmsg,'there is something broken with: '.$cc_name);
+        push(@errmsg,'this is usually a syntax problem, double check '.$cc_name.' and try again');
+        print("\n!!!ERROR!!!\n".join("\n",@errmsg)."\n\n");
+        exit(-1);
+    }
+    
+    my @sections = keys %{$cc->{'_DATA'}};
+    foreach my $sec (@sections){
+        next if($sec =~ /^default/);
+        my $skip = $cc->param(-block => $sec)->{'disabled'};
+        next if($skip);
+        my $tool = $cc->param(-block => $sec)->{'cron_tool'};
+        next if($tool && $tool eq 'false');
+        my $cron_period = $cc->param(-block => $sec)->{'period'} || 'daily';
+        next unless($cron_period eq $period);
+        
+        my $h = {
+            feed    => $sec,
+            config  => $cc_name,
+            tool    => $tool,
+        };
+        push(@crons,$h);
+    }
+}
+
+my @feeds = map { $_->{'config'}.' -- '.$_->{'feed'} } @crons;
+my $f = join("\n",@feeds);
+if($opts{'h'}){
+    print usage();
+    exit(0);
+}
+sub usage {
+    return <<EOF;
+Usage: $0 -p hourly
+Common:
+    -h  --help:     this message
+    -p  --period:   which period to run (hourly, daily, monthly, default: $period)
+    -d  --debug:    debug
+    -L  --lock:     path for the mutex to go (default: $mutex);
+    -T  --throttle: throttle (how man threads to use, default: $throttle)
+                    low:    threads = number of cores
+                    medium: threads = number of cores * 4
+                    high:   threads = number of cores * 8
+
+Advanced:
+    -P  --post-process: enable the post-processor
+    -F  --FeedDir:      what directory $0 should look at for feed configs (eg: /opt/cif/)
+                        if you've installed to a non-standard directory
+    -N  --fail-closed:  error out if one of the jobs fail, mail the -A admin
+                        (default: $fail_closed)
+    -A  --admin:        designate an admin email address where errors should go if we fail open
+                        (default: $admin)
+    -S  --subject:      designate an email subject for errors (eg: a hostname, etc).
+
+Examples:
+    $0 -T high -f -d
+    $0 -T medium -p daily
+    $0 -p daily -P -A root -N -S 'myhost01.example.com'
+
+Current Feeds:
+$f
+EOF
+}
+
+$SIG{__DIE__} = 'cleanup';
+$SIG{'INT'} = 'cleanup';
+
+if(-e $mutex){
+    bail('cif_crontool already running or hung...');
+}
+
+open(MUTEX, ">>$mutex") or die "$mutex: $!";
+close(MUTEX);
+
+foreach(@crons){
+    my $c_tool = $_->{'tool'} || $cron_tool;
+    my $cmd = $c_tool.' -C '.$config.' -r '.$_->{'config'}.' -f '.$_->{'feed'};
+    if($debug){
+        $cmd .= ' -d';
+    }
+    if($debug_level){
+        $cmd .= ' -v '.$debug_level;
+    }
+    if($threads){
+        $cmd .= ' -t '.$threads;
+    } else {
+        $cmd .= ' -T '.$throttle;
+    }
+    if($fail_closed){
+        $cmd .= ' -A '.$admin if($admin);
+        $cmd .= ' -N' if($fail_closed);
+    }
+    $cmd .= ' -P' if($postprocess);
+    if($d_postprocessor){
+        $cmd .= ' -z '.$d_postprocessor;
+    }
+    
+    warn $cmd if($debug);
+    my $ret = system($cmd);
+    cleanup() unless(defined($ret) && $ret == 0 || $ret == 11 || $ret == 2);
+    die("\ninterrupted") if($ret == 2);
+}
+remove_lock();
+
+sub bail {
+    my $msg = shift;
+    if(-e '/tmp/.cif_crontool.err'){
+        print $msg."\n";
+    } else {
+        my $subject = $opts{'S'} || '';
+        $subject .= ' cif_crontool failure';
+        my $msg = MIME::Lite->new(
+            To      => $admin,
+            Subject => $subject,
+            Data    => $msg || 'unknown',
+        );
+        $msg->send();
+        system('touch /tmp/.cif_crontool.err');
+        open(MUTEX, ">>/tmp/.cif_crontool.err") or die "/tmp/.cif_crontool.err: $!";
+        close(MUTEX);
+    }
+    warn($msg);
+    exit(-1);
+}
+
+sub _exit {
+    print "\n\nCaught Interrupt (^C), Aborting\n";
+    remove_lock();
+    exit(1);
+}
+
+sub remove_lock {
+    if(-e $mutex){
+        unlink($mutex) or die "Could not remove $mutex: $!";
+    }
+}

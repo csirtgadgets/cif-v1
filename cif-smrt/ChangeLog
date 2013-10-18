@@ -1,0 +1,62 @@
+Revision history for cif-smrt
+
+1.0.1   2013-10
+    - bugfix to rules [drg]
+    - bugfix to goback flag
+    - added a 'prefetch' execution flag
+    - removed mpatrol as a default feed, new business model, set as example.
+    - bugfix to ParseJson
+
+1.0.0  2013-08-30
+    - dep fix for net-abuse-utils
+    - bugfix to ParseCifFeed for federated sharing
+    - mutex fix for cif_crontool
+    - fixed https://github.com/collectiveintel/cif-v1/issues/43
+    - fixed https://github.com/collectiveintel/cif-v1/issues/44
+    - fixed https://github.com/collectiveintel/cif-v1/issues/42
+    - fixed https://github.com/collectiveintel/cif-v1/issues/41
+    - memory management enhancements
+
+1.0.0-rc.4  2013-07-10
+    - misc bugfixes to parser code (xml)
+    - misc bugfixes to proxy code for HTTP GETs
+    - added address_mask keyword upstream (iodef-pb-simple)
+    - misc rules cleanup
+
+0.99-RC3-00 2013-05
+    - fixes to RelatedActivity and AlternativeID via the IODEF spec
+    - fixes to the "fail open" flags
+    - cleaned up ParseXML code
+    - [ahoying] cleaned up to ParseRSS code [https://github.com/collectiveintel/cif-smrt/issues/52]
+    - added carboncopy features (along with multi-iodef array responses from iodef-pb-simple)
+    - pushed "sharewith" / "carboncopy" down to iodef-pb-simple
+    - [akreffett] cleaned up http proxy support [https://github.com/collectiveintel/cif-smrt/issues/39]
+    - added LWPx::ParanoidAgent support (better timeout support if a feed pull get stuck)
+    - whitelist urls bugfix
+
+0.99.04 2013-01
+    - added whitelist_url creation to makefile.am
+    - minor doc fixes
+    - added proxy support http://code.google.com/p/collective-intelligence-framework/issues/detail?id=159
+    - bugfix to resolver dns api
+
+0.99.03 2012-10-01
+    - misc bugfixes
+    - changed the default throttle factor to 4 (default is 4 threads per cpu core)
+    - enabled specific-class postprocessor enabling (eg: -p fqdn,ip)
+    - better error message handling between threads
+    - cleaned up carbon copy postprocessor
+    - adding try {} catches to parsers, to fail more gracefully
+    - fixes to write auth
+    - changed default lwp timeout from 10 to 30 secs
+
+0.99.02 2012-07-31
+    - zmq support
+    - improved thread support
+    - reduced memory overhead (memleaks)
+    - removed direct dbi integration, now via cif-client and cif-router for submissions
+    - merged cif_analytics in as 'postprocessors' plugin
+
+0.99.01 2012-04-27
+    - initial release
+    - re-factored old "cif_feedparser", CIF::FeedParser to CIF::Smrt
