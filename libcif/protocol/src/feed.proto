@@ -1,0 +1,40 @@
+// TODO -- version, namespace, etc
+
+message FeedType {
+    // pulled from RFC 5070 -- IODEF
+    enum RestrictionType {
+        restriction_type_default        = 1;
+        restriction_type_need_to_know   = 2;
+        restriction_type_private        = 3;
+        restriction_type_public         = 4;
+    }
+    message MapType {
+        required string key = 1;
+        required string value = 2;
+    }
+
+    // TODO: this is a string for now
+    // git describe will give off string references
+    // based on the tags, may not be optimal
+    required string version                  = 1;
+    // guid should evolve to the ContactType from IODEF
+    optional string guid                    = 2;
+    
+    // TODO: evolve this to Assessment Class
+    optional int32 confidence               = 3;
+    
+    // TODO: MLStringType? or even Assessment?
+    // combine with confidence class
+    required string description             = 4;
+    required string ReportTime              = 5;
+    optional RestrictionType restriction    = 6;
+    repeated MapType restriction_map        = 7;
+    repeated MapType group_map              = 8;
+    // TODO: research packed = true
+    repeated bytes data                     = 9;
+    
+    optional string uuid                    = 10;
+    optional int32 query_limit              = 11;
+    
+    repeated MapType feeds_map              = 12;
+}

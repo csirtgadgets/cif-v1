@@ -1,9 +1,0 @@
-[submodule "cif-smrt"]
-	path = cif-smrt
-	url = https://github.com/collectiveintel/cif-smrt.git
-[submodule "libcif"]
-	path = libcif
-	url = https://github.com/collectiveintel/libcif.git
-[submodule "libcif-dbi"]
-	path = libcif-dbi
-	url = https://github.com/collectiveintel/libcif-dbi.git
