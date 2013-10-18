@@ -1,0 +1,9 @@
+TRUNCATE archive;
+TRUNCATE hash;
+TRUNCATE domain;
+TRUNCATE infrastructure;
+TRUNCATE url;
+TRUNCATE email;
+TRUNCATE malware;
+TRUNCATE search;
+TRUNCATE feed;

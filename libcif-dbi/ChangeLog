@@ -1,0 +1,61 @@
+Revision history for libcif-dbi
+
+v1.0.1  2013-10
+    - bugfix to cif_apikeys when deleting specific keys
+    - bugfix to domain whitelisting, requires Net::DNS::Match v0.05
+    - bugfix to profile restrictions
+    - bugfix for feed searches
+    - bugfix to feed retention code
+
+v1.0.0 2013-08-30
+    - bugfix to migrate-data script when handling "sharewith/carboncopy" data
+    - migrated asn, cc and rir plugins back into repo (disabled by default)
+    - bugfix to cif_apikeys
+    - bugfix to how mutex's are handled (using unlink)
+
+v1.0.0-rc.4 2013-07-10
+    - added upgrade scripts, minor tweaks to support
+    - misc bugfixes
+
+0.99.06 [RC3] 2013-05
+    - misc doc fixes to cmd line tools
+    - added rename function to cif_apikeys
+    - security fix to uuid-specific lookup
+    - improved make purgedb arguments (from DELETE to TRUNCATE)
+    - fixed spam and spamvirtising schemas
+    - misc regex fixes
+    - added make rebuilddb command that rebuilds all schemas with the exception of apikeys and groups
+    - changed default feed retention policies
+
+0.99.05 [RC2] 2012-12
+    - bugfixes to cif_vacuum code
+    - bugfix to feed retention policy (defaults to 3)
+    - split out CC, ASN and RIR support
+
+0.99.04 2012-10-01
+    - added spamvertising plugin
+    - renamed cif_feeds to cif_feed in various places
+    - added url_whitelisting (whooops...)
+    - added apikeys_restriction access control (eg: domain/malware, infrastructure/suspicious, etc...)
+    - updated feed indicies
+    - cleaned up url_whitelisting a bit
+    - cleaned up infrastructure_whitelisting
+
+0.99.03 2012-07-31
+    - added cif_archive_vacuum script
+    - cleaned up feed table vacuum 
+    - cleaned up apikeys library a bit
+    - added key expiration to profiles
+
+0.99.02 2012-06-26
+    - misc bugfixes
+    - split out feed support to handle new hashing data-model
+
+0.99.01 2012-04-27
+    - initial release
+    - split cif-dbi out into it's own lib
+    - simplified the storage model
+    - added compression (google-compress-snappy)
+    - leveraging Iodef::Pb (google protocol buffers) instead of JSON for IODEF
+    - re-factored most of the "index tables" to be hash lookups (with the exception of ipv4/6 addrs)
+    - split out "WebAPI" into a generic router platform (cif-router-perl)

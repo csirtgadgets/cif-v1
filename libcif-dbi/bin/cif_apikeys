@@ -1,0 +1,290 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+# fix lib paths, some may be relative
+BEGIN {
+    require File::Spec;
+    my @libs = (
+        "lib",
+        "local/lib",
+        "../libcif/lib", # in case we're in -dev mode
+    );
+    my $bin_path;
+
+    for my $lib (@libs) {
+        unless ( File::Spec->file_name_is_absolute($lib) ) {
+            unless ($bin_path) {
+                if ( File::Spec->file_name_is_absolute(__FILE__) ) {
+                    $bin_path = ( File::Spec->splitpath(__FILE__) )[1];
+                }
+                else {
+                    require FindBin;
+                    no warnings "once";
+                    $bin_path = $FindBin::Bin;
+                }
+            }
+            $lib = File::Spec->catfile( $bin_path, File::Spec->updir, $lib );
+        }
+        unshift @INC, $lib;
+    }
+
+}
+
+use Getopt::Std;
+use CIF qw/generate_uuid_ns is_uuid/;
+use CIF::Profile;
+use Text::Table;
+use Config::Simple;
+use DateTime::Format::DateParse;
+use Data::Dumper;
+use Try::Tiny;
+use CIF qw/debug is_uuid/;
+
+our %opts;
+getopt('t:E:G:g:k:u:C:R:L:D:', \%opts);
+die(usage()) if($opts{'h'});
+
+my $user            = $opts{'u'};
+my $groups          = $opts{'g'};
+my $default_group   = $opts{'G'};
+my $desc            = $opts{'D'};
+my $key             = $opts{'k'};
+my $write           = $opts{'w'};
+my $revoke          = $opts{'r'};
+my $delete          = $opts{'X'};
+my $add             = $opts{'a'};
+my $parentid        = $opts{'p'};
+my $expires         = $opts{'E'};
+my $config          = $opts{'C'} || $ENV{'HOME'}.'/.cif';
+my $restricted      = $opts{'R'};
+my $quiet           = $opts{'q'};
+my $import          = $opts{'I'} || 0;
+my $import_ver      = $opts{'Z'} || 'v0';
+my $import_location = $opts{'L'};
+my $rename          = $opts{'t'};
+our $debug          = $opts{'d'} || 0;
+
+
+if($user){
+    die(usage()) unless($key || $opts{'u'} || $opts{'l'} || $opts{'a'} || $opts{'d'});
+}
+
+sub usage {
+    return <<EOF;
+Usage: perl $0 {options...}
+
+Basic:
+    -h  --help:             this message
+
+    -C  --config:           configuration file, default: $config
+    -u  --user:             specify user alias (root\@localhost)
+    -a  --add:              add key
+    -X  --delete:           delete key
+    -k  --key:              apikey
+    -l  --list:             list users
+    
+Advanced:
+    -R  --restrict:         restrict access to specific type of query 
+                            (infrastructure/botnet,domain/malware,malware/md5,etc... default: 0)
+    -r  --revoke:           revoke a key
+    -w  --write:            enable write access
+    -E  --expires:          set an expiration date
+    -g  --groups:           add user to list of groups (eg: everyone,group1,group2)
+    -G  --default group:    set the default group (defaults to: everyone)
+    -D  --desc:             give the key an optional description
+    -I  --import:           import apikeys from a v0 instance
+    -t  --rename:           rename a user alias
+
+Examples:
+
+Basic:
+    $0 -l
+    $0 -l -u joe\@example.com
+    $0 -u joe\@example.com -a -g everyone,group2 -G everyone
+    $0 -x -k 96818121-f1b6-482e-8851-8fb49cb2f6c0
+    
+Advanced:
+
+Adding a user's key to another group:
+    $0 -k 96818121-f1b6-482e-8851-8fb49cb2f6c0 -g group2,group3
+
+Setting Read/Write access to a key:
+    $0 -k 96818121-f1b6-482e-8851-8fb49cb2f6c0 -w
+    $0 -k 96818121-f1b6-482e-8851-8fb49cb2f6c0 -r
+    
+Enabling specific queries for a user:
+    $0 -u joe\@example.com -e infrastructure -a -a everyone -G everyone
+    
+Setting an expiration date for a user:
+    $0 -u joe\@example.com -E 2020-12-30T23:59:59Z
+    
+Rename a user alias:
+    $0 -u joe\@example.com -t bob\@example.com
+    
+EOF
+}
+
+if($expires){
+    $expires = DateTime::Format::DateParse->parse_datetime($expires);
+    die 'invalid `expires` timestamp'."\n\n".usage() unless($expires);
+}
+
+if($key && !is_uuid($key)){
+    print 'invalid key: '.$key.', should be a uuid'."\n";
+    exit(-1);
+}
+
+my ($err,$ret) = CIF::Profile->new({
+    config  => $config,
+});
+die($err) if($err);
+my $profile = $ret;
+
+if($import){
+    my $input;
+    if($import_location){
+        open(F,$import_location) || die($!);
+        $input = <F>;
+        close(F);
+    } else {
+        $input = <STDIN>;
+    }
+    die "no data" unless($input);
+    require JSON::XS;
+    my $array = JSON::XS::decode_json($input);
+    foreach my $a (@$array){
+        my ($ret,$err);
+        try {
+            $ret = $profile->user_add({
+                uuid            => $a->{'uuid'},
+                userid          => $a->{'uuid_alias'},
+                description     => $a->{'description'},
+                write           => $a->{'write'},
+                revoked         => $a->{'revoked'},
+                parentid        => $a->{'parentid'},
+                groups          => join(',',@{$a->{'groups'}}),
+                default_group   => $a->{'default_guid'},
+            });
+        } catch {
+            $err = shift;
+        };
+        if($err){
+            if($err =~ 'duplicate key'){
+                warn 'skipping, duplicate key: '.$a->{'uuid_alias'}.' - '.$a->{'uuid'};
+            } else {
+                die($err);
+            }
+        }
+    }
+    exit(0);
+    
+}
+
+if($add){
+    die(usage()) unless($user);
+    my $id = $profile->user_add({
+        userid              => $user,
+        description         => $desc,
+        write               => $write,
+        revoked             => $revoke,
+        parentid            => $parentid,
+        groups              => $groups,
+        default_group       => $default_group,
+        expires             => $expires,
+        restricted_access   => $restricted,
+    });
+} elsif($opts{'g'}){
+    if($key){
+        if($delete){
+            $profile->group_remove({
+                key     => $key,
+                group   => $opts{'g'},
+            });
+        } else {
+            $profile->group_add({
+                key             => $key,
+                group           => $opts{'g'},
+                group_default   => $opts{'G'},
+            });
+        }
+    } else {
+        my @g = split(/,/,$opts{'g'});
+        my $t = Text::Table->new('group','guid');
+        foreach(@g){
+            $t->load([$_,generate_uuid_ns($_)]);
+        }
+        print $t;
+        exit(0);
+    }
+} elsif($opts{'G'}){
+    die(usage()) unless($key);
+    $profile->group_set_default({
+        key     => $key,
+        group   => $opts{'G'},
+    });
+} elsif($rename){
+    my $ret = $profile->user_rename({
+        user    => $user,
+        rename  => $rename,
+    });
+    print $ret.' users renamed...'."\n";
+    $user = $rename;
+} else {
+    if($expires){
+        die(usage()) unless($key);
+        my $r = $profile->key_set_expires({
+            key     => $key,
+            expires => $expires,
+        });
+    }
+    
+    if($write) {
+        die(usage()) unless($key);
+        my $r = $profile->key_toggle_write({
+            write   => $write,
+            key     => $key,
+        });
+    } 
+    
+    if($revoke){
+        die(usage()) unless($key);
+        my $r = $profile->key_toggle_revoke({
+            revoke  => $revoke,
+            key     => $key,
+        });
+    }
+    
+    if($delete){
+        die(usage()) unless($key || $user);
+        my $obj = $key || $user;
+        print 'removing: '.$obj."\n";
+        $profile->remove($obj);
+    }
+}
+if(!$user && $key){
+    $user = $profile->user_from_key($key);
+    unless($user){
+        print 'no keys found'."\n" unless($quiet);
+        exit(0);
+    }
+}
+exit(0) if($quiet);
+my @recs = $profile->user_list({ user => $user });
+if($#recs > -1){
+    my $t = Text::Table->new('userid','key','description','guid','default_guid','restricted access','write','revoked','expires','created');
+    foreach (@recs){
+        my $groups = $profile->groups($_->uuid());
+        foreach my $g (@$groups){
+            my $default = $profile->group_default($_->uuid()) || 0;
+            my $isDefaultGuid = ($g eq $default) ? 'true' : '';
+            $t->load([$_->uuid_alias(),$_->uuid(),$_->description(),$g,$isDefaultGuid,$_->restricted_access(),$_->write(),$_->revoked(),$_->expires(),$_->created()]);
+        }
+    }
+    print $t;
+} else {
+    if($user){
+        print $user." has ";
+    }
+    print 'no api keys...'."\n";
+}
