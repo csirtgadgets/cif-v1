@@ -10,15 +10,3 @@
 [submodule "libcif-dbi"]
 	path = libcif-dbi
 	url = https://github.com/collectiveintel/libcif-dbi.git
-[submodule "libcif-dbi-cc"]
-	path = libcif-dbi-cc
-	url = https://github.com/collectiveintel/libcif-dbi-cc.git
-[submodule "libcif-dbi-asn"]
-	path = libcif-dbi-asn
-	url = https://github.com/collectiveintel/libcif-dbi-asn.git
-[submodule "libcif-dbi-rir"]
-	path = libcif-dbi-rir
-	url = https://github.com/collectiveintel/libcif-dbi-rir.git
-[submodule "cif-test-framework"]
-	path = cif-test-framework
-	url = https://github.com/collectiveintel/cif-test-framework.git
