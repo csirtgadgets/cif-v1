@@ -1,0 +1,10 @@
+missing
+*.tar.gz
+Makefile
+Makefile.in
+*.m4
+*.log
+config.status
+configure
+autom4te.cache/
+install-sh
