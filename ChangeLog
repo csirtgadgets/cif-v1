@@ -1,6 +1,8 @@
 Revision history for cif-v1
 
 v1.0.1  2013-10
+    - migrated all submodules into main tree (cleaner dev/forking)
+
 [libcif]
     - fixes https://github.com/collectiveintel/libcif/issues/13
     - bugfix to configure.ac wrt protocol/
