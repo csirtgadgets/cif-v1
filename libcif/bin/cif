@@ -95,7 +95,7 @@ Query Options:
     -q  --query:            query string
     -n  --nolog:            perform a "silent" query (no log query), default: $nolog
     -l  --limit:            set the default result limit (queries only), default is set on server, usually around 500.
-    -c  --confidence:       lowest tolerated confidence (0.00 -- 100.00), default $confidence
+    -c  --confidence:       lowest tolerated confidence (0.00 -- 100.00)
     
 Format Options:
     -p  --plugin:           output plugin ('Table','Snort','Csv','Json','Html'), default: Table

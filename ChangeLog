@@ -14,6 +14,7 @@ v1.0.1  2013-10-21
     - bugfix to -G flag
     - various feed search bugfixes
     - bugfix to build
+    - fixed: https://github.com/collectiveintel/cif-v1/issues/53
 
 [libcif-dbi]
     - bugfix to cif_apikeys when deleting specific keys
