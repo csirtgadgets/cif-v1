@@ -2,12 +2,18 @@ Revision history for cif-v1
 
 v1.0.1  2013-10-21
     - migrated all submodules into main tree (cleaner dev/forking)
+    - cleaned up Net::DNS::Match, cif-v1 now requires [Net::DNS::Match v0.05](http://search.cpan.org/~saxjazman/Net-DNS-Match/lib/Net/DNS/Match.pm)
+    - migrated all submodules into main tree (cleaner dev/forking)
+    - **cif-v1-v1.0.1.tar.gz** is the server instance, which includes libcif
+    - **libcif-v1.0.1.tar.gz** is the client side lib's if you need access from a different instance
+    - server install instructions are [here](https://code.google.com/p/collective-intelligence-framework/wiki/ServerInstall_v1)
 
 [libcif]
     - fixes https://github.com/collectiveintel/libcif/issues/13
     - bugfix to configure.ac wrt protocol/
     - bugfix to -G flag
     - various feed search bugfixes
+    - bugfix to build
 
 [libcif-dbi]
     - bugfix to cif_apikeys when deleting specific keys
