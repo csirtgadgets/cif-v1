@@ -21,6 +21,7 @@ v1.0.1  2013-10-21
     - added a 'prefetch' execution flag
     - removed mpatrol as a default feed, new business model, set as example.
     - bugfix to ParseJson
+    - fixed: https://github.com/collectiveintel/cif-v1/issues/56 (ParseJson)
 
 [cif-router]
     - bugfix to protocol version check
