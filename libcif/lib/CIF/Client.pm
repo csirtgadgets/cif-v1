@@ -68,7 +68,7 @@ sub new {
         @{$self->{'fields'}} = split(/,/,$args->{'fields'}); 
     } 
     
-    my $driver     = 'CIF::Client::Transport::'.$self->get_driver();
+    my $driver     = 'CIF::Client::Transport::'.uc($self->get_driver());
     my $err;
     try {
         $driver     = $driver->new({
