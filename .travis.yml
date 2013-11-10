@@ -1,0 +1,21 @@
+language: c
+script: sh autogen.sh && ./configure && make
+env:
+    PERL5LIB=/home/travis/perl5/lib/perl5
+before_install:
+    - git submodule update --init --recursive
+    - sudo apt-get update -qq
+    - sudo apt-get install -qq perlbrew
+    - perlbrew init
+    - perl --version
+    - sudo apt-get install -qq postgresql apache2 apache2-threaded-dev gcc g++ make libexpat1-dev libapache2-mod-perl2 libclass-dbi-perl libnet-cidr-perl libossp-uuid-perl libxml-libxml-perl libxml2-dev libmodule-install-perl libapache2-request-perl libdbd-pg-perl bind9 libregexp-common-perl libxml-rss-perl libapache2-mod-gnutls libapreq2-dev rsync libunicode-string-perl libconfig-simple-perl libmodule-pluggable-perl libmime-lite-perl libfile-type-perl libtext-csv-perl libio-socket-inet6-perl libapr1-dbg libdate-manip-perl libtry-tiny-perl libclass-accessor-perl pkg-config vim libjson-xs-perl perl-modules libdigest-sha-perl libsnappy-dev libdatetime-format-dateparse-perl liblwp-protocol-https-perl libtime-hires-perl libnet-patricia-perl libnet-ssleay-perl liblog-dispatch-perl libregexp-common-net-cidr-perl libtext-table-perl libdatetime-perl libencode-perl libmime-base64-perl libhtml-table-perl libzmq-dev libzmq1 libzeromq-perl libssl-dev protobuf-compiler libprotobuf-dev cpanminus libclass-accessor-perl libparse-recdescent-perl libmath-bigint-perl libmodule-install-perl
+    - cpanm --version
+    - "cpanm -v Google::ProtocolBuffers Test::SharedFork Test::TCP Net::Abuse::Utils Linux::Cpuinfo Google::ProtocolBuffers Iodef::Pb::Simple Compress::Snappy Net::Abuse::Utils::Spamhaus Net::DNS::Match Snort::Rule Parse::Range Log::Dispatch Net::SSLeay ZeroMQ Sys::MemInfo LWP::Protocol::https LWPx::ParanoidAgent"
+
+notifications:
+    email:
+        on_success: never
+        on_failure: always
+branches:
+    only:
+        - stable
