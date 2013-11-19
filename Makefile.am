@@ -1,4 +1,4 @@
-SUBDIRS = libcif libcif-dbi cif-router cif-smrt
+SUBDIRS = libcif libcif-dbi cif-router cif-smrt tests
 EXTRA_DIST = sbin
 
 ME=cif-v1
