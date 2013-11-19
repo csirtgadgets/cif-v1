@@ -133,7 +133,7 @@ my %AVOID = (
 );
 
 $deps{'CORE'} = [ text_to_hash( << '.') ];
-OSSP::uuid 1.0501
+UUID::Tiny 1.04
 Google::ProtocolBuffers 0.08 
 DateTime::Format::DateParse 0.05
 Net::Patricia 1.16

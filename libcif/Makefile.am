@@ -1,4 +1,4 @@
-SUBDIRS = protocol
+SUBDIRS = protocol tests
 EXTRA_DIST = lib sbin bin
 
 ME=libcif
@@ -9,7 +9,7 @@ all: default
 
 default:
 	@echo "Please read the README before beginning your installation."
-
+ 
 install: files-install
 
 files-install: libs-install bin-install

@@ -7,7 +7,7 @@ use warnings;
 our $VERSION = '1.0.0';
 
 use DateTime::Format::DateParse;
-use OSSP::uuid;
+use UUID::Tiny ':std';
 use CIF::Msg;
 use CIF::Msg::Feed;
 require Iodef::Pb::Simple;
@@ -138,22 +138,12 @@ sub init_logging {
 =cut
 
 sub generate_uuid_random {
-    my $uuid    = OSSP::uuid->new();
-    $uuid->make('v4');
-    my $str = $uuid->export('str');
-    undef $uuid;
-    return($str);
+    return create_uuid_as_string(UUID_RANDOM);
 }
 
 sub generate_uuid_ns {
-    my $source = shift;
-    my $uuid = OSSP::uuid->new();
-    my $uuid_ns = OSSP::uuid->new();
-    $uuid_ns->load('ns::URL');
-    $uuid->make("v3",$uuid_ns,$source);
-    my $str = $uuid->export('str');
-    undef $uuid;
-    return($str);
+    my $arg = shift;
+    return create_uuid_as_string(UUID_V3, UUID_NIL, $arg);
 }
 
 # deprecate
