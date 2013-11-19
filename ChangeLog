@@ -1,6 +1,6 @@
 Revision history for cif-v1
 
-v1.0.1  2013-10-21
+v1.0.1  2013-11-19
     - migrated all submodules into main tree (cleaner dev/forking)
     - cleaned up Net::DNS::Match, cif-v1 now requires [Net::DNS::Match v0.05](http://search.cpan.org/~saxjazman/Net-DNS-Match/lib/Net/DNS/Match.pm)
     - migrated all submodules into main tree (cleaner dev/forking)
