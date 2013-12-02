@@ -1,5 +1,5 @@
 make clean
 rm *.tar.gz
-autoreconf -vf
+autoreconf -vfi
 ./configure
 make dist
