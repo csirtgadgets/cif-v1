@@ -50,7 +50,7 @@ my $mutex           = $opts{'L'} || '/tmp/cif_crontool.lock.'.$period;
 my $postprocess     = $opts{'P'};
 my $dir             = $opts{'F'} || '/opt/cif';
 my $admin           = $opts{'A'} || 'root';
-my $subject         = $opts{'S'};
+my $subject         = $opts{'S'} || '';
 my $fail_closed     = $opts{'N'} || 0;
 my $d_postprocessor = $opts{'z'};
 
@@ -162,7 +162,6 @@ Current Feeds:
 $f
 EOF
 }
-
 $SIG{__DIE__} = 'cleanup';
 $SIG{'INT'} = 'cleanup';
 
@@ -208,7 +207,6 @@ sub bail {
     if(-e '/tmp/.cif_crontool.err'){
         print $msg."\n";
     } else {
-        my $subject = $opts{'S'} || '';
         $subject .= ' cif_crontool failure';
         my $msg = MIME::Lite->new(
             To      => $admin,
