@@ -11,7 +11,7 @@ use Iodef::Pb::Simple qw(iodef_confidence iodef_impacts iodef_additional_data io
 
 __PACKAGE__->table('search');
 __PACKAGE__->columns(Primary => 'id');
-__PACKAGE__->columns(All => qw/id uuid guid hash confidence reporttime created/);
+__PACKAGE__->columns(All => qw/id uuid guid term confidence reporttime created/);
 __PACKAGE__->sequence('search_id_seq');
 
 my @plugins = __PACKAGE__->plugins();
@@ -32,9 +32,9 @@ sub insert {
     my $class = shift;
     my $data = shift;
 
+    return unless($data->{'search'}); # don't ask
     return unless($class->test_datatype($data));
     return unless(ref($data->{'data'}) eq 'IODEFDocumentType');
-
     my $tbl = $class->table();
     my @ids;
 
@@ -50,32 +50,23 @@ sub insert {
                 last;
             }
         }
- 
-        my $additional_data = iodef_additional_data($i);
-        return unless(@$additional_data);
-        foreach my $entry (@$additional_data){
-            ## TODO -- split this into plugins MD5, SHA1, UUID
-            next unless($entry);
-            next unless($entry->get_meaning() eq 'hash');
-            next unless($entry->get_content() =~ /^[a-f0-9]{40}$/);
-            if($class->test_feed($data)){
-                $class->SUPER::insert({
+        if($class->test_feed($data)){
+            $class->SUPER::insert({
                     guid        => iodef_guid($i) || $data->{'guid'},
                     uuid        => $i->get_IncidentID->get_content(),
-                    hash        => $entry->get_content(),
+                    term        => $data->{'search'},
                     confidence  => $confidence,
                     reporttime  => $reporttime,
-                });
-            }
+             });
+        }
             
-            my $id = $class->insert_hash({ 
-                uuid        => $data->{'uuid'}, 
-                guid        => $data->{'guid'}, 
-                confidence  => $confidence,
-                reporttime  => $reporttime,
-            },$entry->get_content());
-            push(@ids,$id);
-        }    
+        my $id = $class->insert_hash({ 
+            uuid        => $data->{'uuid'}, 
+            guid        => $data->{'guid'}, 
+            confidence  => $confidence,
+            reporttime  => $reporttime,
+        },$class->SUPER::generate_sha1($data->{'search'}));
+        push(@ids,$id);  
     }
     $class->table($tbl);
     return(undef,\@ids);

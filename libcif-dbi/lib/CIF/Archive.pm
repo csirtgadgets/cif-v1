@@ -100,7 +100,7 @@ sub insert_index {
 sub search {
     my $class = shift;
     my $data = shift;
-
+    
     $data->{'confidence'}   = 0 unless(defined($data->{'confidence'}));
     $data->{'query'}        = lc($data->{'query'});
  
@@ -151,7 +151,7 @@ sub search {
 sub log_search {
     my $class = shift;
     my $data = shift;
-    
+
     my $q               = lc($data->{'query'});
     my $source          = $data->{'source'}         || 'unknown';
     my $confidence      = $data->{'confidence'}     || 50;
@@ -232,7 +232,7 @@ sub log_search {
         guid        => $guid,
         restriction => RestrictionType::restriction_type_private(),
     });
-   
+    
     my $err;
     ($err,$id) = $class->insert({
         uuid        => $uuid,
@@ -241,6 +241,8 @@ sub log_search {
         created     => $dt,
         feeds       => $data->{'feeds'},
         datatypes   => $data->{'datatypes'},
+        # work-around
+        search      => $q_thing,
     });
     return($err) if($err);
     $class->dbi_commit() unless($class->db_Main->{'AutoCommit'});
