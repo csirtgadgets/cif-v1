@@ -56,7 +56,7 @@ sub handler {
             $reply = "For performance reasons, it appears that legacy JSON support has been disabled by your administrator";
         } else {
             $req->content_type('application/json');
-            $reply = CIF::Router::HTTP::Json::handler($config,$req);
+            $reply = CIF::Router::HTTP::Json::handler($config,$req,$router);
             if($reply =~ /^\d+$/){
                 $req->status($reply);
                 return $reply;

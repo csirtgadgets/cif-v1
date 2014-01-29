@@ -90,9 +90,31 @@ sub search {
     my $self = shift;
     my $args = shift;
     
+    my $msg = $self->encode_query($args);
+    
+    debug('sending query') if($::debug);
+    my ($err,$ret) = $self->send($msg->encode());
+    
+    return $err if($err);
+    $ret = MessageType->decode($ret);
+ 
+    unless($ret->get_status() == MessageType::StatusType::SUCCESS()){
+        return('failed: '.@{$ret->get_data()}[0]) if($ret->get_status() == MessageType::StatusType::FAILED());
+        return('unauthorized') if($ret->get_status() == MessageType::StatusType::UNAUTHORIZED());
+    }
+    return(0) unless($ret->{'data'});
+    
+    return(undef,$ret->get_data()) if($args->{'no_decode'});
+
+    return $self->decode_results({ %$args, data => $ret });
+}
+
+sub encode_query {
+    my $self = shift;
+    my $args = shift;
+    
     my $filter_me   = $args->{'filter_me'} || $self->get_filter_me();
     my $nolog       = (defined($args->{'nolog'})) ? $args->{'nolog'} : $self->get_nolog();
-    my $no_decode   = $args->{'no_decode'};
     
     unless($args->{'apikey'}){
         $args->{'apikey'} = $self->get_apikey();
@@ -141,24 +163,26 @@ sub search {
         ## query shouldn't be repated the QueryType should foreach ($args->{'query'})
         data    => \@queries,
     });
+    $self->{'ip_tree'} = $ip_tree;
+    $self->{'orig_queries'} = \@orig_queries;
+    return $msg;
+}
+
+sub decode_results {
+    my $self = shift;
+    my $args = shift;
     
-    debug('sending query') if($::debug);
-    my ($err,$ret) = $self->send($msg->encode());
+    my $ret         = $args->{'data'};
+    my $filter_me   = $args->{'filter_me'} || $self->get_filter_me();
+    my $nolog       = (defined($args->{'nolog'})) ? $args->{'nolog'} : $self->get_nolog();
     
-    return $err if($err);
-    $ret = MessageType->decode($ret);
- 
-    unless($ret->get_status() == MessageType::StatusType::SUCCESS()){
-        return('failed: '.@{$ret->get_data()}[0]) if($ret->get_status() == MessageType::StatusType::FAILED());
-        return('unauthorized') if($ret->get_status() == MessageType::StatusType::UNAUTHORIZED());
-    }
-    return(0) unless($ret->{'data'});
-    my $uuid = generate_uuid_ns($args->{'apikey'});
-    
-    return(undef,$ret->get_data()) if($no_decode);
+    my $ip_tree = $self->{'ip_tree'};
+    my @orig_queries = $self->{'orig_queries'};
+
+    my $uuid = generate_uuid_ns($args->{'apikey'}) if($args->{'apikey'});
 
     debug('decoding...') if($::debug);
-        ## TODO: finish this so feeds are inline with reg queries
+    ## TODO: finish this so feeds are inline with reg queries
     ## TODO: try to base64 decode and decompress first in try { } catch;
     foreach my $feed (@{$ret->get_data()}){
         my @array;

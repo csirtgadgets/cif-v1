@@ -13,6 +13,7 @@ use Try::Tiny;
 sub handler {
     my $router_config   = shift;
     my $req             = shift;
+    my $router          = shift;
 
     my $r = Apache2::Request->new($req);
     
@@ -55,21 +56,22 @@ sub handler {
             $confidence = 95 if($query =~ /^[a-z]+\/[a-z]$/ && !defined($confidence));
         
             debug('query: '.$query);
-            ($err,$ret) = $cli->search({
+            $ret = $cli->encode_query({
                 query       => $query,
                 limit       => $limit,
                 confidence  => $confidence          || 0,
                 nolog       => $r->param('nolog')   || 0,
             });
+            my $rep = $router->process($ret->encode());
             
-            if($err){
-                for(lc($err)){
-                    if(/^unauthorized$/){
-                        return Apache2::Const::FORBIDDEN();
-                        last;
-                    }
-                }
+            $rep = MessageType->decode($rep);
+            
+            unless($rep->get_status() == MessageType::StatusType::SUCCESS()){
+                return('failed: '.@{$rep->get_data()}[0]) if($rep->get_status() == MessageType::StatusType::FAILED());
+                return('unauthorized') if($rep->get_status() == MessageType::StatusType::UNAUTHORIZED());
             }
+            
+            $ret = $cli->decode_results({ data => $rep });
             
             my $nomap = 0;
                         
