@@ -46,5 +46,21 @@ sub generate_feeds {
     
     return(\@feeds);
 }
+
+__PACKAGE__->set_sql('feed' => qq{
+    SELECT DISTINCT ON (t1.term) t1.term, t1.id, archive.data
+    FROM (
+        SELECT t.term, t.id, t.uuid, t.guid
+        FROM __TABLE__ t
+        WHERE
+            t.reporttime >= ?
+            AND t.confidence >= ?
+        ORDER by t.id DESC
+        LIMIT ?
+    ) t1
+    LEFT JOIN archive ON t1.uuid = archive.uuid
+    LEFT JOIN apikeys_groups ON t1.guid = apikeys_groups.guid
+    WHERE apikeys_groups.uuid = ?
+});
     
 1;
