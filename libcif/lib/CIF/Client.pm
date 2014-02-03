@@ -177,7 +177,7 @@ sub decode_results {
     my $nolog       = (defined($args->{'nolog'})) ? $args->{'nolog'} : $self->get_nolog();
     
     my $ip_tree = $self->{'ip_tree'};
-    my @orig_queries = $self->{'orig_queries'};
+    my @orig_queries = @{$self->{'orig_queries'}};
 
     my $uuid = generate_uuid_ns($args->{'apikey'}) if($args->{'apikey'});
 

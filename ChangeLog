@@ -4,6 +4,7 @@ v1.0.2  2014-
     - fixed #60 (logged searches), requres ALTER TABLE search (see libcif-dbi/schemas/Pg/search.sql)
     - fixed #61 (apache2 hangs on bare metal with many cores)
     - fixed #62 (search feed generation)
+    - fixed #63 (search prefix bug created by #61)
 
 v1.0.1  2013-11-19
     - migrated all submodules into main tree (cleaner dev/forking)
