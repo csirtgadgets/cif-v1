@@ -39,7 +39,7 @@ sub new {
     my @array = (ref($enabled) eq 'ARRAY') ? @$enabled : split(/,/,$enabled);
     
     $self->set_feeds(\@array);
-
+    
     return (undef,$self);
 }
 
@@ -82,7 +82,7 @@ sub init_config {
     
     ## TODO: add groups here 
     
-    $self->set_limit(       $args->{'limit'}        || $self->get_config->{'limit'}         || 10000);
+    $self->set_limit(       $args->{'limit'}        || $self->get_config->{'limit'}         || 50000);
     $self->set_limit_days(  $args->{'limit_days'}   || $self->get_config->{'limit_days'}    || 7);
     
     if(my $roles = $args->{'roles'} || $self->get_config->{'roles'}){
