@@ -6,6 +6,7 @@ v1.0.2  2014-
     - fixed #62 (search feed generation)
     - fixed #63 (search prefix bug created by #61)
     - fixed small bug with cif_feed limit handling
+    - fixed #64 (asn/rir/cc lookups failing)
 
 v1.0.1  2013-11-19
     - migrated all submodules into main tree (cleaner dev/forking)

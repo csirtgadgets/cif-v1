@@ -39,7 +39,7 @@ sub resolve_bgp {
     my @bits = split(/\./,$a);
     return if($#bits < 0);
     
-    $bits[$#bits] = '0/24';
+    $bits[$#bits] = '0';
     $a = join('.',@bits);
   
     my ($as,$network,$ccode,$rir,$date) = get_asn_info($a);
