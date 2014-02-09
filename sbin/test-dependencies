@@ -172,7 +172,7 @@ Sys::MemInfo 0.91
 IO::Uncompress::Unzip 2.02
 XML::RSS 1.48
 Iodef::Pb::Simple 0.21
-Net::Abuse::Utils 0.13
+Net::Abuse::Utils 0.23
 Net::Abuse::Utils::Spamhaus 0.04
 Text::CSV 1.18
 LWPx::ParanoidAgent 1.10
