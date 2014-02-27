@@ -52,7 +52,7 @@ sub process {
                                     name        => $smrt->get_name(),
                                     restriction => $restriction,
                                 });
-                                my $asn = $class->resolve_bgp($addr);
+                                my $asn = $class->resolve_bgp($addr->get_content());
                                 my $new = Iodef::Pb::Simple->new({
                                     address         => $addr->get_content(),
                                     prefix          => $asn->{'prefix'},

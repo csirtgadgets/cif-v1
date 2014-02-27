@@ -118,6 +118,10 @@ sub process {
                     }
                     next unless($#additional_data > -1);
                     if($s->get_AdditionalData()){
+                        my $a = $s->get_AdditionalData();
+                        $a = [ $a ] unless(ref($a) eq 'ARRAY');
+                        push(@{$a},@additional_data);
+                        $s->set_AdditionalData($a);
                         push(@{$s->get_AdditionalData()},@additional_data);
                     } else {
                         $s->set_AdditionalData(\@additional_data);
