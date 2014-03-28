@@ -4,6 +4,7 @@ v1.0.3  2014-03-
     - fixed default sorting for bin/cif
     - bugfix to domain/malware feed indexer
     - bugfix to spamhaus-ip post procesor
+    - bugfix: https://github.com/collectiveintel/cif-v1/issues/67
 
 v1.0.2  2014-02-09
     - fixed #60 (logged searches), requres ALTER TABLE search (see libcif-dbi/schemas/Pg/search.sql)
