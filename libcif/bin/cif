@@ -122,11 +122,10 @@ Example Queries:
     \$> perl $0 -q hut2.ru,f8e74165fb840026fd0fce1fd7d62f5d0e57e7ac
     \$> perl $0 hut2.ru
     
-    \$> perl $0 -q malware
-    \$> perl $0 -q malware
+    \$> perl $0 -q malware/sha1
     \$> perl $0 -q infrastructure/botnet -p Snort
     \$> perl $0 -q domain/malware -p bindzone -c 95
-    \$> perl $0 -q domain -c 40
+    \$> perl $0 -q domain/malware -c 40
     
     \$ $0 -d -q example.com -e search
 
