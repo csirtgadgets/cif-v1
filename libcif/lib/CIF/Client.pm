@@ -184,7 +184,11 @@ sub decode_results {
     debug('decoding...') if($::debug);
     ## TODO: finish this so feeds are inline with reg queries
     ## TODO: try to base64 decode and decompress first in try { } catch;
-    foreach my $feed (@{$ret->get_data()}){
+    my $feed_data = $ret->get_data();
+    if(!defined($feed_data)){
+        $feed_data = [ ];
+    }
+    foreach my $feed (@{$feed_data}){
         my @array;
         my $err;
         my $test;
