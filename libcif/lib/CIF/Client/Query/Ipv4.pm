@@ -12,7 +12,7 @@ sub process {
     my $class   = shift;
     my $args    = shift;
 
-    return unless($args->{'query'} =~ /^$RE{'net'}{'IPv4'}/);
+    return unless($args->{'query'} =~ /^$RE{'net'}{'IPv4'}$/ || $args->{'query'} =~ /^$RE{'net'}{'CIDR'}{'IPv4'}$/);
     $args->{'query'} = normalize_address($args->{'query'});
   
     my $pt = $args->{'pt'};
