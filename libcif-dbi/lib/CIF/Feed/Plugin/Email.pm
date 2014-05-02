@@ -13,7 +13,7 @@ __PACKAGE__->sequence('email_id_seq');
 
 ## TODO: database config?
 my @plugins = __PACKAGE__->plugins();
-push(@plugins,'phishing','registrant','spam','spamvertising');
+push(@plugins,'phishing','registrant','spam','spamvertising','suspicious','whitelist');
 
 sub generate_feeds {
     my $class   = shift;
