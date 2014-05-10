@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.64])
 AC_INIT(cif-v1, m4_esyscmd_s([git describe --tags]), [ci-framework@googlegroups.com])
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([1.9 tar-ustar])
 
 # setup
 
