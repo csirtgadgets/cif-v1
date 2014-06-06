@@ -133,6 +133,7 @@ my %AVOID = (
 );
 
 $deps{'CORE'} = [ text_to_hash( << '.') ];
+Net::DNS 0.77
 Try::Tiny 0.04
 Config::Simple 4.59
 Module::Pluggable 3.9

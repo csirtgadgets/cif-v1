@@ -1,6 +1,6 @@
 Revision history for cif-v1
 
-v1.0.3  2014-04-
+v1.0.3  2014-06-
     - fixed default sorting for bin/cif
     - bugfix to domain/malware feed indexer
     - bugfix to spamhaus-ip post procesor
@@ -8,6 +8,7 @@ v1.0.3  2014-04-
     - docfix: libcif/bin/cif
     - debfix: spamhaus-dbl
     - bugfix: [rtkpmcalpine] https://github.com/collectiveintel/cif-v1/pull/68
+    - debfix: net-dns https://github.com/collectiveintel/cif-v1/issues/75
 
 v1.0.2  2014-02-09
     - fixed #60 (logged searches), requres ALTER TABLE search (see libcif-dbi/schemas/Pg/search.sql)
