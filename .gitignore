@@ -1,3 +1,6 @@
+provision/
+Vagrantfile
+.project
 .vagrant
 *.DS_Store
 missing
