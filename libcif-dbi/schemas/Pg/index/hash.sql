@@ -20,6 +20,9 @@ CREATE INDEX idx_hash_sha1_2 ON hash_sha1 (uuid);
 DROP INDEX IF EXISTS idx_hash_sha1_3;
 CREATE INDEX idx_hash_sha1_3 ON hash_sha1 (reporttime);
 
+DROP INDEX IF EXISTS idx_hash_sha1_4;
+CREATE INDEX idx_hash_sha1_4 ON hash_sha1 (hash,id);
+
 --UUID table
 DROP INDEX IF EXISTS idx_hash_uuid_1;
 CREATE INDEX idx_hash_uuid_1 ON hash_uuid (hash,confidence);
