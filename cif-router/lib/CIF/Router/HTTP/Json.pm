@@ -169,6 +169,10 @@ sub handler {
                 data    => $ret->get_data(),
             });
         }
+        if(/^OPTIONS$/){
+            # AJAX: Support Chrome's preflight OPTIONS request to look for CORS headers
+            return '';
+        }
     }
     return Apache2::Const::FORBIDDEN();
     
