@@ -11,6 +11,8 @@ use Module::Pluggable require => 1, search_path => [__PACKAGE__];
 
 my @plugins = __PACKAGE__->plugins();
 
+use constant RE_REGEX    => qr/^(?:[0-9a-zA-Z-]{1,63}\.)+[a-zA-Z]{2,63}$/;
+
 sub process {
     my $class   = shift;
     my $smrt    = shift;
@@ -34,7 +36,7 @@ sub is_fqdn {
     return unless($addr && $addr->get_content());
     return unless($addr->get_category() == AddressType::AddressCategory::Address_category_ext_value());
     return unless($addr->get_ext_category() =~ /^(fqdn|domain)$/);
-    return 1 if($addr->get_content() =~ /^[a-zA-Z0-9.-]+\.[a-z]{2,8}$/);
+    return 1 if($addr->get_content() =~ RE_REGEX);
 }
 
 sub resolve {
