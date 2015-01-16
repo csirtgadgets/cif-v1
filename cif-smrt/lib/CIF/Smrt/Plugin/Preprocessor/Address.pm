@@ -3,6 +3,9 @@ package CIF::Smrt::Plugin::Preprocessor::Address;
 use strict;
 use warnings;
 
+use Regexp::Common qw/net/;
+use Regexp::Common::net::CIDR;
+
 sub process {
     my $class = shift;
     my $rules = shift;
@@ -10,6 +13,13 @@ sub process {
     
     return $rec unless($rec->{'address'});
     $rec->{'address'} = lc($rec->{'address'});
+    
+    if($address =~ /^$RE{'net'}{'CIDR'}{'IPv4'}$/){
+    	if ($2 > 14){
+    		$rec->{'address'} = $1.'/14';
+    	}
+    }
+    
     return $rec;
 }
 
