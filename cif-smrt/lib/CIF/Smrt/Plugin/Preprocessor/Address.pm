@@ -14,7 +14,7 @@ sub process {
     return $rec unless($rec->{'address'});
     $rec->{'address'} = lc($rec->{'address'});
     
-    if($address =~ /^$RE{'net'}{'CIDR'}{'IPv4'}$/){
+    if($rec->{'address'} =~ /^$RE{'net'}{'CIDR'}{'IPv4'}$/){
     	if ($2 > 14){
     		$rec->{'address'} = $1.'/14';
     	}
