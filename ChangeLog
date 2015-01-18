@@ -1,5 +1,8 @@
 Revision history for cif-v1
 
+v1.0.4	2015-01-18
+    - fixed: https://github.com/collectiveintel/cif-v1/issues/83
+
 v1.0.3  2014-07-26
     - fixed default sorting for bin/cif
     - bugfix to domain/malware feed indexer

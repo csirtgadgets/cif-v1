@@ -16,12 +16,11 @@ sub process {
     $rec->{'address'} = lc($rec->{'address'});
     
     if($rec->{'address'} =~ /^$RE{'net'}{'CIDR'}{'IPv4'}{'-keep'}$/){
-    	my $max = $rules->{'max_prefix'} || 16;
+    	my $max = $rec->{'max_prefix'} || 14;
     	if ($2 < $max){
     		$rec->{'address'} = $1.'/'.$max;
     	}
     }
-    
     return $rec;
 }
 
