@@ -15,7 +15,7 @@ sub process {
     return $rec unless($address);
     return $rec if($rec->{'atype'} && $rec->{'atype'} ne 'url');
     if ($address =~ /^$RE{'net'}{'IPv4'}$/ || $address =~ /^$RE{'net'}{'CIDR'}{'IPv4'}$/){
-		return unless($rec->{'atype'} && $rec->{'atype'} eq 'url');
+		return $rec unless($rec->{'atype'} && $rec->{'atype'} eq 'url');
     }
 
     # Regexp::Common qw/URI/ chokes on large urls
