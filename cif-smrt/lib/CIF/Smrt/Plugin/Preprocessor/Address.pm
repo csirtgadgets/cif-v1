@@ -12,14 +12,15 @@ sub process {
     my $rec = shift;
     
     return $rec unless($rec->{'address'});
+    return $rec if ($rec->{'atype'} && $rec->{'atype'} ne 'ipv4');
     $rec->{'address'} = lc($rec->{'address'});
     
-    if($rec->{'address'} =~ /^$RE{'net'}{'CIDR'}{'IPv4'}$/){
-    	if ($2 < 14){
-    		$rec->{'address'} = $1.'/14';
+    if($rec->{'address'} =~ /^$RE{'net'}{'CIDR'}{'IPv4'}{'-keep'}$/){
+    	if ($2 < 8){
+    		$rec->{'address'} = $1.'/8';
     	}
     }
-    
+
     return $rec;
 }
 

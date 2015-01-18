@@ -13,10 +13,13 @@ sub process {
     
     my $address = $rec->{'address'};    
     return $rec unless($address);
-    
+    return $rec if($rec->{'atype'} && $rec->{'atype'} ne 'url');
+    if ($address =~ /^$RE{'net'}{'IPv4'}$/ || $address =~ /^$RE{'net'}{'CIDR'}{'IPv4'}$/){
+		return unless($rec->{'atype'} && $rec->{'atype'} eq 'url');
+    }
+
     # Regexp::Common qw/URI/ chokes on large urls
     return $rec if($address =~ /^(ftp|https?):\/\//);
-    return $rec if($address =~ /^$RE{'net'}{'IPv4'}$/ || $address =~ /^$RE{'net'}{'CIDR'}{'IPv4'}$/);
     
     if($rec->{'address'} =~ /^([a-z0-9.-]+[a-z]{2,6}|\b(?:\d{1,3}\.){3}\d{1,3}\b)(:\d+)?\/+/){
         $rec->{'address'} = 'http://'.$rec->{'address'};

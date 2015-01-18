@@ -16,7 +16,6 @@ sub process {
     my $smrt    = shift;
     my $data    = shift;
     
-    ## TODO -- FIX!
     my @new_incidents;
     foreach my $i (@{$data->get_Incident()}){
         next unless($i->get_purpose && $i->get_purpose == IncidentType::IncidentPurpose::Incident_purpose_mitigation());

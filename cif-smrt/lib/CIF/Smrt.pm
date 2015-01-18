@@ -749,7 +749,6 @@ sub worker_routine {
                     nanosleep NSECS_PER_MSEC;
                 }
             }
-            
             push(@results,map { $_->encode() } @$iodef);
                        
             debug('sending message...') if($::debug && $::debug > 2);
