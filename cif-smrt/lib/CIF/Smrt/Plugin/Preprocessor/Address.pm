@@ -16,9 +16,9 @@ sub process {
     $rec->{'address'} = lc($rec->{'address'});
     
     if($rec->{'address'} =~ /^$RE{'net'}{'CIDR'}{'IPv4'}{'-keep'}$/){
-    	my $max = $rec->{'max_prefix'} || 14;
-    	if ($2 < $max){
-    		$rec->{'address'} = $1.'/'.$max;
+    	my $min = $rec->{'min_prefix'} || 14;
+    	if ($2 < $min){
+    		$rec->{'address'} = $1.'/'.$min;
     	}
     }
     return $rec;
