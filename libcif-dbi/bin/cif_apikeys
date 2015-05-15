@@ -64,6 +64,7 @@ my $import_ver      = $opts{'Z'} || 'v0';
 my $import_location = $opts{'L'};
 my $rename          = $opts{'t'};
 our $debug          = $opts{'d'} || 0;
+my $export          = $opts{'e'} || 0;
 
 
 if($user){
