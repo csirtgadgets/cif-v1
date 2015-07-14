@@ -46,16 +46,16 @@ our $DEFAULT_GOBACK = 3;
 use Time::HiRes qw/nanosleep/;
 use ZeroMQ qw/:all/;
 
-# the lower this is, the higher the chance of
+# the lower this is, the higher the chance of 
 # threading collisions resulting in a seg fault.
 # the higher the thread count, the higher this number needs to be
 use constant NSECS_PER_MSEC     => 1_000_000;
 
 __PACKAGE__->follow_best_practice;
 __PACKAGE__->mk_accessors(qw(
-    config feeds_config feeds threads
-    entries defaults feed rules load_full goback
-    client wait_for_server name instance
+    config feeds_config feeds threads 
+    entries defaults feed rules load_full goback 
+    client wait_for_server name instance 
     batch_control client_config postprocess apikey
     severity_map proxy
 ));
@@ -69,10 +69,10 @@ our @postprocessors = __PACKAGE__->plugins();
 sub new {
     my $class = shift;
     my $args = shift;
-
+    
     my $self = {};
     bless($self,$class);
-
+      
     my ($err,$ret) = $self->init($args);
     return($err) if($err);
 
@@ -85,10 +85,10 @@ sub init {
 
     my ($err,$ret) = $self->init_config($args);
     return($err) if($err);
-
+      
     ($err,$ret) = $self->init_rules($args);
     return($err) if($err);
-
+   
     $self->set_threads(         $args->{'threads'}          || $self->get_config->{'threads'}           || 1);
     $self->set_wait_for_server( $args->{'wait_for_server'}  || $self->get_config->{'wait_for_server'}   || 0);
     $self->set_batch_control(   $args->{'batch_control'}    || $self->get_config->{'batch_control'}     || 2500); # arbitrary
@@ -98,25 +98,25 @@ sub init {
 
     ($err,$ret) = $self->init_postprocessors($args);
     return($err) if($err);
-
+    
     if($self->get_postprocess()){
         debug('postprocessing enabled...') if($::debug);
         debug('processors: '.join(',',@{$self->get_postprocess()})) if($::debug > 1);
     } else {
         debug('postprocessing disabled...') if($::debug);
     }
-
+    
     $self->set_goback(time() - ($self->get_goback() * 84600));
-
+    
     if($::debug){
         my $gb = DateTime->from_epoch(epoch => $self->get_goback());
         debug('goback: '.$gb);
-    }
-
+    }    
+    
     ## TODO -- this isnt' being passed to the plugins, the config is
     $self->set_name(        $args->{'name'}     || $self->get_config->{'name'}      || 'localhost');
     $self->set_instance(    $args->{'instance'} || $self->get_config->{'instance'}  || 'localhost');
-
+    
     $self->init_feeds($args);
     return($err,$ret) if($err);
     return(undef,1);
@@ -125,10 +125,10 @@ sub init {
 sub init_postprocessors {
     my $self = shift;
     my $args = shift;
-
+    
     my $things = $args->{'postprocess'} || $self->get_config->{'postprocess'};
     return unless($things);
-
+    
     if($things eq '1'){
         $self->set_postprocess(\@postprocessors);
     } else {
@@ -137,7 +137,7 @@ sub init_postprocessors {
             foreach my $p (@postprocessors){
                 if(lc($p) =~ /::$_$/){
                     push(@$enabled,$p);
-                }
+                }               
             }
         }
         $self->set_postprocess($enabled);
@@ -148,17 +148,17 @@ sub init_postprocessors {
 sub init_config {
     my $self = shift;
     my $args = shift;
-
+    
     # do this here, we'll do the setup within the sender_routine (thread)
     $self->set_client_config($args->{'config'});
-
+    
     my $err;
     try {
         $args->{'config'} = Config::Simple->new($args->{'config'});
     } catch {
         $err = shift;
     };
-
+    
     unless($args->{'config'}){
         return('unknown or missing config: '.$self->get_client_config());
     }
@@ -171,27 +171,27 @@ sub init_config {
 
     $self->set_config(          $args->{'config'}->param(-block => 'cif_smrt'));
     $self->set_feeds_config(    $args->{'config'}->param(-block => 'cif_feeds'));
-
+    
     $self->init_config_severity($args);
-
+    
     return(undef,1);
 }
 
 sub init_config_severity {
     my $self = shift;
     my $args = shift;
-
+    
     my $map = $args->{'config'}->param(-block => 'cif_smrt_severity');
     $map = DEFAULT_SEVERITY_MAP() unless(keys %$map);
-
+    
     $self->set_severity_map($map);
-
+    
 }
 
 sub init_rules {
     my $self = shift;
     my $args = shift;
-
+    
     my $rulesfile = $args->{'rules'};
     my ($err,@errmsg);
     try {
@@ -199,16 +199,16 @@ sub init_rules {
     } catch {
         $err = shift;
     };
-
+    
     return('missing or unknown rules configuration: '.$rulesfile) unless($args->{'rules'});
-
+    
     if($err){
         my @errmsg;
         push(@errmsg,'there is something broken with: '.$rulesfile);
         push(@errmsg,'this is usually a syntax problem, double check '.$rulesfile.' and try again');
         return(join("\n",@errmsg));
     }
-
+    
     unless($args->{'feed'}){
         my @sections = keys %{$args->{'rules'}->{'_DATA'}};
         @sections = map { $_ = $_ if($_ !~ /^default/) } @sections;
@@ -220,11 +220,11 @@ sub init_rules {
     $self->set_feed($args->{'feed'});
     my $defaults    = $args->{'rules'}->param(-block => 'default');
     my $rules       = $args->{'rules'}->param(-block => $self->get_feed());
-
+    
     return ('invalid feed: '.$self->get_feed().'...') unless(keys %$rules);
-
+   
     map { $defaults->{$_} = $rules->{$_} } keys (%$rules);
-
+    
     $defaults->{'guid'} = 'everyone' unless($defaults->{'guid'});
     unless(is_uuid($defaults->{'guid'})){
         $defaults->{'guid'} = generate_uuid_url($defaults->{'guid'});
@@ -236,12 +236,12 @@ sub init_rules {
 
 sub init_feeds {
     my $self = shift;
-
+    
     my $feeds = $self->get_feeds_config->{'enabled'} || return;
     $self->set_feeds($feeds);
 }
 
-sub pull_feed {
+sub pull_feed { 
     my $f = shift;
     my $ret = threads->create('_pull_feed',$f)->join();
     return(undef,'') unless($ret);
@@ -254,11 +254,11 @@ sub pull_feed {
 
     # encode to utf8
     $ret = encode_utf8($ret);
-
+    
     # remove any CR's
     $ret =~ s/\r//g;
     delete($f->{'feed'});
-
+    
     return(undef,$ret);
 }
 
@@ -267,7 +267,7 @@ sub pull_feed {
 sub _pull_feed {
     my $f = shift;
     return unless($f->{'feed'});
-
+    
     foreach my $key (keys %$f){
         foreach my $key2 (keys %$f){
             if($f->{$key} =~ /<$key2>/){
@@ -275,18 +275,18 @@ sub _pull_feed {
             }
         }
     }
-
+    
     if(my $prefetch = $f->{'prefetch'}){
         my $r = _prefetch($prefetch);
         return unless($r);
     }
-
+    
     my @pulls = __PACKAGE__->plugins();
     @pulls = sort grep(/::Pull::/,@pulls);
     foreach(@pulls){
         my ($err,$ret) = $_->pull($f);
         return('ERROR: '.$err) if($err);
-
+        
         # we don't want to error out if there's just no content
         next unless(defined($ret));
         return($ret);
@@ -305,9 +305,9 @@ sub _prefetch {
         debug('illegal chars in the prefetch command, returning');
         return(0);
     }
-
+    
     debug('running pre-fetch: '.$cmd) if($::debug > 1);
-
+    
     my ($file,$args) = split /\s/,$cmd,2;
     $args = [] unless($args);
     my $ret = system($file,@$args);
@@ -320,7 +320,7 @@ sub _prefetch {
 sub parse {
     my $self = shift;
     my $f = $self->get_rules();
-
+    
     if($self->get_proxy()){
         $f->{'proxy'} = $self->get_proxy();
     }
@@ -331,7 +331,7 @@ sub parse {
     }
     my ($err,$content) = pull_feed($f);
     return($err) if($err);
-
+    
     my $return;
     ## TODO -- this mess will be cleaned up and plugin-ized in v2
     try {
@@ -418,7 +418,7 @@ sub _decode {
 sub _sort_timestamp {
     my $recs    = shift;
     my $rules   = shift;
-
+    
     my $refresh = $rules->{'refresh'} || 0;
 
     debug('setting up sort...');
@@ -431,10 +431,6 @@ sub _sort_timestamp {
 
         $dt = normalize_timestamp($dt,$now);
 
-        if(!$dt) {
-            $dt = normalize_timestamp($now,$now);
-        }
-        
         if($refresh){
             $rt = $now;
             $rec->{'timestamp_epoch'} = $now->epoch();
@@ -442,7 +438,7 @@ sub _sort_timestamp {
             $rt = normalize_timestamp($rt,$now);
             $rec->{'timestamp_epoch'} = $dt->epoch();
         }
-
+       
         $rec->{'detecttime'}        = $dt->ymd().'T'.$dt->hms().'Z';
         $rec->{'reporttime'}        = $rt->ymd().'T'.$rt->hms().'Z';
     }
@@ -462,20 +458,20 @@ sub preprocess_routine {
     debug('parsing...') if($::debug);
     my ($err,$recs) = $self->parse();
     return($err) if($err);
-
+    
     debug('parsed records: '."\n".Dumper($recs)) if($::debug > 9);
-
+    
     return unless($#{$recs} > -1);
-
+    
     if($self->get_goback()){
         debug('sorting '.($#{$recs}+1).' recs...') if($::debug);
         $recs = _sort_timestamp($recs,$self->get_rules());
     }
-
+    
     ## TODO -- move this to the threads?
     ## test with alienvault scan's feed
     debug('mapping...') if($::debug);
-
+    
     my @array;
     foreach my $r (@$recs){
         foreach my $key (keys %$r){
@@ -487,7 +483,7 @@ sub preprocess_routine {
                 }
             }
         }
-
+        
         unless($r->{'assessment'}){
             debug('WARNING: config missing an assessment') if($::debug);
             $r->{'assessment'} = 'unknown';
@@ -496,12 +492,12 @@ sub preprocess_routine {
         foreach my $p (@preprocessors){
             $r = $p->process($self->get_rules(),$r);
         }
-
+        
         # TODO -- work-around, make this more configurable
         unless($r->{'severity'}){
             $r->{'severity'} = (defined($self->get_severity_map->{$r->{'assessment'}})) ? $self->get_severity_map->{$r->{'assessment'}} : 'medium';
         }
-
+            
         ## TODO -- if we do this, we need to degrade the count somehow...
         last if($r->{'timestamp_epoch'} < $self->get_goback());
         push(@array,$r);
@@ -519,27 +515,27 @@ sub preprocess_routine {
 sub process {
     my $self = shift;
     my $args = shift;
-
+    
     # do this first so the threads don't copy the recs into their mem
     debug('setting up zmq interfaces...') if($::debug);
-
+   
     my $context = ZeroMQ::Context->new();
     my $workers = $context->socket(ZMQ_PUSH);
     $workers->bind(WORKER_CONNECTION());
-
+    
     my $ctrl = $context->socket(ZMQ_PUB);
     $ctrl->bind(CTRL_CONNECTION());
-
+    
     # feature of zmq, pub/sub's need a warm up msg
     debug('sending ctrl warm-up msg...');
     $ctrl->send('WARMING_UP');
-
+    
     my $return = $context->socket(ZMQ_PULL);
     $return->bind(RETURN_CONNECTION());
-
+    
     my $workers_sum = $context->socket(ZMQ_PULL);
     $workers_sum->bind(WORKER_SUM_CONNECTION());
-
+    
     # this needs to be started first
     debug('starting sender thread...');
     threads->create('sender_routine',$self)->detach();
@@ -548,15 +544,15 @@ sub process {
     # if we still see a race condition, send a warmup message to the sender either here
     # or through the workers as a 'checkin'
     nanosleep NSECS_PER_MSEC;
-
+    
     ## TODO -- req/reply checkins?
     debug('creating '.$self->get_threads().' worker threads...');
     for (1 ... $self->get_threads()) {
         threads->create('worker_routine', $self)->detach();
     }
-
+       
     debug('done...') if($::debug);
-
+    
     debug('running preprocessor routine...') if($::debug);
     ## TODO -- figure out if this really needs to be threaded out or not
     # there are implications with how we return errors
@@ -565,7 +561,7 @@ sub process {
     return($err) if($err);
 
     return (undef,'no records') unless($#{$array} > -1);
-
+    
     my $master_count = ($#{$array} + 1);
     debug('processing: '.$master_count.' records...');
 
@@ -574,7 +570,7 @@ sub process {
     ## TODO -- batch this out a little
     debug('sending to workers...') if($::debug);
     $workers->send_as(json => $_) foreach(@$array);
-
+    
     my $poller = ZeroMQ::Poller->new(
         {
             name    => 'workers_sum',
@@ -587,7 +583,7 @@ sub process {
             events  => ZMQ_POLLIN,
         },
     );
-
+    
     my $done = 0;
     my $total_recs = $master_count;
     my $sent_recs = 0;
@@ -595,7 +591,7 @@ sub process {
     debug('starting with '.$master_count.' recs...');
     do {
         debug('waiting on message...') if($::debug && $::debug > 1);
-
+        
         debug('polling...') if($::debug > 5);
         $poller->poll();
         debug('found msg') if($::debug && $::debug > 1);
@@ -603,7 +599,7 @@ sub process {
             $msg = $workers_sum->recv()->data();
             for($msg){
                 if(/^COMPLETED:(\d+)$/){
-                    $master_count -= $1;
+                    $master_count -= $1; 
                     last;
                 }
                 if(/^ADDED:(\d+)$/){
@@ -613,9 +609,9 @@ sub process {
             }
             $msg = undef;
         }
-
+        
         ## TODO -- should this be after the return check?
-        debug('master count: '.$master_count) if($::debug && $::debug > 1);
+        debug('master count: '.$master_count) if($::debug && $::debug > 1);  
         if($master_count == 0){
             debug('sending total: '.$total_recs) if($::debug && $::debug > 1);
             $ctrl->send('TOTAL:'.$total_recs);
@@ -640,42 +636,42 @@ sub process {
         debug('sent recs: '.$sent_recs) if($::debug && $::debug > 1);
         debug('total recs: '.$total_recs) if($::debug && $::debug > 1);
     } while($sent_recs != -1 && $sent_recs < $total_recs);
-
+    
     debug('sent recs: '.$sent_recs);
 
     $ctrl->send('WRK_DONE');
-
+    
     $workers->close();
     $workers_sum->close();
     $ctrl->close();
     $return->close();
     $context->term();
-
+    
     return $err unless($sent_recs > -1);
     return(undef,1);
 }
 
 sub worker_routine {
     my $self = shift;
-
+   
     require Iodef::Pb::Simple;
     my $context = ZeroMQ::Context->new();
-
+    
     debug('starting worker: '.threads->tid()) if($::debug > 1);
-
+    
     my $receiver = $context->socket(ZMQ_PULL);
     $receiver->connect(WORKER_CONNECTION());
-
+    
     my $sender = $context->socket(ZMQ_PUSH);
     $sender->connect(SENDER_CONNECTION());
-
+    
     my $ctrl = $context->socket(ZMQ_SUB);
-    $ctrl->setsockopt(ZMQ_SUBSCRIBE,'');
+    $ctrl->setsockopt(ZMQ_SUBSCRIBE,''); 
     $ctrl->connect(CTRL_CONNECTION());
-
+    
     my $workers_sum = $context->socket(ZMQ_PUSH);
     $workers_sum->connect(WORKER_SUM_CONNECTION());
-
+    
      my $poller = ZeroMQ::Poller->new(
         {
             name    => 'worker',
@@ -687,8 +683,8 @@ sub worker_routine {
             socket  => $ctrl,
             events  => ZMQ_POLLIN,
         },
-    );
-
+    ); 
+       
     my $done = 0;
     my $recs = 0;
     my (@results,$tmp_results);
@@ -706,15 +702,15 @@ sub worker_routine {
             debug('receiving event...') if($::debug > 4);
             my $msg = $receiver->recv_as('json');
             debug('processing message...') if($::debug > 4);
-
+            
             debug('generating uuid...') if($::debug > 4);
             $msg->{'id'} = generate_uuid_random();
-
+            
             if($::debug > 1){
                 my $thing = $msg->{'address'} || $msg->{'malware_md5'} || $msg->{'malware_sha1'} || 'NA -- SOMETHING BROKEN IN THE FEED CONFIG';
                 debug('uuid: '.$msg->{'id'}.' - '.$msg->{'reporttime'}.' - '.$thing.' - '.$msg->{'assessment'}.' - '.$msg->{'description'});
             }
-
+    
             debug('generating iodef...') if($::debug > 3);
 
             my $iodef = Iodef::Pb::Simple->new($msg);
@@ -754,12 +750,12 @@ sub worker_routine {
                 }
             }
             push(@results,map { $_->encode() } @$iodef);
-
+                       
             debug('sending message...') if($::debug && $::debug > 2);
             $sender->send_as('json' => \@results);
             debug('message sent...') if($::debug && $::debug > 2);
             $workers_sum->send('COMPLETED:1');
-
+            
             # clear the global var
             $#results = -1;
         }
@@ -777,7 +773,7 @@ sub worker_routine {
 sub sender_routine {
     my $self        = shift;
     #my $total_recs  = shift;
-
+      
     # do this within the thread
     require CIF::Client;
     my ($err,$client) = CIF::Client->new({
@@ -785,23 +781,23 @@ sub sender_routine {
         apikey  => $self->get_apikey(),
     });
     $self->set_client($client);
-
+    
     my $batch_control = $self->get_batch_control();
-
+    
     my $context = ZeroMQ::Context->new();
-
+    
     debug('starting sender thread...') if($::debug > 1);
-
+       
     my $sender = $context->socket(ZMQ_PULL);
     $sender->bind(SENDER_CONNECTION());
-
+    
     my $ctrl = $context->socket(ZMQ_SUB);
     $ctrl->setsockopt(ZMQ_SUBSCRIBE,'');
     $ctrl->connect(CTRL_CONNECTION());
-
+    
     my $return = $context->socket(ZMQ_PUSH);
     $return->connect(RETURN_CONNECTION());
-
+    
     my $poller = ZeroMQ::Poller->new(
         {
             name    => 'sender',
@@ -813,9 +809,9 @@ sub sender_routine {
             socket  => $ctrl,
             events  => ZMQ_POLLIN,
         },
-    );
-
-    my $queue;
+    ); 
+                 
+    my $queue; 
     my $done = 0;
     my ($total_recs,$sent_recs) = (0,0);
     do {
@@ -842,8 +838,8 @@ sub sender_routine {
             push(@$queue,@$msg);
             debug('msgs in queue: '.($#{$queue}+1)) if($::debug > 2);
         }
-
-        # we're not done till we at-least have a total from the
+        
+        # we're not done till we at-least have a total from the 
         # master thread
         # if what's in the queue is the difference between sent and total
         # we're done
@@ -871,7 +867,7 @@ sub sender_routine {
         }
         nanosleep NSECS_PER_MSEC;
     } while (!$done);
-
+    
     debug('sender done...') if($::debug > 1);;
     $sender->close();
     $return->close();
@@ -888,9 +884,9 @@ sub send {
         guid    => $self->get_rules->{'guid'},
         data    => $data,
     });
-
+    
     debug('submitting...') if($::debug);
-    return $self->get_client->submit($ret);
+    return $self->get_client->submit($ret);    
 }
 
 sub throttle {
@@ -899,11 +895,11 @@ sub throttle {
     require Linux::Cpuinfo;
     my $cpu = Linux::Cpuinfo->new();
     return(DEFAULT_THROTTLE_FACTOR()) unless($cpu);
-
+    
     my $cores = $cpu->num_cpus();
     return(DEFAULT_THROTTLE_FACTOR()) unless($cores && $cores =~ /^\d+$/);
     return(DEFAULT_THROTTLE_FACTOR()) if($cores eq 1);
-
+    
     return($cores * (DEFAULT_THROTTLE_FACTOR() * 2))    if($throttle eq 'high');
     return($cores * DEFAULT_THROTTLE_FACTOR())          if($throttle eq 'medium');
     return($cores / 2)                                  if($throttle eq 'low');
