@@ -430,6 +430,10 @@ sub _sort_timestamp {
         my $rt = $rec->{'reporttime'} || $now;
 
         $dt = normalize_timestamp($dt,$now);
+	
+        if(!$dt) {
+            $dt = normalize_timestamp($now,$now);
+        }
 
         if($refresh){
             $rt = $now;
