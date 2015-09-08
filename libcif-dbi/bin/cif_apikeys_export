@@ -30,13 +30,16 @@ BEGIN {
 }
 
 use Getopt::Std;
+use CIF qw/generate_uuid_ns/;
 use CIF::Profile;
 use Data::Dumper;
 
 my $config          = $opts{'C'} || $ENV{'HOME'}.'/.cif';
+my $groups          = $opts{'G'} = 'everyone';
+my $limit           = $opts{'l'};
 
 our %opts;
-getopt('C:', \%opts);
+getopt('C:G:l:', \%opts);
 die(usage()) if($opts{'h'});
 
 sub usage {
@@ -44,34 +47,64 @@ sub usage {
 Usage: perl $0 {options...}
 
 Basic:
-    -h  --help:             this message
+    -h          this message
+    -g          specify known groups (csv)
 EOF
 }
 
 my ($err,$ret) = CIF::Profile->new({
     config  => $config,
 });
+
 die($err) if($err);
 my $profile = $ret;
 
+my @gg = split(',', $opts{'G'});
+
+my $group_map = {};
+my @gg = split(',', $groups);
+foreach (@gg){
+    $group_map->{generate_uuid_ns($_)} = $_;
+}
+
+my $tlp_map = {
+    'private'       => 'red',
+    'need-to-know'  => 'amber',
+    'default'       => 'amber',
+    'public'        => 'green'
+};
+
+my $limit = $opts{'l'} || 0;
 my @array;
 require JSON::XS;
 my @recs = $profile->user_list({ user => $user });
 if($#recs > -1){
     foreach (@recs){
         my $groups = $profile->groups($_->uuid());
+        foreach my $g (@$groups){
+            $g = $group_map->{$g};
+        }
+        my $default_group = $group_map->{$_->default_guid()};
         push(@$array,
             {
                 token           => $_->uuid(),
-                user            => $_->uuid_alias(),
+                username        => $_->uuid_alias(),
                 write           => $_->write(),
-                revoked         => $_->revoked(),
-                groups          => \@groups,
+                revoked         => $_->revoked() || 0,
+                groups          => $groups,
                 read            => 1,
-                default_group   => $_->default_guid(),
-                expires         => $_->expires(),
+                default_group   => $default_group,
+                expires         => $_->expires() || '',
+                description     => $_->description() || '',
             },
         );
+        if($limit){
+            $limit--;
+            if($limit == 0){
+                last;
+            }
+        }
+        
     }
     $array = JSON::XS::encode_json($array);
     print $array."\n";
